@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_script_include">
+    <sys_script_include action="INSERT_OR_UPDATE">
+        <access>package_private</access>
+        <active>true</active>
+        <api_name>x_183199_testcommv.TestCommvaultEndpoint</api_name>
+        <client_callable>true</client_callable>
+        <description/>
+        <name>TestCommvaultEndpoint</name>
+        <script><![CDATA[var TestCommvaultEndpoint = Class.create();
+TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProcessor, {
+	getHello: function() {	
+		gs.addInfoMessage('Successfully sent request to execute workflow');
+		var sm = new sn_ws.RESTMessageV2();
+		sm.setEndpoint("https://winproxy1.commvault.com:9001/webconsole/RestServlet/qcommand/qoperation%20execute");
+		sm.setHttpMethod("post");
+		sm.setHttpTimeout(80000);
+		sm.setLogLevel("all");
+		
+		var body = "<Workflow_StartWorkflow><options></options><workflow><workflowName>ApiTestWorkflow</workflowName></workflow><client><clientName>skummali-setup</clientName></client></Workflow_StartWorkflow>";
+		sm.setRequestBody(body);
+		
+		var token="QSDK 31b0ae5d080b651f02332a2be0f009cc42b006f6147535be037531e34c4203e33a1510d45df4c1681a123cefecef03f488fd1caac867715e559802bbad0baf5d4a6f73580539e06f57f4dfc31d62080a3f9a3cb9682958e24970976280c3d10eafae1a284dd81fdda5e619478f8f22dc8c0d228038cc172fdf160cb304baee4833f11b18ea142e7f795da56c1454dc8999c08609ad8762e3776b93f6966eb698a178dbf2db5bd5f5c7449b197534b92c5cceebb918f0dbc8ef392aefb05f9af8676940704ce43558ef3eb2e2116d5aad452f82c4c634b1aeb070d50a8ede93d3952588db2552a18bed105cd809e3fb4564dde43deebae8566eeb41da15afc5661a9626431403ecd7c387c499f3a3725002cfa4d2b8e436f12162cf44131a3a651";
+		
+		sm.setRequestHeader("Authtoken",token);
+		sm.setRequestHeader("Content-Type","Application/xml");
+		
+		var response = sm.execute();
+		var responseBody = reponse.getBody();
+		
+		//gs.addInfoMessage('Successfully sent request to execute workflow');
+		
+		return '{"content": "Hello"}';
+	},
+    type: 'TestCommvaultEndpoint'
+});]]></script>
+        <sys_class_name>sys_script_include</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2017-12-26 12:20:08</sys_created_on>
+        <sys_id>a1c8f345db530300180ad170cf96191c</sys_id>
+        <sys_mod_count>14</sys_mod_count>
+        <sys_name>TestCommvaultEndpoint</sys_name>
+        <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
+        <sys_policy>read</sys_policy>
+        <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
+        <sys_update_name>sys_script_include_a1c8f345db530300180ad170cf96191c</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2017-12-27 15:11:31</sys_updated_on>
+    </sys_script_include>
+</record_update>

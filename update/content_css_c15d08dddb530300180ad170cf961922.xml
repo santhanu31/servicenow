@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="content_css">
+    <content_css action="INSERT_OR_UPDATE">
+        <name>testcommvaultstyles</name>
+        <style>.form-container {&#13;
+    background: white;&#13;
+    border-collapse: collapse;&#13;
+    margin: auto;&#13;
+    width: 100%;&#13;
+    border-left: 1px solid #cccccc;&#13;
+    box-shadow: 0px 0px 10px #c7c7c7;&#13;
+    animation: float 5s infinite;&#13;
+    border-bottom: none;&#13;
+    border-right: none;&#13;
+    border-top: none;&#13;
+    border-radius: 0px;&#13;
+    margin-bottom: 20px;&#13;
+    padding: 20px;&#13;
+}&#13;
+&#13;
+.appContainer{&#13;
+   padding: 40px;&#13;
+}&#13;
+&#13;
+.imageHeading {&#13;
+   background-color: #303a46;&#13;
+   padding: 20px;&#13;
+}&#13;
+&#13;
+.actionBtn {&#13;
+    color: #fff;&#13;
+    background-color: #19a06a;&#13;
+    border-color: #c1d0ca;&#13;
+}&#13;
+&#13;
+.actionBtn.submitBtn {&#13;
+    box-shadow: 0px 0px 10px #c7c7c7;&#13;
+    border: 0px;&#13;
+}&#13;
+&#13;
+.actionBtn.submitBtn.perform-backup {&#13;
+    width: 35%;&#13;
+    margin-top: 7px;&#13;
+}&#13;
+&#13;
+#cvapp .actionBtn:hover {&#13;
+    color: #333 !important;&#13;
+    background-color: #e6e6e6;&#13;
+    border-color: #adadad;&#13;
+}&#13;
+&#13;
+#cvapp .actionBtn:focus {&#13;
+    color: #fff;&#13;
+    text-decoration: none;&#13;
+}&#13;
+&#13;
+#cvapp .actionBtn.submitBtn:active {&#13;
+    background-image: none;&#13;
+    outline: 0;&#13;
+    -webkit-box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125);&#13;
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125);&#13;
+}&#13;
+&#13;
+#cvapp .actionBtn.submitBtn:hover {&#13;
+    color: #fff !important;&#13;
+    background-color: #23a973;&#13;
+    border-color: #c1d0ca;&#13;
+}&#13;
+&#13;
+#cvapp .actionBtn:active {&#13;
+}&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+&#13;
+</style>
+        <sys_class_name>content_css</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2017-12-26 13:48:59</sys_created_on>
+        <sys_id>c15d08dddb530300180ad170cf961922</sys_id>
+        <sys_mod_count>10</sys_mod_count>
+        <sys_name>testcommvaultstyles</sys_name>
+        <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
+        <sys_update_name>content_css_c15d08dddb530300180ad170cf961922</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2017-12-27 07:28:33</sys_updated_on>
+        <type>local</type>
+        <url/>
+    </content_css>
+</record_update>
