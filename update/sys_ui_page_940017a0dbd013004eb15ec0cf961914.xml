@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script/>
+        <description/>
+        <direct>false</direct>
+        <endpoint>x_183199_testcommv_ViewClients.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"></link>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+	<script src="x_183199_testcommv.angular_app_client_lo.jsdbx"></script>
+	<link href="c15d08dddb530300180ad170cf961922.cssdbx" rel="stylesheet" type="text/css"></link> 
+	
+	
+	<div id="cvapp" ng-app="angularapp" class="ng-cloak">
+		
+		<div ng-controller="ViewClientsController as vcctrl" class="appContainer">
+			<div class="row">
+				<div class="col-xs-12">
+					<div class="form-container">
+						<h4 class="imageHeading"><img src="commvault_logo.png" width="300" height="49"/><span class="module-name">View clients</span>
+							<div class="cos_load_holder" ng-show="onAjax">
+								<div class="cos_load">
+									<div class="cos_spinner">
+										<div class="cos_mask">
+											<div class="cos_maskedCircle"></div>
+										</div>
+									</div>
+								</div>
+							</div>			
+						</h4>
+						<hr/>
+						<div class="row">
+							<div class="col-xs-12 text-center">
+								<div class="table-container" ng-hide="onAjax">
+									<table class="table-snow">
+										<thead>
+											<tr>
+												<!--<th>
+													<input type="checkbox"></input>
+												</th>-->
+												<th>Client name</th>
+												<th>Client type</th>
+												<th>Operating system</th>
+												<th>Version</th>
+												<!-- <th>Operating System</th>
+												<th>Location</th>
+												<th>Created By</th> -->
+											</tr>
+										</thead>
+										<tbody class="table-hover">
+											<tr ng-repeat="clientProperty in getClientResponse.clientProperties">
+												<td>{{clientProperty.client.clientEntity.displayName}}</td>
+												<td>
+													<span ng-repeat="ida in clientProperty.client.idaList">
+														{{ida.idaEntity.appName}}<span ng-show=" ! $last ">, </span>
+													</span>
+												</td>
+												<td>{{clientProperty.client.osInfo.OsDisplayInfo.OSName}}</td>
+												<td>{{clientProperty.client.versionInfo.version}}</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>	
+							</div>
+						</div>
+						
+					</div>	
+				</div>
+			</div>
+			
+		</div>
+	</div>
+</j:jelly>]]></html>
+        <name>ViewClients</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2018-02-12 13:07:19</sys_created_on>
+        <sys_id>940017a0dbd013004eb15ec0cf961914</sys_id>
+        <sys_mod_count>6</sys_mod_count>
+        <sys_name>ViewClients</sys_name>
+        <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
+        <sys_update_name>sys_ui_page_940017a0dbd013004eb15ec0cf961914</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2018-02-12 13:43:03</sys_updated_on>
+    </sys_ui_page>
+</record_update>

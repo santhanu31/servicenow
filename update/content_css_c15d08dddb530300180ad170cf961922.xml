@@ -2,7 +2,12 @@
 <record_update table="content_css">
     <content_css action="INSERT_OR_UPDATE">
         <name>testcommvaultstyles</name>
-        <style>.form-container {&#13;
+        <style>.adminconsole-frame {&#13;
+    width: 100%;&#13;
+    height: 850px;&#13;
+}&#13;
+&#13;
+.form-container {&#13;
     background: white;&#13;
     border-collapse: collapse;&#13;
     margin: auto;&#13;
@@ -18,6 +23,46 @@
     padding: 20px;&#13;
 }&#13;
 &#13;
+.table-snow {&#13;
+    width: 100%;&#13;
+    text-align: left;&#13;
+    background: #efefef;&#13;
+    border: 1px solid #ececec;&#13;
+}&#13;
+&#13;
+.table-snow th {&#13;
+    text-align: left;&#13;
+    background: #39485a;&#13;
+    font-weight: 300;&#13;
+    line-height: 2rem;&#13;
+    letter-spacing: 0.05rem;&#13;
+    color: #ffffff;&#13;
+    vertical-align: bottom;&#13;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12);&#13;
+    vertical-align: middle;&#13;
+    padding: 8px 12px;&#13;
+    font-size: 12px;&#13;
+}&#13;
+&#13;
+.table-snow input[type=checkbox] {&#13;
+    margin-top: -2px;&#13;
+}&#13;
+&#13;
+.table-snow td {&#13;
+    color: #484848;&#13;
+    background: #FFFFFF;&#13;
+    padding: 14px 12px;&#13;
+    text-align: left;&#13;
+    font-weight: 400;&#13;
+    font-size: 13px;&#13;
+    border-bottom: 1px solid #efefef;&#13;
+}&#13;
+&#13;
+.table-snow tr:hover td {&#13;
+    background: #f7f7f7;&#13;
+    cursor: pointer;&#13;
+}&#13;
+&#13;
 .appContainer{&#13;
    padding: 40px;&#13;
 }&#13;
@@ -25,6 +70,12 @@
 .imageHeading {&#13;
    background-color: #303a46;&#13;
    padding: 20px;&#13;
+}&#13;
+&#13;
+.module-name {&#13;
+    color: white;&#13;
+    margin-left: 20px;&#13;
+    font-size: 1.2em;&#13;
 }&#13;
 &#13;
 .actionBtn {&#13;
@@ -70,6 +121,63 @@
 #cvapp .actionBtn:active {&#13;
 }&#13;
 &#13;
+.cos_load_holder {&#13;
+    position: relative;&#13;
+    float: right;&#13;
+}&#13;
+&#13;
+.cos_load_holder.loader {&#13;
+	display: block;&#13;
+}&#13;
+&#13;
+@-webkit-keyframes spin {&#13;
+    from { -webkit-transform: rotate(0deg); }&#13;
+    to { -webkit-transform: rotate(360deg); }&#13;
+}&#13;
+&#13;
+@-moz-keyframes spin {&#13;
+    from { -moz-transform: rotate(0deg); }&#13;
+    to { -moz-transform: rotate(360deg); }&#13;
+}&#13;
+&#13;
+@-ms-keyframes spin {&#13;
+    from { -ms-transform: rotate(0deg); }&#13;
+    to { -ms-transform: rotate(360deg); }&#13;
+}&#13;
+&#13;
+.cos_load {&#13;
+	position: absolute;&#13;
+	top: 50%;&#13;
+	left: 50%;&#13;
+	width: 28px;&#13;
+	height: 28px;&#13;
+	margin: 10px 0 0 -40px;&#13;
+}&#13;
+&#13;
+.cos_load .cos_spinner {&#13;
+	position: absolute;&#13;
+	left: 1px;&#13;
+	top: 1px;&#13;
+	width: 26px;&#13;
+	height: 26px;&#13;
+	-webkit-animation: spin 1s infinite linear;&#13;
+	-moz-animation: spin 1s infinite linear;&#13;
+	-o-animation: spin 1s infinite linear;&#13;
+	animation: spin 1s infinite linear;&#13;
+}&#13;
+&#13;
+.cos_load .cos_mask {&#13;
+	width: 12px;&#13;
+	height: 12px;&#13;
+	overflow: hidden;&#13;
+}&#13;
+&#13;
+.cos_load .cos_maskedCircle {&#13;
+	width: 20px;&#13;
+	height: 20px;&#13;
+	border-radius: 12px;&#13;
+	border: 3px solid #fff;&#13;
+}&#13;
 &#13;
 &#13;
 &#13;
@@ -101,14 +209,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:48:59</sys_created_on>
         <sys_id>c15d08dddb530300180ad170cf961922</sys_id>
-        <sys_mod_count>10</sys_mod_count>
+        <sys_mod_count>27</sys_mod_count>
         <sys_name>testcommvaultstyles</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>content_css_c15d08dddb530300180ad170cf961922</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2017-12-27 07:28:33</sys_updated_on>
+        <sys_updated_on>2018-01-31 09:54:04</sys_updated_on>
         <type>local</type>
         <url/>
     </content_css>
