@@ -5,7 +5,124 @@
         <description>Client-side logic for Angular App</description>
         <global>false</global>
         <name>x_183199_testcommv.angular_app_client_lo</name>
-        <script><![CDATA[angular.module('angularapp',[]);
+        <script><![CDATA[angular.module('angularapp',["highcharts-ng"]);
+
+
+angular.module('angularapp').controller('SLAReportController', function($scope){
+	console.log('In SLA Report controller');
+	
+	$scope.pieData = [];
+	$scope.chartConfig = {
+      chart: {
+        type: 'pie',
+		margin: [0, 200, 0, 0],
+		spacingTop: 0,
+        spacingBottom: 0,
+        spacingLeft: 0,
+        spacingRight: 0  
+      },
+	  plotOptions: {
+        pie: {
+            showInLegend: true
+        }
+      },
+      series: [{
+        data: $scope.pieData,
+        id: 'SLA Summary'
+      }],
+      title: {
+        text: ''
+      },
+	  credits: {
+		  enabled: false
+	  },
+	  legend: {
+                enabled: true,
+                layout: 'vertical',
+                align: 'right',
+                width: 200,
+                verticalAlign: 'middle',
+                useHTML: true,
+                labelFormatter: function() {
+                    return '<div style="text-align: left; width:130px;float:left;">' + this.name + ' ' + this.y;
+				}
+	  }
+    };
+	
+	$scope.tableHeaders = [];
+	$scope.tableData = [];
+	
+	$scope.onAjax = true;
+	$scope.SLAReportObj = [];
+	$scope.getSLAReport = function() {
+		$scope.onGetSLAReport = function(response) {
+			var answer = response.responseXML.documentElement.getAttribute("answer");
+			$scope.SLAReport = JSON.parse(answer);
+			console.log($scope.SLAReport);
+			$scope.onAjax = false;
+			$scope.$apply();
+			angular.forEach($scope.SLAReport.pages[0].dataSets.dataSet, function(value, key) {
+				var currentDataset = value;
+			  	if(currentDataset.dataSet.dataSetName === 'SLA Details' || currentDataset.dataSet.dataSetName === 'SLA Summary') {
+					
+					/* call api to get records using dataset id */
+					
+					$scope.onGetData = function(response) {
+						var answer = response.responseXML.documentElement.getAttribute("answer");
+						var dataSetData = JSON.parse(answer);
+						
+						console.log('dataSetData' + dataSetData);
+						
+						$scope.SLAReportObj[currentDataset.dataSet.dataSetName] = {
+							dataSetID: currentDataset.dataSet.dataSetId,
+							columns: dataSetData.columns,
+							records: dataSetData.records
+						};
+						
+						if(currentDataset.dataSet.dataSetName === 'SLA Summary') {
+							angular.forEach(dataSetData.records, function(record, rIndex){
+								if(record[1] === 'Missed SLA') {
+									$scope.pieData.push({ y: record[2], name: record[1], color: "#cc0000" });
+								} else if(record[1] === 'Met SLA ') {
+									$scope.pieData.push({ y: record[2], name: record[1], color: "#666699" });
+								}
+								$scope.$apply();
+							});
+						} else if(currentDataset.dataSet.dataSetName === 'SLA Details') {
+							$scope.tableHeaders = dataSetData.columns;
+							angular.forEach(dataSetData.records, function(record, rIndex){
+								var data = {};
+								data.rowId = record[0]; //sys_rowid
+								data.rowId = record[0]; //Data Source
+								data.rowId = record[0]; //Client Groups
+								data.rowId = record[0]; //ClientId
+								data.rowId = record[0];
+								data.rowId = record[0];
+								$scope.$apply();
+							});
+						}
+						
+						console.log('SLA Report object' + $scope.SLAReportObj);
+					};
+					
+					var getDataForDatasetEndpoint = new GlideAjax('TestCommvaultEndpoint');
+					getDataForDatasetEndpoint.addParam('sysparm_name','getDataForDataset');
+					getDataForDatasetEndpoint.addParam('sysparm_dataSetId', currentDataset.dataSet.dataSetId);
+					getDataForDatasetEndpoint.getXML($scope.onGetData);
+					
+				}
+			});
+			
+		};
+		
+		var getSLAReportEndpoint = new GlideAjax('TestCommvaultEndpoint');
+		getSLAReportEndpoint.addParam('sysparm_name','getSLAReport');
+		//getSLAReportEndpoint.addParam('sysparm_dataSetId', 126);
+		getSLAReportEndpoint.getXML($scope.onGetSLAReport);
+	};
+	
+	$scope.getSLAReport();
+});
 
 angular.module('angularapp').controller('ScheduleController', function($scope){
 	console.log('In schedule controller');
@@ -74,14 +191,14 @@ angular.module('angularapp').controller('AngularAppCtrl', function($scope){
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>36</sys_mod_count>
+        <sys_mod_count>58</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-02-12 13:35:37</sys_updated_on>
+        <sys_updated_on>2018-02-14 14:34:26</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>

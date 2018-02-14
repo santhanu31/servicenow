@@ -15,6 +15,46 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		
 		return "";
 	},
+	getDataForDataset: function() {
+		var token = this._getToken();
+		var dataSetId = this.getParameter('sysparm_dataSetId');
+		gs.info('Getting Data for Dataset ' + dataSetId + ' using token ' + token);
+		
+		var sm = new sn_ws.RESTMessageV2();
+		sm.setEndpoint('https://winproxy1.commvault.com:9001/CustomReportsEngine/rest/reportsplusengine/datasets/' + dataSetId + '/data');
+		sm.setHttpMethod("get");
+		sm.setHttpTimeout(80000);
+		sm.setRequestHeader("Accept","application/json");
+		sm.setRequestHeader("Authtoken", token);
+		sm.setLogLevel("all");
+		
+		var response = sm.execute();
+		var responseBody = response.getBody();
+		
+		gs.info('Returning response' + responseBody);
+		
+		return responseBody;
+	},
+	getSLAReport: function() {
+		var token = this._getToken();
+		
+		gs.info('Getting SLA Reports using token ' + token);
+		
+		var sm = new sn_ws.RESTMessageV2();
+		sm.setEndpoint("https://winproxy1.commvault.com:9001/CustomReportsEngine/rest/reportsplusengine/reports/name:Servers%20SLA?includeDrafts=false&version=0");
+		sm.setHttpMethod("get");
+		sm.setHttpTimeout(80000);
+		sm.setRequestHeader("Accept","application/json");
+		sm.setRequestHeader("Authtoken", token);
+		sm.setLogLevel("all");
+		
+		var response = sm.execute();
+		var responseBody = response.getBody();
+		
+		gs.info('Returning response' + responseBody);
+		
+		return responseBody;
+	},
 	getSchedules: function() {
 		var token = this._getToken();
 		
@@ -102,13 +142,13 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 12:20:08</sys_created_on>
         <sys_id>a1c8f345db530300180ad170cf96191c</sys_id>
-        <sys_mod_count>33</sys_mod_count>
+        <sys_mod_count>38</sys_mod_count>
         <sys_name>TestCommvaultEndpoint</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy>read</sys_policy>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_script_include_a1c8f345db530300180ad170cf96191c</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-02-12 13:24:17</sys_updated_on>
+        <sys_updated_on>2018-02-14 11:19:56</sys_updated_on>
     </sys_script_include>
 </record_update>
