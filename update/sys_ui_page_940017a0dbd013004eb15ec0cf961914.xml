@@ -8,19 +8,86 @@
         <endpoint>x_183199_testcommv_ViewClients.do</endpoint>
         <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
 <j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+	
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"></link>
+	<link href="c15d08dddb530300180ad170cf961922.cssdbx" rel="stylesheet" type="text/css"></link> 
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
 	<script src="https://code.highcharts.com/stock/highstock.src.js"></script>
 	<script src="https://rawgithub.com/pablojim/highcharts-ng/master/src/highcharts-ng.js"></script>
-	
-	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"></link>
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 	<script src="x_183199_testcommv.angular_app_client_lo.jsdbx"></script>
-	<link href="c15d08dddb530300180ad170cf961922.cssdbx" rel="stylesheet" type="text/css"></link> 
+	
+	
+	<script>
+          var $j_custom = jQuery.noConflict(true);
+    </script>
 	
 	
 	<div id="cvapp" ng-app="angularapp" class="ng-cloak">
 		
+		
+		
 		<div ng-controller="ViewClientsController as vcctrl" class="appContainer">
+			
+			<!-- Backup Modal -->
+
+			<div class="modal backupModal fade" id="backupModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="close btn" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&#xD7;</span></button>
+							<h4 class="modal-title" id="myModalLabel"> Backup client</h4>
+						</div>
+						<div class="modal-body">
+							<div class="row">
+								<div class="col-xs-4 text-center">
+									<div class="modal-col-heading">Choose application</div>
+									<div class="list-group-container">
+										<div class="list-group">
+											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">MS SQL Server</a>
+											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">MySQL</a>
+											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">Oracle Database</a>
+											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">PostgreSQL</a>
+										</div>
+									</div>    
+								</div>
+								<div class="col-xs-4 text-center">
+									<div class="modal-col-heading">Choose backup set</div>
+									<div class="list-group-container">
+										<div class="list-group">
+											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">MS SQL Server</a>
+											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">MySQL</a>
+											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">Oracle Database</a>
+											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">PostgreSQL</a>
+										</div>
+									</div> 
+								</div>
+								<div class="col-xs-4 text-center">
+									<div class="modal-col-heading">Chooose sublient</div>
+									<div class="list-group-container">
+										<div class="list-group">
+											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">MS SQL Server</a>
+											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">MySQL</a>
+											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">Oracle Database</a>
+											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">PostgreSQL</a>
+										</div>
+									</div> 
+								</div>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+							<button type="button" class="btn actionBtn"> Backup</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Backup Modal End -->
+			
 			<div class="row">
 				<div class="col-xs-12">
 					<div class="form-container">
@@ -56,7 +123,7 @@
 											</tr>
 										</thead>
 										<tbody class="table-hover">
-											<tr ng-repeat="clientProperty in getClientResponse.clientProperties">
+											<tr ng-repeat="clientProperty in clientResponse.clientProperties">
 												<td>{{clientProperty.client.clientEntity.displayName}}</td>
 												<td>
 													<span ng-repeat="ida in clientProperty.client.idaList">
@@ -64,7 +131,7 @@
 													</span>
 												</td>
 												<td>{{clientProperty.client.osInfo.OsDisplayInfo.OSName}}</td>
-												<td>{{clientProperty.client.versionInfo.version}}</td>
+												<td>{{clientProperty.client.versionInfo.version}} <button type="button" class="btn actionBtn" data-toggle="modal" data-target="#backupModal" data-backdrop="static" data-keyboard="false" ng-click="getSubclients(clientProperty.client.clientEntity.clientId)">Backup</button></td>
 											</tr>
 										</tbody>
 									</table>
@@ -85,13 +152,13 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-02-12 13:07:19</sys_created_on>
         <sys_id>940017a0dbd013004eb15ec0cf961914</sys_id>
-        <sys_mod_count>9</sys_mod_count>
+        <sys_mod_count>29</sys_mod_count>
         <sys_name>ViewClients</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_page_940017a0dbd013004eb15ec0cf961914</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-02-14 13:16:11</sys_updated_on>
+        <sys_updated_on>2018-02-21 09:08:24</sys_updated_on>
     </sys_ui_page>
 </record_update>

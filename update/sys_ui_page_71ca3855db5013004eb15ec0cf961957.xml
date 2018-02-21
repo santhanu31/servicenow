@@ -38,8 +38,11 @@
 						</h4>
 						<hr/>
 						<div class="row">
-							<div class="col-xs-12 text-center">
-								<highchart id="chart1" config="chartConfig"></highchart>
+							<div class="col-xs-12">
+								<div class="highchart-div" ng-hide="onAjax">
+									<div class="highchart-title">SLA Summary</div>
+									<highchart id="chart1" config="chartConfig"></highchart>
+								</div>	
 							</div>
 						</div>
 						
@@ -49,11 +52,21 @@
 									<table class="table-snow">
 										<thead>
 											<tr>
-												<th ng-repeat="header in tableHeaders">{{header.name}}</th>
+												<th ng-repeat="header in tableHeaders" ng-if="(header.name != 'sys_rowid' &amp;&amp; header.name != 'ClientId')">{{header.name}}</th>
 											</tr>
 										</thead>
 										<tbody class="table-hover">
-											
+											<tr ng-repeat="row in tableData">
+												<!--<td>{{row.rowId}}</td>-->
+												<td>{{row.dataSource}}</td>
+												<td>{{row.clientGroups}}</td>
+												<!--<td>{{row.clientId}}</td>-->
+												<td>{{row.client}}</td>
+												<td>{{row.slaStatus}}</td>
+												<td>{{row.clientOwners}}</td>
+												<td>{{row.category}}</td>
+												<td>{{row.slaDays}}</td>
+											</tr>
 										</tbody>
 									</table>
 								</div>	
@@ -73,13 +86,13 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-02-14 10:10:51</sys_created_on>
         <sys_id>71ca3855db5013004eb15ec0cf961957</sys_id>
-        <sys_mod_count>5</sys_mod_count>
+        <sys_mod_count>12</sys_mod_count>
         <sys_name>SLAReport</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_page_71ca3855db5013004eb15ec0cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-02-14 14:06:45</sys_updated_on>
+        <sys_updated_on>2018-02-20 09:40:45</sys_updated_on>
     </sys_ui_page>
 </record_update>

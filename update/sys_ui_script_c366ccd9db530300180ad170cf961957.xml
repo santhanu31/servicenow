@@ -13,41 +13,41 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 	
 	$scope.pieData = [];
 	$scope.chartConfig = {
-      chart: {
-        type: 'pie',
-		margin: [0, 200, 0, 0],
-		spacingTop: 0,
-        spacingBottom: 0,
-        spacingLeft: 0,
-        spacingRight: 0  
-      },
-	  plotOptions: {
-        pie: {
-            showInLegend: true
-        }
-      },
-      series: [{
-        data: $scope.pieData,
-        id: 'SLA Summary'
-      }],
-      title: {
-        text: ''
-      },
-	  credits: {
-		  enabled: false
-	  },
-	  legend: {
-                enabled: true,
-                layout: 'vertical',
-                align: 'right',
-                width: 200,
-                verticalAlign: 'middle',
-                useHTML: true,
-                labelFormatter: function() {
-                    return '<div style="text-align: left; width:130px;float:left;">' + this.name + ' ' + this.y;
-				}
-	  }
-    };
+		chart: {
+			type: 'pie',
+			margin: [0, 200, 0, 0],
+			spacingTop: 0,
+			spacingBottom: 0,
+			spacingLeft: 0,
+			spacingRight: 0
+		},
+		plotOptions: {
+			pie: {
+				showInLegend: true
+			}
+		},
+		series: [{
+			data: $scope.pieData,
+			id: 'SLA Summary'
+		}],
+		title: {
+			text: '',
+		},
+		credits: {
+			enabled: false
+		},
+		legend: {
+			enabled: true,
+			layout: 'vertical',
+			align: 'right',
+			width: 200,
+			verticalAlign: 'middle',
+			useHTML: true,
+			labelFormatter: function() {
+				return '<div style="text-align: left; width:130px;float:left;">' + this.name + ' ' + this.y;
+			}
+		}
+	};
 	
 	$scope.tableHeaders = [];
 	$scope.tableData = [];
@@ -59,146 +59,173 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 			var answer = response.responseXML.documentElement.getAttribute("answer");
 			$scope.SLAReport = JSON.parse(answer);
 			console.log($scope.SLAReport);
-			$scope.onAjax = false;
+			
 			$scope.$apply();
-			angular.forEach($scope.SLAReport.pages[0].dataSets.dataSet, function(value, key) {
-				var currentDataset = value;
-			  	if(currentDataset.dataSet.dataSetName === 'SLA Details' || currentDataset.dataSet.dataSetName === 'SLA Summary') {
-					
-					/* call api to get records using dataset id */
-					
-					$scope.onGetData = function(response) {
-						var answer = response.responseXML.documentElement.getAttribute("answer");
-						var dataSetData = JSON.parse(answer);
+			angular.forEach($scope.SLAReport.pages, function(page){
+				angular.forEach(page.dataSets.dataSet, function(value, key) {
+					var currentDataset = value;
+					if(currentDataset.dataSet.dataSetName === 'SLA Details' || currentDataset.dataSet.dataSetName === 'SLA Summary') {
 						
-						console.log('dataSetData' + dataSetData);
+						/* call api to get records using dataset id */
 						
-						$scope.SLAReportObj[currentDataset.dataSet.dataSetName] = {
-							dataSetID: currentDataset.dataSet.dataSetId,
-							columns: dataSetData.columns,
-							records: dataSetData.records
-						};
-						
-						if(currentDataset.dataSet.dataSetName === 'SLA Summary') {
-							angular.forEach(dataSetData.records, function(record, rIndex){
-								if(record[1] === 'Missed SLA') {
-									$scope.pieData.push({ y: record[2], name: record[1], color: "#cc0000" });
-								} else if(record[1] === 'Met SLA ') {
-									$scope.pieData.push({ y: record[2], name: record[1], color: "#666699" });
+						$scope.onGetData = function(response) {
+							var answer = response.responseXML.documentElement.getAttribute("answer");
+							var dataSetData = JSON.parse(answer);
+							
+							console.log('dataSetData' + dataSetData);
+							
+							$scope.SLAReportObj[currentDataset.dataSet.dataSetName] = {
+								dataSetID: currentDataset.dataSet.dataSetId,
+								columns: dataSetData.columns,
+								records: dataSetData.records
+							};
+							
+							if(currentDataset.dataSet.dataSetName === 'SLA Summary') {
+								angular.forEach(dataSetData.records, function(record, rIndex){
+									if(record[1] === 'Missed SLA') {
+										$scope.pieData.push({ y: record[2], name: record[1], color: "#cc0000" });
+										} else if(record[1] === 'Met SLA ') {
+											$scope.pieData.push({ y: record[2], name: record[1], color: "#666699" });
+											}
+											$scope.onAjax = false;
+											$scope.$apply();
+										});
+									} else if(currentDataset.dataSet.dataSetName === 'SLA Details') {
+										$scope.tableHeaders = dataSetData.columns;
+										angular.forEach(dataSetData.records, function(record, rIndex){
+											var rowData = {};
+												rowData.rowId = record[0]; //sys_rowid
+												rowData.dataSource = record[1]; //Data Source
+												rowData.clientGroups = record[2]; //Client Groups
+												rowData.clientId = record[3]; //ClientId
+												rowData.client = record[4]; //Client
+												rowData.slaStatus = record[5]; //SLA Status
+												rowData.clientOwners = record[6]; //Client Owners
+												rowData.category = record[7]; //Category
+												rowData.slaDays = record[8]; //SLA Days
+												
+												$scope.tableData.push(rowData);
+												
+												$scope.$apply();
+											});
+										}
+										
+										console.log('SLA Report object' + $scope.SLAReportObj);
+									};
+									
+									var getDataForDatasetEndpoint = new GlideAjax('TestCommvaultEndpoint');
+									getDataForDatasetEndpoint.addParam('sysparm_name','getDataForDataset');
+									getDataForDatasetEndpoint.addParam('sysparm_dataSetId', currentDataset.dataSet.dataSetId);
+									getDataForDatasetEndpoint.getXML($scope.onGetData);
+									
 								}
-								$scope.$apply();
 							});
-						} else if(currentDataset.dataSet.dataSetName === 'SLA Details') {
-							$scope.tableHeaders = dataSetData.columns;
-							angular.forEach(dataSetData.records, function(record, rIndex){
-								var data = {};
-								data.rowId = record[0]; //sys_rowid
-								data.rowId = record[0]; //Data Source
-								data.rowId = record[0]; //Client Groups
-								data.rowId = record[0]; //ClientId
-								data.rowId = record[0];
-								data.rowId = record[0];
-								$scope.$apply();
-							});
-						}
+						});
 						
-						console.log('SLA Report object' + $scope.SLAReportObj);
+						
 					};
 					
-					var getDataForDatasetEndpoint = new GlideAjax('TestCommvaultEndpoint');
-					getDataForDatasetEndpoint.addParam('sysparm_name','getDataForDataset');
-					getDataForDatasetEndpoint.addParam('sysparm_dataSetId', currentDataset.dataSet.dataSetId);
-					getDataForDatasetEndpoint.getXML($scope.onGetData);
-					
-				}
+					var getSLAReportEndpoint = new GlideAjax('TestCommvaultEndpoint');
+					getSLAReportEndpoint.addParam('sysparm_name','getSLAReport');
+					//getSLAReportEndpoint.addParam('sysparm_dataSetId', 126);
+					getSLAReportEndpoint.getXML($scope.onGetSLAReport);
+				};
+				
+				$scope.getSLAReport();
 			});
 			
-		};
-		
-		var getSLAReportEndpoint = new GlideAjax('TestCommvaultEndpoint');
-		getSLAReportEndpoint.addParam('sysparm_name','getSLAReport');
-		//getSLAReportEndpoint.addParam('sysparm_dataSetId', 126);
-		getSLAReportEndpoint.getXML($scope.onGetSLAReport);
-	};
-	
-	$scope.getSLAReport();
-});
-
-angular.module('angularapp').controller('ScheduleController', function($scope){
-	console.log('In schedule controller');
-	$scope.onAjax = true;
-	$scope.getSchedules = function() {
-		$scope.onSchedules = function(response) {
-			var answer = response.responseXML.documentElement.getAttribute("answer");
-			$scope.schedules = JSON.parse(answer);
-			$scope.onAjax = false;
-			$scope.$apply();
-			console.log($scope.schedules);
-		};
-		
-		var getScheduleEndpoint = new GlideAjax('TestCommvaultEndpoint');
-		getScheduleEndpoint.addParam('sysparm_name','getSchedules');
-		getScheduleEndpoint.getXML($scope.onSchedules);
-	};
-	
-	$scope.getSchedules();
-});
-
-angular.module('angularapp').controller('ViewClientsController', function($scope){
-	$scope.onAjax = true;
-	$scope.getClients = function() {
-		$scope.onGetClients = function(response) {
-			var answer = response.responseXML.documentElement.getAttribute("answer");
-			$scope.getClientResponse = JSON.parse(answer);
-			$scope.onAjax = false;
-			$scope.$apply();
-			console.log($scope.getClientResponse);
-		};
-		
-		var getClientsEndpoint = new GlideAjax('TestCommvaultEndpoint');
-		getClientsEndpoint.addParam('sysparm_name','getClients');
-		getClientsEndpoint.getXML($scope.onGetClients);
-	};
-	
-	$scope.getClients();
-});
-
-angular.module('angularapp').controller('AngularAppCtrl', function($scope){
-	$scope.myVar = "This is the value of myVar";
-	$scope.btnText = "Perform backup";
-	
-	$scope.callWorkflow = function() {
-		console.log('Calling workflow');
-		$scope.btnText = "Sending request";
-		
-		$scope.callback = function (response) {
-			var answer = response.responseXML.documentElement.getAttribute("answer"); 
-			$scope.btnText = "Perform backup";
-			$scope.$apply();
-			console.log(response);
-			console.log(answer);
-		};
-		
-		var getHelloAddr = new GlideAjax('TestCommvaultEndpoint');
-
-		getHelloAddr.addParam('sysparm_name','getSchedules');
-
-		getHelloAddr.getXML($scope.callback);
-	};
-});]]></script>
+			angular.module('angularapp').controller('ScheduleController', function($scope){
+				console.log('In schedule controller');
+				$scope.onAjax = true;
+				$scope.getSchedules = function() {
+					$scope.onSchedules = function(response) {
+						var answer = response.responseXML.documentElement.getAttribute("answer");
+						$scope.schedules = JSON.parse(answer);
+						$scope.onAjax = false;
+						$scope.$apply();
+						console.log($scope.schedules);
+					};
+					
+					var getScheduleEndpoint = new GlideAjax('TestCommvaultEndpoint');
+					getScheduleEndpoint.addParam('sysparm_name','getSchedules');
+					getScheduleEndpoint.getXML($scope.onSchedules);
+				};
+				
+				$scope.getSchedules();
+			});
+			
+			angular.module('angularapp').controller('ViewClientsController', function($scope){
+				$scope.onAjax = true;
+				$scope.getClients = function() {
+					$scope.onGetClients = function(response) {
+						var answer = response.responseXML.documentElement.getAttribute("answer");
+						$scope.clientResponse = JSON.parse(answer);
+						$scope.onAjax = false;
+						$scope.$apply();
+						console.log($scope.clientResponse);
+					};
+					
+					var getClientsEndpoint = new GlideAjax('TestCommvaultEndpoint');
+					getClientsEndpoint.addParam('sysparm_name','getClients');
+					getClientsEndpoint.getXML($scope.onGetClients);
+				};
+				
+				$scope.getSubclients = function(clientId) {
+					$scope.clientId = clientId;
+					$scope.onAjax = true;
+					$scope.onGetSubclients = function(response) {
+						var answer = response.responseXML.documentElement.getAttribute("answer");
+						$scope.subclientResponse = JSON.parse(answer);
+						$scope.onAjax = false;
+						$scope.$apply();
+						console.log($scope.subclientResponse);
+					};
+					
+					var getSubclientsEndpoint = new GlideAjax('TestCommvaultEndpoint');
+					getSubclientsEndpoint.addParam('sysparm_name','getSubclients');
+					getSubclientsEndpoint.addParam('sysparm_clientId', $scope.clientId);
+					getSubclientsEndpoint.getXML($scope.onGetSubclients);
+				};
+				
+				$scope.getClients();
+			});
+			
+			angular.module('angularapp').controller('AngularAppCtrl', function($scope){
+				$scope.myVar = "This is the value of myVar";
+				$scope.btnText = "Perform backup";
+				
+				$scope.callWorkflow = function() {
+					console.log('Calling workflow');
+					$scope.btnText = "Sending request";
+					
+					$scope.callback = function (response) {
+						var answer = response.responseXML.documentElement.getAttribute("answer");
+						$scope.btnText = "Perform backup";
+						$scope.$apply();
+						console.log(response);
+						console.log(answer);
+					};
+					
+					var getHelloAddr = new GlideAjax('TestCommvaultEndpoint');
+					
+					getHelloAddr.addParam('sysparm_name','getSchedules');
+					
+					getHelloAddr.getXML($scope.callback);
+				};
+			});]]></script>
         <script_name>angular_app_client_logic</script_name>
         <sys_class_name>sys_ui_script</sys_class_name>
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>58</sys_mod_count>
+        <sys_mod_count>66</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-02-14 14:34:26</sys_updated_on>
+        <sys_updated_on>2018-02-21 09:09:26</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>
