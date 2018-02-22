@@ -22,7 +22,7 @@
 	
 	
 	<script>
-          var $j_custom = jQuery.noConflict(true);
+          var $j_commvault = jQuery.noConflict(true);
     </script>
 	
 	
@@ -47,10 +47,7 @@
 									<div class="modal-col-heading">Choose application</div>
 									<div class="list-group-container">
 										<div class="list-group">
-											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">MS SQL Server</a>
-											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">MySQL</a>
-											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">Oracle Database</a>
-											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">PostgreSQL</a>
+											<a class="list-group-item" ng-class="{'selected': app.selected}" ng-repeat="app in appList" ng-click="selectApp(app)">{{app.appName}}</a>
 										</div>
 									</div>    
 								</div>
@@ -58,10 +55,7 @@
 									<div class="modal-col-heading">Choose backup set</div>
 									<div class="list-group-container">
 										<div class="list-group">
-											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">MS SQL Server</a>
-											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">MySQL</a>
-											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">Oracle Database</a>
-											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">PostgreSQL</a>
+											<a class="list-group-item" ng-class="{'selected': backupset.selected}" ng-repeat="backupset in backupSetList" ng-click="selectBackupset(backupset)">{{backupset.backupsetName}}</a>
 										</div>
 									</div> 
 								</div>
@@ -69,10 +63,7 @@
 									<div class="modal-col-heading">Chooose sublient</div>
 									<div class="list-group-container">
 										<div class="list-group">
-											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">MS SQL Server</a>
-											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">MySQL</a>
-											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">Oracle Database</a>
-											<a class="list-group-item" ng-class="{'selected': selected}" ng-click="selected=true">PostgreSQL</a>
+											<a class="list-group-item" ng-class="{'selected': subclient.selected}" ng-repeat="subclient in subclientList" ng-click="selectSubclient(subclient)">{{subclient.subclientName}}</a>
 										</div>
 									</div> 
 								</div>
@@ -106,7 +97,7 @@
 						
 						<div class="row">
 							<div class="col-xs-12 text-center">
-								<div class="table-container" ng-hide="onAjax">
+								<div class="table-container" ng-show="tabeLoaded">
 									<table class="table-snow">
 										<thead>
 											<tr>
@@ -117,6 +108,7 @@
 												<th>Client type</th>
 												<th>Operating system</th>
 												<th>Version</th>
+												<th>Perform backup</th>
 												<!-- <th>Operating System</th>
 												<th>Location</th>
 												<th>Created By</th> -->
@@ -131,7 +123,8 @@
 													</span>
 												</td>
 												<td>{{clientProperty.client.osInfo.OsDisplayInfo.OSName}}</td>
-												<td>{{clientProperty.client.versionInfo.version}} <button type="button" class="btn actionBtn" data-toggle="modal" data-target="#backupModal" data-backdrop="static" data-keyboard="false" ng-click="getSubclients(clientProperty.client.clientEntity.clientId)">Backup</button></td>
+												<td>{{clientProperty.client.versionInfo.version}}</td>
+												<td><button type="button" class="btn actionBtn" ng-click="getSubclients(clientProperty.client.clientEntity.clientId)">Backup</button></td>
 											</tr>
 										</tbody>
 									</table>
@@ -152,13 +145,13 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-02-12 13:07:19</sys_created_on>
         <sys_id>940017a0dbd013004eb15ec0cf961914</sys_id>
-        <sys_mod_count>29</sys_mod_count>
+        <sys_mod_count>39</sys_mod_count>
         <sys_name>ViewClients</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_page_940017a0dbd013004eb15ec0cf961914</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-02-21 09:08:24</sys_updated_on>
+        <sys_updated_on>2018-02-21 12:39:46</sys_updated_on>
     </sys_ui_page>
 </record_update>

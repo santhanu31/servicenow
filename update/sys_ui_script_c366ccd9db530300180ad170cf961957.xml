@@ -156,11 +156,14 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 			
 			angular.module('angularapp').controller('ViewClientsController', function($scope){
 				$scope.onAjax = true;
+				$scope.tabeLoaded = false;
+				//$scope.test = "teststring";
 				$scope.getClients = function() {
 					$scope.onGetClients = function(response) {
 						var answer = response.responseXML.documentElement.getAttribute("answer");
 						$scope.clientResponse = JSON.parse(answer);
 						$scope.onAjax = false;
+						$scope.tabeLoaded = true;
 						$scope.$apply();
 						console.log($scope.clientResponse);
 					};
@@ -170,21 +173,114 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 					getClientsEndpoint.getXML($scope.onGetClients);
 				};
 				
+				$scope.appList = [];
+				$scope.backupSetList = [];
+				$scope.subclientList = [];
 				$scope.getSubclients = function(clientId) {
 					$scope.clientId = clientId;
 					$scope.onAjax = true;
 					$scope.onGetSubclients = function(response) {
+						$scope.appList = [];
+						$scope.backupSetList = [];
+						$scope.subclientList = [];
 						var answer = response.responseXML.documentElement.getAttribute("answer");
 						$scope.subclientResponse = JSON.parse(answer);
 						$scope.onAjax = false;
-						$scope.$apply();
+						
 						console.log($scope.subclientResponse);
+						
+						var isAppPresent = function(applicationId) {
+							for (var i = 0; i < $scope.appList.length; i++) {
+								if ($scope.appList[i].applicationId === applicationId) {
+									return true;
+								}
+							}
+							return false; 
+						};
+						
+						angular.forEach($scope.subclientResponse.entity, function(record, rIndex){
+							if(!isAppPresent(record.applicationId)) {
+								$scope.appList.push({applicationId:record.applicationId, appName:record.appName});
+							}
+						});
+						
+						$scope.$apply();
+						
+						$j_commvault('#backupModal').modal({
+						  keyboard: false,
+						  backdrop: 'static' 	
+						});
+						$j_commvault('#backupModal').modal('show');
+						
 					};
 					
 					var getSubclientsEndpoint = new GlideAjax('TestCommvaultEndpoint');
 					getSubclientsEndpoint.addParam('sysparm_name','getSubclients');
 					getSubclientsEndpoint.addParam('sysparm_clientId', $scope.clientId);
 					getSubclientsEndpoint.getXML($scope.onGetSubclients);
+				};
+				
+				$scope.getBackupSet = function(app) {
+					$scope.backupSetList = [];
+					$scope.subclientList = [];
+					var isBackupSetPresent = function(backupsetId) {
+						for (var i = 0; i < $scope.backupSetList.length; i++) {
+								if ($scope.backupSetList[i].backupsetId === backupsetId) {
+									return true;
+								}
+						}
+						return false; 
+					};
+					angular.forEach($scope.subclientResponse.entity, function(record, rIndex){
+							if(!isBackupSetPresent(record.backupsetId) && record.applicationId === $scope.selectedApp.applicationId) {
+								$scope.backupSetList.push({backupsetId:record.backupsetId, backupsetName:record.backupsetName});
+							}
+					});
+				};
+				
+				$scope.getSubclient = function(backupset) {
+					$scope.subclientList = [];
+					var isSubclientPresent = function(subclientId) {
+						for (var i = 0; i < $scope.subclientList.length; i++) {
+								if ($scope.subclientList[i].subclientId === subclientId) {
+									return true;
+								}
+						}
+						return false; 
+					};
+					angular.forEach($scope.subclientResponse.entity, function(record, rIndex){
+							if(!isSubclientPresent(record.subclientId) && record.applicationId === $scope.selectedApp.applicationId && record.backupsetId === $scope.selectedBackupset.backupsetId) {
+								$scope.subclientList.push({subclientId:record.subclientId, subclientName:record.subclientName});
+							}
+					});
+				};
+				
+				$scope.selectApp = function(app) {
+					for (var i = 0; i < $scope.appList.length; i++) {
+						$scope.appList[i].selected = false;
+					}
+					app.selected = true;
+					$scope.selectedApp = app;
+					
+					$scope.getBackupSet(app);
+				};
+				
+				$scope.selectBackupset = function(backupset) {
+					for (var i = 0; i < $scope.backupSetList.length; i++) {
+						$scope.backupSetList[i].selected = false;
+					}
+					backupset.selected = true;
+					$scope.selectedBackupset = backupset;
+					
+					$scope.getSubclient(backupset);
+				};
+				
+				$scope.selectSubclient = function(subclient) {
+					for (var i = 0; i < $scope.subclientList.length; i++) {
+						$scope.subclientList[i].selected = false;
+					}
+					subclient.selected = true;
+					$scope.selectedSubclient = subclient;
 				};
 				
 				$scope.getClients();
@@ -218,14 +314,14 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>66</sys_mod_count>
+        <sys_mod_count>84</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-02-21 09:09:26</sys_updated_on>
+        <sys_updated_on>2018-02-21 12:35:48</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>
