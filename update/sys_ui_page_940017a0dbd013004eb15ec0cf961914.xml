@@ -68,6 +68,24 @@
 									</div> 
 								</div>
 							</div>
+							
+							<div class="chooseBackupLevel">
+								<div class="row">
+									<div class="col-xs-4 text-center">
+										<div class="modal-col-heading">Choose backup level</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-xs-12">
+										<div class="btn-group full-width" role="group">
+										  <button type="button" class="btn one-third-width" ng-click="onBackupLevelSelection('FULL')" ng-class="{'selected': selectedBackupLevel === 'FULL'}">Full</button>
+										  <button type="button" class="btn one-third-width" ng-click="onBackupLevelSelection('INCREMENTAL')" ng-class="{'selected': selectedBackupLevel === 'INCREMENTAL'}">Incremental</button>
+										  <button type="button" class="btn one-third-width" ng-click="onBackupLevelSelection('DIFFERENTIAL')" ng-class="{'selected': selectedBackupLevel === 'DIFFERENTIAL'}" >Differential</button>
+										</div>  
+									</div>
+								</div>
+							</div>
+							
 						</div>
 						<div class="modal-footer">
 							<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -145,13 +163,13 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-02-12 13:07:19</sys_created_on>
         <sys_id>940017a0dbd013004eb15ec0cf961914</sys_id>
-        <sys_mod_count>39</sys_mod_count>
+        <sys_mod_count>47</sys_mod_count>
         <sys_name>ViewClients</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_page_940017a0dbd013004eb15ec0cf961914</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-02-21 12:39:46</sys_updated_on>
+        <sys_updated_on>2018-02-28 06:44:39</sys_updated_on>
     </sys_ui_page>
 </record_update>

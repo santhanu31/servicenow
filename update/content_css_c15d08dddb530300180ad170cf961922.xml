@@ -260,9 +260,53 @@
     border-right: 8px solid #2cc185;&#13;
 }&#13;
 &#13;
+.full-width {&#13;
+   width: 100%;&#13;
+}&#13;
 &#13;
+.one-third-width {&#13;
+   width: 33%;&#13;
+}&#13;
 &#13;
+.chooseBackupLevel .btn-group {&#13;
+  margin-top: 10px;&#13;
+}&#13;
+ &#13;
+.chooseBackupLevel button, .chooseBackupLevel button:active, .chooseBackupLevel button:focus {&#13;
+    color: #333;&#13;
+    font-size: 12px;&#13;
+    font-weight: 500;&#13;
+    background-color: #f7f7f7;&#13;
+    outline: none;&#13;
+    transition: all 0.1s ease-in;&#13;
+    border: 1px solid #ddd;&#13;
+}&#13;
 &#13;
+.chooseBackupLevel button:hover {&#13;
+    color: #333;&#13;
+    text-decoration: none;&#13;
+    background-color: #fdfdfd;&#13;
+    box-shadow: none;&#13;
+}&#13;
+&#13;
+.chooseBackupLevel button.selected {&#13;
+    background-color: #2cc185;&#13;
+    border: 1px solid #2cc185;&#13;
+   color: #ffffff;&#13;
+}&#13;
+&#13;
+/*.chooseBackupLevel button:focus{&#13;
+    border-bottom: 8px solid #2cc185;&#13;
+    background-color: #ffffff;&#13;
+    box-shadow: none;&#13;
+}&#13;
+&#13;
+.chooseBackupLevel button:active{&#13;
+   color: #333;&#13;
+    background-color: #fdfdfd;&#13;
+    transition: all 0.1s ease-in;&#13;
+    box-shadow: none;&#13;
+}*/&#13;
 &#13;
 &#13;
 &#13;
@@ -294,14 +338,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:48:59</sys_created_on>
         <sys_id>c15d08dddb530300180ad170cf961922</sys_id>
-        <sys_mod_count>38</sys_mod_count>
+        <sys_mod_count>51</sys_mod_count>
         <sys_name>testcommvaultstyles</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>content_css_c15d08dddb530300180ad170cf961922</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-02-21 07:35:04</sys_updated_on>
+        <sys_updated_on>2018-02-28 06:38:52</sys_updated_on>
         <type>local</type>
         <url/>
     </content_css>

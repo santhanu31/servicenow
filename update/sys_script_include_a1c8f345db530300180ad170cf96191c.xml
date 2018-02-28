@@ -21,7 +21,7 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		gs.info('Getting Data for Dataset ' + dataSetId + ' using token ' + token);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint('https://winproxy1.commvault.com:9001/CustomReportsEngine/rest/reportsplusengine/datasets/' + dataSetId + '/data');
+		sm.setEndpoint('https://winproxy1.commvault.com:9287/CustomReportsEngine/rest/reportsplusengine/datasets/' + dataSetId + '/data');
 		sm.setHttpMethod("get");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -41,7 +41,7 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		gs.info('Getting SLA Reports using token ' + token);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("https://winproxy1.commvault.com:9001/CustomReportsEngine/rest/reportsplusengine/reports/name:Servers%20SLA?includeDrafts=false&version=0");
+		sm.setEndpoint("https://winproxy1.commvault.com:9287/CustomReportsEngine/rest/reportsplusengine/reports/name:Servers%20SLA?includeDrafts=false&version=0");
 		sm.setHttpMethod("get");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -61,7 +61,7 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		gs.info('Getting schedules using token ' + token);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("https://winproxy1.commvault.com:9001/webconsole/RestServlet/SchedulePolicy");
+		sm.setEndpoint("https://winproxy1.commvault.com:9287/webconsole/RestServlet/SchedulePolicy");
 		sm.setHttpMethod("get");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -82,7 +82,7 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		gs.info('Getting clients using token ' + token);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("https://winproxy1.commvault.com:9001/webconsole/RestServlet/Client?propertylevel=10&Hiddenclients=false&includevm=true");
+		sm.setEndpoint("https://winproxy1.commvault.com:9287/webconsole/RestServlet/Client?propertylevel=10&Hiddenclients=false&includevm=true");
 		sm.setHttpMethod("get");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -104,12 +104,49 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		gs.info('Getting clients using token ' + token);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("https://winproxy1.commvault.com:9001/webconsole/RestServlet/client/" + clientId + "/Hierarchy?backedUp=false");
+		sm.setEndpoint("https://winproxy1.commvault.com:9287/webconsole/RestServlet/client/" + clientId + "/Hierarchy?backedUp=false");
 		sm.setHttpMethod("get");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
 		sm.setRequestHeader("Authtoken", token);
 		sm.setLogLevel("all");
+		
+		var response = sm.execute();
+		var responseBody = response.getBody();
+		
+		gs.info('Returning response' + responseBody);
+		
+		return responseBody;
+	},
+	runBackup: function() {
+		var token = this._getToken();
+		
+		var clientId = this.getParameter('sysparm_clientId');
+		var clientName = this.getParameter('sysparm_clientName');
+		var subclientId = this.getParameter('sysparm_subclientId');
+		var subclientName = this.getParameter('sysparm_subclientName');
+		var backupsetId = this.getParameter('sysparm_backupsetId');
+		var backupsetName = this.getParameter('sysparm_backupsetName');
+		var appId = this.getParameter('sysparm_appId');
+		var appName = this.getParameter('sysparm_appName');
+		var backupLevel = this.getParameter('sysparm_backupLevel');
+		
+		var entityType = "SUBCLIENT_ENTITY";
+		
+		var body = '<TMMsg_CreateTaskReq><taskInfo><task taskType="IMMEDIATE"/><associations subclientId="' + subclientId + '" applicationId="' + appId + '" clientName="' + clientName + '" backupsetId="' + backupsetId + '" clientId="' + clientId + '" subclientName="' + subclientName + '" backupsetName="' + backupsetName + '" _type_="' + entityType + '" appName="' + appName + '"/><subTasks><subTask subTaskType="2" operationType="2"/><options><backupOpts backupLevel="' + backupLevel + '"/></options></subTasks></taskInfo></TMMsg_CreateTaskReq>';
+		
+		gs.info('Sending backup request' + body);
+		
+		var sm = new sn_ws.RESTMessageV2();
+		sm.setEndpoint("https://winproxy1.commvault.com:9287/webconsole/RestServlet/CreateTask");
+		sm.setHttpMethod("post");
+		sm.setHttpTimeout(80000);
+		sm.setRequestHeader("Accept","application/json");
+		sm.setRequestHeader("Content-Type","application/xml");
+		sm.setRequestHeader("Authtoken", token);
+		sm.setLogLevel("all");
+		
+		sm.setRequestBody(body);
 		
 		var response = sm.execute();
 		var responseBody = response.getBody();
@@ -127,7 +164,7 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		var ePassword = gs.base64Encode(password);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("https://winproxy1.commvault.com:9001/webconsole/RestServlet/Login");
+		sm.setEndpoint("https://winproxy1.commvault.com:9287/webconsole/RestServlet/Login");
 		sm.setHttpMethod("post");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -163,13 +200,13 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 12:20:08</sys_created_on>
         <sys_id>a1c8f345db530300180ad170cf96191c</sys_id>
-        <sys_mod_count>39</sys_mod_count>
+        <sys_mod_count>41</sys_mod_count>
         <sys_name>TestCommvaultEndpoint</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy>read</sys_policy>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_script_include_a1c8f345db530300180ad170cf96191c</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-02-21 07:58:24</sys_updated_on>
+        <sys_updated_on>2018-02-27 11:03:01</sys_updated_on>
     </sys_script_include>
 </record_update>
