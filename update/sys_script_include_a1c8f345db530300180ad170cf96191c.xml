@@ -77,7 +77,7 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		
 	},
 	getClients: function() {
-		var token = this._getToken();
+		/*var token = this._getToken();
 		
 		gs.info('Getting clients using token ' + token);
 		
@@ -91,14 +91,18 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		sm.setLogLevel("all");
 		
 		var response = sm.execute();
-		var responseBody = response.getBody();
+		var responseBody = response.getBody();*/
+		
+		var responseBody = '{ "clientProperties":[ { "clientProps":{ "isVirtualServerDiscoveredClient":false,"clientStatus":0,"isMA":true,"specialClientFlags":0,"isCommCellPackageAbsent":false,"grcMigratedClient":false,"IsDeletedClient":false,"isUserCentricClient":false,"IsVirtualClient":false,"attributes":[ { "name":"Is Unlicensed MA","value":"0" } ] },"client":{ "osInfo":{ "Type":"Windows","SubType":"Server","osId":210,"OsDisplayInfo":{ "ProcessorType":"WinX64","OSName":"Windows Server 2012 R2 Datacenter" } },"idaList":[ { "idaEntity":{ "appName":"Windows File System","_type_":4,"applicationId":33 } },{ "idaEntity":{ "appName":"SQL Server","_type_":4,"applicationId":81 } },{ "idaEntity":{ "appName":"Metrics Reporting Server","_type_":4,"applicationId":121 } } ],"clientEntity":{ "hostName":"skummali-setup.testlab.commvault.com","clientId":2,"clientName":"skummali-setup","displayName":"skummali-setup","clientGUID":"531D992D-B767-461C-9F1E-70492FF4D100" },"versionInfo":{ "UpdateStatus":3,"version":"11 SP11","GalaxyRelease":{ "ReleaseID":16 } } } },{ "clientProps":{ "isVirtualServerDiscoveredClient":false,"clientStatus":268435456,"specialClientFlags":2,"isCommCellPackageAbsent":true,"EnableSnapBackups":false,"grcMigratedClient":false,"isUserCentricClient":false },"client":{ "osInfo":{ "Type":"Windows","SubType":"Server","osId":210,"OsDisplayInfo":{ "ProcessorType":"","OSName":"Windows" } },"idaList":[ { "idaEntity":{ "appName":"Windows File System","_type_":4,"applicationId":33 } } ],"clientEntity":{ "hostName":"EdgeClient20","clientId":4,"clientName":"EdgeClient20","displayName":"EdgeClient20","clientGUID":"D63F3060-2CF4-4FE4-BFDB-F4049217B7F7" },"versionInfo":{ "UpdateStatus":4,"version":"11","GalaxyRelease":{ "ReleaseID":16 } } } },{ "clientProps":{ "isVirtualServerDiscoveredClient":false,"clientStatus":0,"specialClientFlags":0,"isCommCellPackageAbsent":false,"grcMigratedClient":false,"IsDeletedClient":false,"isUserCentricClient":false,"IsVirtualClient":false },"client":{ "osInfo":{ "Type":"Windows","SubType":"Server","osId":210,"OsDisplayInfo":{ "ProcessorType":"WinX64","OSName":"Windows Server 2012 R2 Datacenter" } },"idaList":[ { "idaEntity":{ "appName":"Windows File System","_type_":4,"applicationId":33 } },{ "idaEntity":{ "appName":"SQL Server","_type_":4,"applicationId":81 } } ],"clientEntity":{ "hostName":"sk-vm.testlab.commvault.com","clientId":5,"clientName":"sk-vm","displayName":"sk-vm","clientGUID":"6E5B299C-59F5-4C61-AD2E-F1DB5F072CAE" },"versionInfo":{ "UpdateStatus":3,"version":"11 SP11","GalaxyRelease":{ "ReleaseID":16 } } } },{ "clientProps":{ "isVirtualServerDiscoveredClient":false,"clientStatus":0,"specialClientFlags":0,"isCommCellPackageAbsent":false,"grcMigratedClient":false,"IsDeletedClient":false,"isUserCentricClient":false,"IsVirtualClient":false },"client":{ "osInfo":{ "Type":"Windows","SubType":"Server","osId":210,"OsDisplayInfo":{ "ProcessorType":"WinX64","OSName":"Windows Server 2012 R2 Datacenter" } },"idaList":[ { "idaEntity":{ "appName":"Windows File System","_type_":4,"applicationId":33 } },{ "idaEntity":{ "appName":"MySQL","_type_":4,"applicationId":104 } } ],"clientEntity":{ "hostName":"sk-test.testlab.commvault.com","clientId":6,"clientName":"sk-test","displayName":"sk-test","clientGUID":"D3AEDD35-4DAE-4E9F-A7C1-80D845F8E3AF" },"versionInfo":{ "UpdateStatus":3,"version":"11 SP11","GalaxyRelease":{ "ReleaseID":16 } } } } ] }';
 		
 		gs.info('Returning response' + responseBody);
+		
+		
 		
 		return responseBody;
 	},
 	getSubclients: function() {
-		var token = this._getToken();
+		/*var token = this._getToken();
 		var clientId = this.getParameter('sysparm_clientId');
 		
 		gs.info('Getting clients using token ' + token);
@@ -112,7 +116,9 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		sm.setLogLevel("all");
 		
 		var response = sm.execute();
-		var responseBody = response.getBody();
+		var responseBody = response.getBody();*/
+		
+		var responseBody = '{ "entity":[ { "subclientId":2,"applicationId":33,"clientName":"skummali-setup","backupsetId":3,"instanceId":1,"clientId":2,"subclientName":"default","backupsetName":"defaultBackupSet","instanceName":"DefaultInstanceName","appName":"Windows File System" },{ "subclientId":3,"applicationId":33,"clientName":"skummali-setup","backupsetId":4,"instanceId":1,"clientId":2,"subclientName":"IndexingSubclient","backupsetName":"Indexing BackupSet","instanceName":"DefaultInstanceName","appName":"Windows File System" },{ "subclientId":4,"applicationId":121,"clientName":"skummali-setup","backupsetId":5,"instanceId":1,"clientId":2,"subclientName":"default","backupsetName":"defaultBackupSet","instanceName":"DefaultInstanceName","appName":"Metrics Reporting Server" } ] }';
 		
 		gs.info('Returning response' + responseBody);
 		
@@ -133,7 +139,7 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		
 		var entityType = "SUBCLIENT_ENTITY";
 		
-		var body = '<TMMsg_CreateTaskReq><taskInfo><task taskType="IMMEDIATE"/><associations subclientId="' + subclientId + '" applicationId="' + appId + '" clientName="' + clientName + '" backupsetId="' + backupsetId + '" clientId="' + clientId + '" subclientName="' + subclientName + '" backupsetName="' + backupsetName + '" _type_="' + entityType + '" appName="' + appName + '"/><subTasks><subTask subTaskType="2" operationType="2"/><options><backupOpts backupLevel="' + backupLevel + '"/></options></subTasks></taskInfo></TMMsg_CreateTaskReq>';
+		var body = '<TMMsg_CreateTaskReq><taskInfo><task taskType="IMMEDIATE"/><associations subclientId="' + subclientId + '" applicationId="' + appId + '" backupsetId="' + backupsetId + '" clientId="' + clientId + '" subclientName="' + subclientName + '" backupsetName="' + backupsetName + '" _type_="' + entityType + '" appName="' + appName + '"/><subTasks><subTask subTaskType="2" operationType="2"/><options><backupOpts backupLevel="' + backupLevel + '"/></options></subTasks></taskInfo></TMMsg_CreateTaskReq>';
 		
 		gs.info('Sending backup request' + body);
 		
@@ -200,13 +206,13 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 12:20:08</sys_created_on>
         <sys_id>a1c8f345db530300180ad170cf96191c</sys_id>
-        <sys_mod_count>41</sys_mod_count>
+        <sys_mod_count>44</sys_mod_count>
         <sys_name>TestCommvaultEndpoint</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy>read</sys_policy>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_script_include_a1c8f345db530300180ad170cf96191c</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-02-27 11:03:01</sys_updated_on>
+        <sys_updated_on>2018-03-01 08:21:23</sys_updated_on>
     </sys_script_include>
 </record_update>

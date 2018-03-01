@@ -78,24 +78,92 @@
 								<div class="row">
 									<div class="col-xs-12">
 										<div class="btn-group full-width" role="group">
-										  <button type="button" class="btn one-third-width" ng-click="onBackupLevelSelection('FULL')" ng-class="{'selected': selectedBackupLevel === 'FULL'}">Full</button>
-										  <button type="button" class="btn one-third-width" ng-click="onBackupLevelSelection('INCREMENTAL')" ng-class="{'selected': selectedBackupLevel === 'INCREMENTAL'}">Incremental</button>
-										  <button type="button" class="btn one-third-width" ng-click="onBackupLevelSelection('DIFFERENTIAL')" ng-class="{'selected': selectedBackupLevel === 'DIFFERENTIAL'}" >Differential</button>
+										  <button type="button" class="btn one-third-width" ng-click="onBackupLevelSelection('FULL')" ng-class="{'selected-level': selectedBackupLevel === 'FULL'}">Full</button>
+										  <button type="button" class="btn one-third-width" ng-click="onBackupLevelSelection('INCREMENTAL')" ng-class="{'selected-level': selectedBackupLevel === 'INCREMENTAL'}">Incremental</button>
+										  <button type="button" class="btn one-third-width" ng-click="onBackupLevelSelection('DIFFERENTIAL')" ng-class="{'selected-level': selectedBackupLevel === 'DIFFERENTIAL'}" >Differential</button>
 										</div>  
 									</div>
 								</div>
 							</div>
 							
+							<div class="error-text-container">
+								<div class="row">
+									<div class="col-xs-12 text-center">
+										<span class="error-text">{{errorText}}</span>
+										<span class="info-text">{{infoText}}</span>
+									</div>
+								</div>
+							</div>	
+							
 						</div>
 						<div class="modal-footer">
-							<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-							<button type="button" class="btn actionBtn"> Backup</button>
+							<button type="button" class="btn actionBtn modalClose" data-dismiss="modal">Close</button>
+							<button type="button" class="btn actionBtn" ng-click="onRunBackup()"> Backup</button>
 						</div>
 					</div>
 				</div>
 			</div>
 
 			<!-- Backup Modal End -->
+			
+			<!-- Activity control modal -->
+			
+			<div class="modal activityModal fade" id="activityModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="close btn" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&#xD7;</span></button>
+							<h4 class="modal-title" id="myModalLabel"> Activity control</h4>
+						</div>
+						<div class="modal-body">
+							
+							<div class="row">
+								<div class="col-xs-8">
+									<div class="actionLabel">
+										Data backup
+									</div>
+								</div>
+								<div class="col-xs-4">
+									<div class="main-container__column materail-switch materail-switch_primary">
+										<input class="materail-switch__element" type="checkbox" id="switch_input1"></input>
+										<label class="materail-switch__label" for="switch_input1"></label>
+									</div>									
+								</div>
+							</div>	
+							<hr/>
+							<div class="row">
+								<div class="col-xs-8">
+									<div class="actionLabel">
+										Data restore
+									</div>
+								</div>
+								<div class="col-xs-4">
+									<div class="main-container__column materail-switch materail-switch_primary">
+										<input class="materail-switch__element" type="checkbox" id="switch_input2"></input>
+										<label class="materail-switch__label" for="switch_input2"></label>
+									</div>									
+								</div>
+							</div>	
+							
+							<div class="error-text-container">
+								<div class="row">
+									<div class="col-xs-12 text-center">
+										<span class="error-text">{{errorText}}</span>
+										<span class="info-text">{{infoText}}</span>
+									</div>
+								</div>
+							</div>	
+							
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn actionBtn modalClose" data-dismiss="modal">Close</button>
+							<button type="button" class="btn actionBtn" ng-click="saveActivitySettings()"> Save</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<!-- Activity control modal end -->
 			
 			<div class="row">
 				<div class="col-xs-12">
@@ -127,6 +195,7 @@
 												<th>Operating system</th>
 												<th>Version</th>
 												<th>Perform backup</th>
+												<th>Activity control</th>
 												<!-- <th>Operating System</th>
 												<th>Location</th>
 												<th>Created By</th> -->
@@ -142,7 +211,24 @@
 												</td>
 												<td>{{clientProperty.client.osInfo.OsDisplayInfo.OSName}}</td>
 												<td>{{clientProperty.client.versionInfo.version}}</td>
-												<td><button type="button" class="btn actionBtn" ng-click="getSubclients(clientProperty.client.clientEntity.clientId)">Backup</button></td>
+												<td>
+													<!--<div class="option-btn-container" ng-class="{'open': clientProperty.actionDropdownSelected}">
+														  
+														  <div class="options-icon-holder">	
+															  <span class="glyphicon glyphicon-option-horizontal options-icon option-btn" ng-click="toggleActionDropdown(clientProperty)"></span>	
+														  </div>	  
+														  <div class="option-btn-dropdown-content">
+															<a href="#">Link 1</a>
+															<a href="#">Link 2</a>
+															<a href="#">Link 3</a>
+														  </div>
+													</div>-->
+													<!--<button type="button" class="btn actionBtn" ng-click="getSubclients(clientProperty.client.clientEntity.clientId)">Backup</button>-->
+													<a ng-click="getSubclients(clientProperty.client.clientEntity.clientId)">Backup</a>
+												</td>
+												<td>
+													<a ng-click="doActivityControl(clientProperty.client.clientEntity.clientId)">Activity control</a>
+												</td>
 											</tr>
 										</tbody>
 									</table>
@@ -163,13 +249,13 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-02-12 13:07:19</sys_created_on>
         <sys_id>940017a0dbd013004eb15ec0cf961914</sys_id>
-        <sys_mod_count>47</sys_mod_count>
+        <sys_mod_count>68</sys_mod_count>
         <sys_name>ViewClients</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_page_940017a0dbd013004eb15ec0cf961914</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-02-28 06:44:39</sys_updated_on>
+        <sys_updated_on>2018-03-01 12:39:18</sys_updated_on>
     </sys_ui_page>
 </record_update>
