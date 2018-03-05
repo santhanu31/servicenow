@@ -15,13 +15,35 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		
 		return "";
 	},
+	getVMList: function() {
+		var token = this._getToken();
+		
+		gs.info('Getting schedules using token ' + token);
+		
+		var sm = new sn_ws.RESTMessageV2();
+		sm.setEndpoint("http://winproxy1.commvault.com:9001/webconsole/RestServlet/VM?forUser=true&status=0");
+		sm.setHttpMethod("get");
+		sm.setHttpTimeout(80000);
+		sm.setRequestHeader("Accept","application/json");
+		sm.setRequestHeader("Authtoken", token);
+		sm.setRequestHeader("sortingInfo", "asc:2");
+		sm.setRequestHeader("pagingInfo", "0,10000");
+		sm.setLogLevel("all");
+		
+		var response = sm.execute();
+		var responseBody = response.getBody();
+		
+		gs.info('Returning response' + responseBody);
+		
+		return responseBody;
+	},
 	getDataForDataset: function() {
 		var token = this._getToken();
 		var dataSetId = this.getParameter('sysparm_dataSetId');
 		gs.info('Getting Data for Dataset ' + dataSetId + ' using token ' + token);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint('https://winproxy1.commvault.com:9287/CustomReportsEngine/rest/reportsplusengine/datasets/' + dataSetId + '/data');
+		sm.setEndpoint('http://winproxy1.commvault.com:9001/CustomReportsEngine/rest/reportsplusengine/datasets/' + dataSetId + '/data');
 		sm.setHttpMethod("get");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -41,7 +63,7 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		gs.info('Getting SLA Reports using token ' + token);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("https://winproxy1.commvault.com:9287/CustomReportsEngine/rest/reportsplusengine/reports/name:Servers%20SLA?includeDrafts=false&version=0");
+		sm.setEndpoint("http://winproxy1.commvault.com:9001/CustomReportsEngine/rest/reportsplusengine/reports/name:Servers%20SLA?includeDrafts=false&version=0");
 		sm.setHttpMethod("get");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -61,7 +83,7 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		gs.info('Getting schedules using token ' + token);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("https://winproxy1.commvault.com:9287/webconsole/RestServlet/SchedulePolicy");
+		sm.setEndpoint("http://winproxy1.commvault.com:9001/webconsole/RestServlet/SchedulePolicy");
 		sm.setHttpMethod("get");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -77,12 +99,12 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		
 	},
 	getClients: function() {
-		/*var token = this._getToken();
+		var token = this._getToken();
 		
 		gs.info('Getting clients using token ' + token);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("https://winproxy1.commvault.com:9287/webconsole/RestServlet/Client?propertylevel=10&Hiddenclients=false&includevm=true");
+		sm.setEndpoint("http://winproxy1.commvault.com:9001/webconsole/RestServlet/Client?propertylevel=10&Hiddenclients=false&includevm=true");
 		sm.setHttpMethod("get");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -91,24 +113,20 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		sm.setLogLevel("all");
 		
 		var response = sm.execute();
-		var responseBody = response.getBody();*/
-		
-		var responseBody = '{ "clientProperties":[ { "clientProps":{ "isVirtualServerDiscoveredClient":false,"clientStatus":0,"isMA":true,"specialClientFlags":0,"isCommCellPackageAbsent":false,"grcMigratedClient":false,"IsDeletedClient":false,"isUserCentricClient":false,"IsVirtualClient":false,"attributes":[ { "name":"Is Unlicensed MA","value":"0" } ] },"client":{ "osInfo":{ "Type":"Windows","SubType":"Server","osId":210,"OsDisplayInfo":{ "ProcessorType":"WinX64","OSName":"Windows Server 2012 R2 Datacenter" } },"idaList":[ { "idaEntity":{ "appName":"Windows File System","_type_":4,"applicationId":33 } },{ "idaEntity":{ "appName":"SQL Server","_type_":4,"applicationId":81 } },{ "idaEntity":{ "appName":"Metrics Reporting Server","_type_":4,"applicationId":121 } } ],"clientEntity":{ "hostName":"skummali-setup.testlab.commvault.com","clientId":2,"clientName":"skummali-setup","displayName":"skummali-setup","clientGUID":"531D992D-B767-461C-9F1E-70492FF4D100" },"versionInfo":{ "UpdateStatus":3,"version":"11 SP11","GalaxyRelease":{ "ReleaseID":16 } } } },{ "clientProps":{ "isVirtualServerDiscoveredClient":false,"clientStatus":268435456,"specialClientFlags":2,"isCommCellPackageAbsent":true,"EnableSnapBackups":false,"grcMigratedClient":false,"isUserCentricClient":false },"client":{ "osInfo":{ "Type":"Windows","SubType":"Server","osId":210,"OsDisplayInfo":{ "ProcessorType":"","OSName":"Windows" } },"idaList":[ { "idaEntity":{ "appName":"Windows File System","_type_":4,"applicationId":33 } } ],"clientEntity":{ "hostName":"EdgeClient20","clientId":4,"clientName":"EdgeClient20","displayName":"EdgeClient20","clientGUID":"D63F3060-2CF4-4FE4-BFDB-F4049217B7F7" },"versionInfo":{ "UpdateStatus":4,"version":"11","GalaxyRelease":{ "ReleaseID":16 } } } },{ "clientProps":{ "isVirtualServerDiscoveredClient":false,"clientStatus":0,"specialClientFlags":0,"isCommCellPackageAbsent":false,"grcMigratedClient":false,"IsDeletedClient":false,"isUserCentricClient":false,"IsVirtualClient":false },"client":{ "osInfo":{ "Type":"Windows","SubType":"Server","osId":210,"OsDisplayInfo":{ "ProcessorType":"WinX64","OSName":"Windows Server 2012 R2 Datacenter" } },"idaList":[ { "idaEntity":{ "appName":"Windows File System","_type_":4,"applicationId":33 } },{ "idaEntity":{ "appName":"SQL Server","_type_":4,"applicationId":81 } } ],"clientEntity":{ "hostName":"sk-vm.testlab.commvault.com","clientId":5,"clientName":"sk-vm","displayName":"sk-vm","clientGUID":"6E5B299C-59F5-4C61-AD2E-F1DB5F072CAE" },"versionInfo":{ "UpdateStatus":3,"version":"11 SP11","GalaxyRelease":{ "ReleaseID":16 } } } },{ "clientProps":{ "isVirtualServerDiscoveredClient":false,"clientStatus":0,"specialClientFlags":0,"isCommCellPackageAbsent":false,"grcMigratedClient":false,"IsDeletedClient":false,"isUserCentricClient":false,"IsVirtualClient":false },"client":{ "osInfo":{ "Type":"Windows","SubType":"Server","osId":210,"OsDisplayInfo":{ "ProcessorType":"WinX64","OSName":"Windows Server 2012 R2 Datacenter" } },"idaList":[ { "idaEntity":{ "appName":"Windows File System","_type_":4,"applicationId":33 } },{ "idaEntity":{ "appName":"MySQL","_type_":4,"applicationId":104 } } ],"clientEntity":{ "hostName":"sk-test.testlab.commvault.com","clientId":6,"clientName":"sk-test","displayName":"sk-test","clientGUID":"D3AEDD35-4DAE-4E9F-A7C1-80D845F8E3AF" },"versionInfo":{ "UpdateStatus":3,"version":"11 SP11","GalaxyRelease":{ "ReleaseID":16 } } } } ] }';
+		var responseBody = response.getBody();
 		
 		gs.info('Returning response' + responseBody);
-		
-		
 		
 		return responseBody;
 	},
 	getSubclients: function() {
-		/*var token = this._getToken();
+		var token = this._getToken();
 		var clientId = this.getParameter('sysparm_clientId');
 		
 		gs.info('Getting clients using token ' + token);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("https://winproxy1.commvault.com:9287/webconsole/RestServlet/client/" + clientId + "/Hierarchy?backedUp=false");
+		sm.setEndpoint("http://winproxy1.commvault.com:9001/webconsole/RestServlet/client/" + clientId + "/Hierarchy?backedUp=false");
 		sm.setHttpMethod("get");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -116,10 +134,8 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		sm.setLogLevel("all");
 		
 		var response = sm.execute();
-		var responseBody = response.getBody();*/
-		
-		var responseBody = '{ "entity":[ { "subclientId":2,"applicationId":33,"clientName":"skummali-setup","backupsetId":3,"instanceId":1,"clientId":2,"subclientName":"default","backupsetName":"defaultBackupSet","instanceName":"DefaultInstanceName","appName":"Windows File System" },{ "subclientId":3,"applicationId":33,"clientName":"skummali-setup","backupsetId":4,"instanceId":1,"clientId":2,"subclientName":"IndexingSubclient","backupsetName":"Indexing BackupSet","instanceName":"DefaultInstanceName","appName":"Windows File System" },{ "subclientId":4,"applicationId":121,"clientName":"skummali-setup","backupsetId":5,"instanceId":1,"clientId":2,"subclientName":"default","backupsetName":"defaultBackupSet","instanceName":"DefaultInstanceName","appName":"Metrics Reporting Server" } ] }';
-		
+		var responseBody = response.getBody();
+	
 		gs.info('Returning response' + responseBody);
 		
 		return responseBody;
@@ -144,7 +160,7 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		gs.info('Sending backup request' + body);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("https://winproxy1.commvault.com:9287/webconsole/RestServlet/CreateTask");
+		sm.setEndpoint("http://winproxy1.commvault.com:9001/webconsole/RestServlet/CreateTask");
 		sm.setHttpMethod("post");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -165,12 +181,12 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		gs.info("Getting token");
 		
 		var username = 'admin';
-		var password = 'Builder!12';
+		var password = '';
 		
 		var ePassword = gs.base64Encode(password);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("https://winproxy1.commvault.com:9287/webconsole/RestServlet/Login");
+		sm.setEndpoint("http://winproxy1.commvault.com:9001/webconsole/RestServlet/Login");
 		sm.setHttpMethod("post");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -206,13 +222,13 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 12:20:08</sys_created_on>
         <sys_id>a1c8f345db530300180ad170cf96191c</sys_id>
-        <sys_mod_count>44</sys_mod_count>
+        <sys_mod_count>51</sys_mod_count>
         <sys_name>TestCommvaultEndpoint</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy>read</sys_policy>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_script_include_a1c8f345db530300180ad170cf96191c</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-01 08:21:23</sys_updated_on>
+        <sys_updated_on>2018-03-05 12:36:43</sys_updated_on>
     </sys_script_include>
 </record_update>

@@ -452,16 +452,88 @@
     width: 400px;&#13;
 }&#13;
 &#13;
+.input-group-btn&gt;.btn {&#13;
+    position: relative;&#13;
+    height: auto;&#13;
+}&#13;
 &#13;
+.table-action-bar {&#13;
+    margin-bottom: 20px;&#13;
+}&#13;
 &#13;
+.clickable {&#13;
+   cursor: pointer;&#13;
+}&#13;
 &#13;
+table .sort-icon {&#13;
+   font-size: 10px;&#13;
+   margin-left: 5px;&#13;
+}&#13;
 &#13;
+.pagination {&#13;
+   margin: 0px;&#13;
+}&#13;
 &#13;
+.dropdown.choose-location-dropdown ul {&#13;
+    width: 100%;&#13;
+}&#13;
 &#13;
+.btn.btn-default.dropdown-toggle.choose-location-btn {&#13;
+    width: 100%;&#13;
+    font-size: 14px;&#13;
+    font-weight: 350;&#13;
+    color: #696868;&#13;
+    letter-spacing: 0.5px;&#13;
+    text-align: left;&#13;
+    background-color: #f3f3f3;&#13;
+}&#13;
 &#13;
+.btn.btn-default.dropdown-toggle.choose-location-btn .caret {&#13;
+    position: relative;&#13;
+    float: right;&#13;
+    margin-top: 8px;&#13;
+    border-top: 6px solid #757575;&#13;
+    border-right: 6px solid transparent;&#13;
+    border-left: 6px solid transparent;&#13;
+}&#13;
 &#13;
+.page-size-select {&#13;
+    border-radius: 5px;&#13;
+    width: 100%;&#13;
+    border: 1px solid #d4d4d4;&#13;
+    padding: 7px;&#13;
+    outline: none;&#13;
+}&#13;
 &#13;
+.pagination&gt;li&gt;a, .pagination&gt;li&gt;span {&#13;
+   color: #39485a;&#13;
+}&#13;
 &#13;
+.pagination &gt; .active &gt; a, .pagination &gt; .active &gt; a:hover, .pagination &gt; .active &gt; a:focus, .pagination &gt; .active &gt; span, .pagination &gt; .active &gt; span:hover, .pagination &gt; .active &gt; span:focus {&#13;
+    color: #fff;&#13;
+    background-color: #39485a;&#13;
+    border-color: #39485a;&#13;
+}&#13;
+&#13;
+.pagination&gt;.active&gt;a, .pagination&gt;.active&gt;a:focus, .pagination&gt;.active&gt;a:hover, .pagination&gt;.active&gt;span, .pagination&gt;.active&gt;span:focus, .pagination&gt;.active&gt;span:hover {&#13;
+    color: #fff;&#13;
+    background-color: #39485a;&#13;
+    border-color: #39485a;&#13;
+}&#13;
+&#13;
+.search-term input{&#13;
+    border-right: 0;&#13;
+    border: 1px solid #ccc;&#13;
+    box-shadow: none;&#13;
+    outline: none;&#13;
+    border-top-left-radius: 40px;&#13;
+    border-bottom-left-radius: 40px;&#13;
+}&#13;
+&#13;
+.search-term .input-group-addon {&#13;
+    border-top-right-radius: 40px;&#13;
+    border-bottom-right-radius: 40px;&#13;
+}&#13;
 &#13;
 &#13;
 &#13;
@@ -481,14 +553,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:48:59</sys_created_on>
         <sys_id>c15d08dddb530300180ad170cf961922</sys_id>
-        <sys_mod_count>78</sys_mod_count>
+        <sys_mod_count>90</sys_mod_count>
         <sys_name>testcommvaultstyles</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>content_css_c15d08dddb530300180ad170cf961922</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-01 12:41:40</sys_updated_on>
+        <sys_updated_on>2018-03-05 13:04:56</sys_updated_on>
         <type>local</type>
         <url/>
     </content_css>

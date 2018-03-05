@@ -5,8 +5,87 @@
         <description>Client-side logic for Angular App</description>
         <global>false</global>
         <name>x_183199_testcommv.angular_app_client_lo</name>
-        <script><![CDATA[angular.module('angularapp',["highcharts-ng"]);
+        <script><![CDATA[angular.module('angularapp',['highcharts-ng', 'angularUtils.directives.dirPagination']);
 
+angular.module('angularapp').filter('capacity', function() {
+	var format = function(number, unit) {
+		if (number.toFixed(2) == Math.floor(number.toFixed(2))) {
+			return Math.floor(number.toFixed(2)) + unit; //in case of 3.999 .toFixed(2) makes it 4.00 - so important to retain .toFixed
+		}
+		return number.toFixed(2) + unit;
+	};
+	return function(x) {
+		var value = Number(x);
+		if (isNaN(value)) {
+			return x;
+		}
+		if (value <= 1024) {
+			return format(value, ' ' + 'Bytes');
+		}
+		value = value / 1024;
+		if (value.toFixed(2) < 1024) {
+			return format(value, ' ' + 'KB');
+		}
+		value = value / 1024;
+		if (value.toFixed(2) < 1024) {
+			return format(value, ' ' + 'MB');
+		}
+		value = value / 1024;
+		if (value.toFixed(2) < 1024) {
+			return format(value, ' ' + 'GB');
+		}
+		value = value / 1024;
+		if (value.toFixed(2) < 1024) {
+			return format(value, ' ' + 'TB');
+		}
+		value = value / 1024;
+		return format(value, ' ' + 'PB');
+	};
+});
+
+angular.module('angularapp').filter('statusmap', function() {
+	return function(statusnum) {
+		if(statusnum == 1 ) {
+			return 'PROTECTED';
+		}
+		if(statusnum == 2) {
+			return 'UNPROTECTED';
+		}
+		if(statusnum == 4) {
+			return 'BACKUP ERROR';
+		}
+		return 'UNKNOWN';
+	};
+});
+
+angular.module('angularapp').controller('VMController', function($scope){
+	console.log('In VM controller');
+	$scope.onAjax = true;
+	$scope.getVMList = function() {
+		$scope.onVMList = function(response) {
+			var answer = response.responseXML.documentElement.getAttribute("answer");
+			$scope.vmListResponse = JSON.parse(answer);
+			$scope.vmList = $scope.vmListResponse.vmStatusInfoList;
+			$scope.onAjax = false;
+			$scope.$apply();
+			console.log($scope.vmList);
+		};
+		
+		var getVMListEndpoint = new GlideAjax('TestCommvaultEndpoint');
+		getVMListEndpoint.addParam('sysparm_name','getVMList');
+		getVMListEndpoint.getXML($scope.onVMList);
+	};
+	
+	$scope.sort = function (keyname) {
+		$scope.sortKey = keyname;
+		$scope.reverse = !$scope.reverse; 
+	};
+
+	$scope.pageSizeList = [5, 10, 20, 50, 100];
+	$scope.pageSize = $scope.pageSizeList[2];
+	
+	$scope.getVMList();
+});
 
 angular.module('angularapp').controller('SLAReportController', function($scope){
 	console.log('In SLA Report controller');
@@ -159,6 +238,7 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 				$scope.onAjax = true;
 				$scope.tabeLoaded = false;
 				$scope.selectedBackupLevel = null;
+				
 				//$scope.test = "teststring";
 				$scope.getClients = function() {
 					$scope.onGetClients = function(response) {
@@ -199,207 +279,216 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 									return true;
 								}
 							}
-							return false; 
+							return false;
 						};
 						
 						angular.forEach($scope.subclientResponse.entity, function(record, rIndex){
 							if(!isAppPresent(record.applicationId)) {
 								$scope.appList.push({applicationId:record.applicationId, appName:record.appName});
-							}
-						});
+								}
+							});
+							
+							$scope.$apply();
+							
+							$j_commvault('#backupModal').modal({
+								keyboard: false,
+								backdrop: 'static'
+							});
+							$j_commvault('#backupModal').modal('show');
+							
+						};
 						
-						$scope.$apply();
-						
-						$j_commvault('#backupModal').modal({
-						  keyboard: false,
-						  backdrop: 'static' 	
-						});
-						$j_commvault('#backupModal').modal('show');
-						
+						var getSubclientsEndpoint = new GlideAjax('TestCommvaultEndpoint');
+						getSubclientsEndpoint.addParam('sysparm_name','getSubclients');
+						getSubclientsEndpoint.addParam('sysparm_clientId', $scope.clientId);
+						getSubclientsEndpoint.getXML($scope.onGetSubclients);
 					};
 					
-					var getSubclientsEndpoint = new GlideAjax('TestCommvaultEndpoint');
-					getSubclientsEndpoint.addParam('sysparm_name','getSubclients');
-					getSubclientsEndpoint.addParam('sysparm_clientId', $scope.clientId);
-					getSubclientsEndpoint.getXML($scope.onGetSubclients);
-				};
-				
-				$scope.getBackupSet = function(app) {
-					$scope.backupSetList = [];
-					$scope.subclientList = [];
-					var isBackupSetPresent = function(backupsetId) {
-						for (var i = 0; i < $scope.backupSetList.length; i++) {
+					$scope.getBackupSet = function(app) {
+						$scope.backupSetList = [];
+						$scope.subclientList = [];
+						var isBackupSetPresent = function(backupsetId) {
+							for (var i = 0; i < $scope.backupSetList.length; i++) {
 								if ($scope.backupSetList[i].backupsetId === backupsetId) {
 									return true;
 								}
-						}
-						return false; 
-					};
-					angular.forEach($scope.subclientResponse.entity, function(record, rIndex){
+							}
+							return false;
+						};
+						angular.forEach($scope.subclientResponse.entity, function(record, rIndex){
 							if(!isBackupSetPresent(record.backupsetId) && record.applicationId === $scope.selectedApp.applicationId) {
 								$scope.backupSetList.push({backupsetId:record.backupsetId, backupsetName:record.backupsetName});
-							}
-					});
-				};
-				
-				$scope.getSubclient = function(backupset) {
-					$scope.subclientList = [];
-					var isSubclientPresent = function(subclientId) {
-						for (var i = 0; i < $scope.subclientList.length; i++) {
-								if ($scope.subclientList[i].subclientId === subclientId) {
-									return true;
 								}
-						}
-						return false; 
-					};
-					angular.forEach($scope.subclientResponse.entity, function(record, rIndex){
-							if(!isSubclientPresent(record.subclientId) && record.applicationId === $scope.selectedApp.applicationId && record.backupsetId === $scope.selectedBackupset.backupsetId) {
-								$scope.subclientList.push({subclientId:record.subclientId, subclientName:record.subclientName});
-							}
-					});
-				};
+							});
+						};
+						
+						$scope.getSubclient = function(backupset) {
+							$scope.subclientList = [];
+							var isSubclientPresent = function(subclientId) {
+								for (var i = 0; i < $scope.subclientList.length; i++) {
+									if ($scope.subclientList[i].subclientId === subclientId) {
+										return true;
+									}
+								}
+								return false;
+							};
+							angular.forEach($scope.subclientResponse.entity, function(record, rIndex){
+								if(!isSubclientPresent(record.subclientId) && record.applicationId === $scope.selectedApp.applicationId && record.backupsetId === $scope.selectedBackupset.backupsetId) {
+									$scope.subclientList.push({subclientId:record.subclientId, subclientName:record.subclientName});
+									}
+								});
+							};
+							
+							$scope.selectedApp = null;
+							$scope.selectedBackupset = null;
+							$scope.selectedSubclient = null;
+							
+							$scope.selectApp = function(app) {
+								$scope.selectedBackupset = null;
+								$scope.selectedSubclient = null;
+								for (var i = 0; i < $scope.appList.length; i++) {
+									$scope.appList[i].selected = false;
+								}
+								app.selected = true;
+								$scope.selectedApp = app;
+								
+								$scope.getBackupSet(app);
+							};
+							
+							$scope.selectBackupset = function(backupset) {
+								$scope.selectedSubclient = null;
+								for (var i = 0; i < $scope.backupSetList.length; i++) {
+									$scope.backupSetList[i].selected = false;
+								}
+								backupset.selected = true;
+								$scope.selectedBackupset = backupset;
+								
+								$scope.getSubclient(backupset);
+							};
+							
+							$scope.selectSubclient = function(subclient) {
+								for (var i = 0; i < $scope.subclientList.length; i++) {
+									$scope.subclientList[i].selected = false;
+								}
+								subclient.selected = true;
+								$scope.selectedSubclient = subclient;
+							};
+							
+							$scope.onBackupLevelSelection = function(selectedBackupLevel) {
+								$scope.selectedBackupLevel = selectedBackupLevel;
+							};
+							
+							$scope.runBackupCallback = function(response) {
+								var answer = response.responseXML.documentElement.getAttribute("answer");
+								$scope.runBackupResponse = JSON.parse(answer);
+								console.log($scope.runBackupResponse);
+								$scope.infoText = '';
+								$j_commvault('#backupModal').modal('hide');
+							};
+							
+							$scope.onRunBackup = function() {
+								$scope.errorText = "";
+								if(!$scope.selectedApp)	{
+									$scope.errorText = "Please select an application";
+									return;
+								}
+								if(!$scope.selectedBackupset)	{
+									$scope.errorText = "Please select a backupset";
+									return;
+								}
+								if(!$scope.selectedSubclient)	{
+									$scope.errorText = "Please select a subclient";
+									return;
+								}
+								if(!$scope.selectedBackupLevel)	{
+									$scope.errorText = "Please select a backup level";
+									return;
+								}
+								if(!$scope.clientId)	{
+									$scope.errorText = "Please select a client";
+									return;
+								}
+								
+								
+								$scope.infoText = 'Please wait...';
+								var runBackupEndpoint = new GlideAjax('TestCommvaultEndpoint');
+								runBackupEndpoint.addParam('sysparm_name','runBackup');
+								runBackupEndpoint.addParam('sysparm_clientId', $scope.clientId);
+								runBackupEndpoint.addParam('sysparm_subclientId', $scope.selectedSubclient.subclientId);
+								runBackupEndpoint.addParam('sysparm_subclientName', $scope.selectedSubclient.subclientName);
+								runBackupEndpoint.addParam('sysparm_backupsetId', $scope.selectedBackupset.backupsetId);
+								runBackupEndpoint.addParam('sysparm_backupsetName', $scope.selectedBackupset.backupsetName);
+								runBackupEndpoint.addParam('sysparm_appId', $scope.selectedApp.applicationId);
+								runBackupEndpoint.addParam('sysparm_appName', $scope.selectedApp.appName);
+								runBackupEndpoint.addParam('sysparm_backupLevel',$scope.selectedBackupLevel);
+								
+								runBackupEndpoint.getXML($scope.runBackupCallback);
+							};
+							
+							$scope.toggleActionDropdown = function(clientProperty) {
+								if(!clientProperty.actionDropdownSelected) {
+									clientProperty.actionDropdownSelected = true;
+								} else {
+									clientProperty.actionDropdownSelected = false;
+								}
+							};
+							
+							$scope.doActivityControl = function(clientId) {
+								$j_commvault('#activityModal').modal({
+									keyboard: false,
+									backdrop: 'static'
+								});
+								$j_commvault('#activityModal').modal('show');
+							};
 				
-				$scope.selectedApp = null;
-				$scope.selectedBackupset = null;
-				$scope.selectedSubclient = null;
 				
-				$scope.selectApp = function(app) {
-					$scope.selectedBackupset = null;
-					$scope.selectedSubclient = null;
-					for (var i = 0; i < $scope.appList.length; i++) {
-						$scope.appList[i].selected = false;
-					}
-					app.selected = true;
-					$scope.selectedApp = app;
-					
-					$scope.getBackupSet(app);
-				};
+							$scope.sort = function (keyname) {
+								$scope.sortKey = keyname;
+								$scope.reverse = !$scope.reverse; 
+							};
 				
-				$scope.selectBackupset = function(backupset) {
-					$scope.selectedSubclient = null;
-					for (var i = 0; i < $scope.backupSetList.length; i++) {
-						$scope.backupSetList[i].selected = false;
-					}
-					backupset.selected = true;
-					$scope.selectedBackupset = backupset;
-					
-					$scope.getSubclient(backupset);
-				};
-				
-				$scope.selectSubclient = function(subclient) {
-					for (var i = 0; i < $scope.subclientList.length; i++) {
-						$scope.subclientList[i].selected = false;
-					}
-					subclient.selected = true;
-					$scope.selectedSubclient = subclient;
-				};
-				
-				$scope.onBackupLevelSelection = function(selectedBackupLevel) {
-					$scope.selectedBackupLevel = selectedBackupLevel;	
-				};
-				
-				$scope.runBackupCallback = function(response) {
-					var answer = response.responseXML.documentElement.getAttribute("answer");
-					$scope.runBackupResponse = JSON.parse(answer);
-					console.log($scope.runBackupResponse);
-					$scope.infoText = '';
-					$j_commvault('#backupModal').modal('hide');
-				};
-				
-				$scope.onRunBackup = function() {
-					$scope.errorText = "";
-					if(!$scope.selectedApp)	{
-						$scope.errorText = "Please select an application";
-						return;
-					}
-					if(!$scope.selectedBackupset)	{
-						$scope.errorText = "Please select a backupset";
-						return;
-					}
-					if(!$scope.selectedSubclient)	{
-						$scope.errorText = "Please select a subclient";
-						return;
-					}
-					if(!$scope.selectedBackupLevel)	{
-						$scope.errorText = "Please select a backup level";
-						return;
-					}
-					if(!$scope.clientId)	{
-						$scope.errorText = "Please select a client";
-						return;
-					}
-					
-					
-					$scope.infoText = 'Please wait...';
-					var runBackupEndpoint = new GlideAjax('TestCommvaultEndpoint');
-					runBackupEndpoint.addParam('sysparm_name','runBackup');
-					runBackupEndpoint.addParam('sysparm_clientId', $scope.clientId);
-					runBackupEndpoint.addParam('sysparm_subclientId', $scope.selectedSubclient.subclientId);
-					runBackupEndpoint.addParam('sysparm_subclientName', $scope.selectedSubclient.subclientName);
-					runBackupEndpoint.addParam('sysparm_backupsetId', $scope.selectedBackupset.backupsetId);
-					runBackupEndpoint.addParam('sysparm_backupsetName', $scope.selectedBackupset.backupsetName);
-					runBackupEndpoint.addParam('sysparm_appId', $scope.selectedApp.applicationId);
-					runBackupEndpoint.addParam('sysparm_appName', $scope.selectedApp.appName);
-					runBackupEndpoint.addParam('sysparm_backupLevel',$scope.selectedBackupLevel);
-					
-					runBackupEndpoint.getXML($scope.runBackupCallback);
-				};
-				
-				$scope.toggleActionDropdown = function(clientProperty) {
-					if(!clientProperty.actionDropdownSelected) {
-						clientProperty.actionDropdownSelected = true;
-					} else {
-						clientProperty.actionDropdownSelected = false;
-					}
-				};
-				
-				$scope.doActivityControl = function(clientId) {
-					$j_commvault('#activityModal').modal({
-						  keyboard: false,
-						  backdrop: 'static' 	
+							$scope.pageSizeList = [5, 10, 20, 50, 100];
+							$scope.pageSize = $scope.pageSizeList[2];
+							
+							$scope.getClients();
 						});
-					$j_commvault('#activityModal').modal('show');
-				};
-				
-				$scope.getClients();
-			});
-			
-			angular.module('angularapp').controller('AngularAppCtrl', function($scope){
-				$scope.myVar = "This is the value of myVar";
-				$scope.btnText = "Perform backup";
-				
-				$scope.callWorkflow = function() {
-					console.log('Calling workflow');
-					$scope.btnText = "Sending request";
-					
-					$scope.callback = function (response) {
-						var answer = response.responseXML.documentElement.getAttribute("answer");
-						$scope.btnText = "Perform backup";
-						$scope.$apply();
-						console.log(response);
-						console.log(answer);
-					};
-					
-					var getHelloAddr = new GlideAjax('TestCommvaultEndpoint');
-					
-					getHelloAddr.addParam('sysparm_name','getSchedules');
-					
-					getHelloAddr.getXML($scope.callback);
-				};
-			});]]></script>
-        <script_name>angular_app_client_logic</script_name>
+						
+						angular.module('angularapp').controller('AngularAppCtrl', function($scope){
+							$scope.myVar = "This is the value of myVar";
+							$scope.btnText = "Perform backup";
+							
+							$scope.callWorkflow = function() {
+								console.log('Calling workflow');
+								$scope.btnText = "Sending request";
+								
+								$scope.callback = function (response) {
+									var answer = response.responseXML.documentElement.getAttribute("answer");
+									$scope.btnText = "Perform backup";
+									$scope.$apply();
+									console.log(response);
+									console.log(answer);
+								};
+								
+								var getHelloAddr = new GlideAjax('TestCommvaultEndpoint');
+								
+								getHelloAddr.addParam('sysparm_name','getSchedules');
+								
+								getHelloAddr.getXML($scope.callback);
+							};
+						});]]></script>
+        <script_name>angular_app_client_lo</script_name>
         <sys_class_name>sys_ui_script</sys_class_name>
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>95</sys_mod_count>
+        <sys_mod_count>113</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-01 10:54:39</sys_updated_on>
+        <sys_updated_on>2018-03-05 13:17:05</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>

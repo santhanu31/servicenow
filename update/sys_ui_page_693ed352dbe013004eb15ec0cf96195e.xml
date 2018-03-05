@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script/>
+        <description/>
+        <direct>false</direct>
+        <endpoint>x_183199_testcommv_VirtualMachines.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+	<script src="https://code.highcharts.com/stock/highstock.src.js"></script>
+	<script src="https://rawgithub.com/pablojim/highcharts-ng/master/src/highcharts-ng.js"></script>
+	
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"></link>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+	<g:requires name="x_183199_testcommv.dirPagination.jsdbx"/>
+	<script src="x_183199_testcommv.angular_app_client_lo.jsdbx"></script>
+
+	<link href="c15d08dddb530300180ad170cf961922.cssdbx" rel="stylesheet" type="text/css"></link> 
+	
+	
+	<div id="cvapp" ng-app="angularapp" class="ng-cloak">
+		
+		<div ng-controller="VMController as vmctrl" class="appContainer">
+			<div class="row">
+				<div class="col-xs-12">
+					<div class="form-container">
+						<h4 class="imageHeading"><img src="commvault_logo.png" width="300" height="49"/><span class="module-name">Virtual Machines</span>
+							<div class="cos_load_holder" ng-show="onAjax">
+								<div class="cos_load">
+									<div class="cos_spinner">
+										<div class="cos_mask">
+											<div class="cos_maskedCircle"></div>
+										</div>
+									</div>
+								</div>
+							</div>			
+						</h4>
+						<hr/>
+						
+						<div class="row table-action-bar">
+							<div class="col-xs-1">
+							  <select class="page-size-select" ng-model="pageSize" ng-options="pg for pg in pageSizeList">
+							  </select>
+							</div>
+							
+							<div class="col-xs-5">
+								<dir-pagination-controls
+								   max-size="5"
+								   direction-links="true"
+								   boundary-links="true"
+								   auto-hide="false" >
+								</dir-pagination-controls>
+							</div>
+							
+							
+							<div class="col-xs-4 col-xs-offset-2">
+								<div class="input-group search-term">
+								  <input type="text" class="form-control" placeholder="Search" ng-model="searchTerm"></input>
+								  <span class="input-group-addon">
+										<span class="glyphicon glyphicon-search"></span>
+								  </span>
+								</div>
+							</div>				
+						</div>
+						
+						<div class="row">
+							<div class="col-xs-12 text-center">
+								<div class="table-container" ng-hide="onAjax">
+									<table class="table-snow">
+										<thead>
+											<tr>
+												<!--<th>
+													<input type="checkbox"></input>
+												</th>-->
+												<th class="clickable" ng-click="sort('name')">Name
+													<span class="glyphicon sort-icon" ng-show="sortKey=='name'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
+												</th>
+												<th class="clickable" ng-click="sort('pseudoClient.clientName')">Hypervisor
+													<span class="glyphicon sort-icon" ng-show="sortKey=='pseudoClient.clientName'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
+												</th>
+												<th class="clickable" ng-click="sort('vmUsedSpace')">Last backup size
+													<span class="glyphicon sort-icon" ng-show="sortKey=='vmUsedSpace'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
+												</th>
+												<th class="clickable" ng-click="sort('vmSize')">VM size
+													<span class="glyphicon sort-icon" ng-show="sortKey=='vmSize'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
+												</th>
+												<th class="clickable" ng-click="sort('vmStatus')">VM status
+													<span class="glyphicon sort-icon" ng-show="sortKey=='vmStatus'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
+												</th>
+												<th class="clickable" ng-click="sort('bkpStartTime')">Last backup time
+													<span class="glyphicon sort-icon" ng-show="sortKey=='bkpStartTime'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
+												</th>
+												<th class="clickable" ng-click="sort('vmHost')">Host
+													<span class="glyphicon sort-icon" ng-show="sortKey=='vmHost'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
+												</th>
+												<th class="clickable" ng-click="sort('proxyClient.clientName')">Proxy
+													<span class="glyphicon sort-icon" ng-show="sortKey=='proxyClient.clientName'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
+												</th>
+											</tr>
+										</thead>
+										<tbody class="table-hover">
+											<tr dir-paginate="vm in vmList | orderBy:sortKey:reverse | filter:searchTerm|itemsPerPage:pageSize">
+												<td>{{vm.name}}</td>
+												<td>{{vm.pseudoClient.clientName}}</td>
+												<td>{{vm.vmUsedSpace | capacity}}</td>
+												<td>{{vm.vmSize | capacity}}</td>
+												<td>{{vm.vmStatus | statusmap}}</td>
+												<td>{{vm.bkpStartTime * 1000 | date : "medium"}}</td>
+												<td>{{vm.vmHost}}</td>
+												<td>{{vm.proxyClient.clientName}}</td>
+											</tr>
+										</tbody>
+									</table>
+								</div>	
+							</div>
+						</div>
+						
+					</div>	
+				</div>
+			</div>
+			
+		</div>
+	</div>
+</j:jelly>]]></html>
+        <name>VirtualMachines</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2018-03-02 10:53:57</sys_created_on>
+        <sys_id>693ed352dbe013004eb15ec0cf96195e</sys_id>
+        <sys_mod_count>14</sys_mod_count>
+        <sys_name>VirtualMachines</sys_name>
+        <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
+        <sys_update_name>sys_ui_page_693ed352dbe013004eb15ec0cf96195e</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2018-03-05 13:38:38</sys_updated_on>
+    </sys_ui_page>
+</record_update>
