@@ -53,6 +53,14 @@
     font-size: 12px;&#13;
 }&#13;
 &#13;
+.table-snow th.text-center {&#13;
+   text-align: center;&#13;
+}&#13;
+&#13;
+.table-snow td.text-center {&#13;
+   text-align: center;&#13;
+}&#13;
+&#13;
 .table-snow input[type=checkbox] {&#13;
     margin-top: -2px;&#13;
 }&#13;
@@ -321,53 +329,6 @@
   font-size: 12px;  &#13;
 }&#13;
 &#13;
-.option-btn {&#13;
-    background-color: #4f96ab;&#13;
-    color: white;&#13;
-    padding-left: 4px;&#13;
-    padding-top: 6px;&#13;
-    font-size: 13px;&#13;
-    border: none;&#13;
-    width: 25px;&#13;
-    height: 25px;&#13;
-    border-radius: 50%;&#13;
-    border: 1px solid #4f96ab;&#13;
-    box-shadow: 0 0 11px 1px #d6d6d6;&#13;
-}&#13;
-&#13;
-.option-btn-container {&#13;
-    position: relative;&#13;
-    display: inline-block;&#13;
-}&#13;
-&#13;
-.option-btn-dropdown-content{&#13;
-    display: none;&#13;
-    position: absolute;&#13;
-    background-color: #808080;&#13;
-    min-width: 160px;&#13;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);&#13;
-    z-index: 1;&#13;
-    right: 0;&#13;
-    top: 30px;&#13;
-}&#13;
-&#13;
-.option-btn-dropdown-content a {&#13;
-    color: black;&#13;
-    padding: 12px 16px;&#13;
-    text-decoration: none;&#13;
-    display: block;&#13;
-}&#13;
-&#13;
-.option-btn-dropdown-content a:hover {background-color: #ddd}&#13;
-&#13;
-.option-btn-container.open .option-btn-dropdown-content {&#13;
-    display: block;&#13;
-}&#13;
-&#13;
-.option-btn-container:hover .option-btn{&#13;
-    background-color: #3e8e41;&#13;
-}&#13;
-&#13;
 .materail-switch {&#13;
     width: 42px;&#13;
     height: 30px;&#13;
@@ -474,29 +435,6 @@ table .sort-icon {&#13;
    margin: 0px;&#13;
 }&#13;
 &#13;
-.dropdown.choose-location-dropdown ul {&#13;
-    width: 100%;&#13;
-}&#13;
-&#13;
-.btn.btn-default.dropdown-toggle.choose-location-btn {&#13;
-    width: 100%;&#13;
-    font-size: 14px;&#13;
-    font-weight: 350;&#13;
-    color: #696868;&#13;
-    letter-spacing: 0.5px;&#13;
-    text-align: left;&#13;
-    background-color: #f3f3f3;&#13;
-}&#13;
-&#13;
-.btn.btn-default.dropdown-toggle.choose-location-btn .caret {&#13;
-    position: relative;&#13;
-    float: right;&#13;
-    margin-top: 8px;&#13;
-    border-top: 6px solid #757575;&#13;
-    border-right: 6px solid transparent;&#13;
-    border-left: 6px solid transparent;&#13;
-}&#13;
-&#13;
 .page-size-select {&#13;
     border-radius: 5px;&#13;
     width: 100%;&#13;
@@ -535,6 +473,60 @@ table .sort-icon {&#13;
     border-bottom-right-radius: 40px;&#13;
 }&#13;
 &#13;
+.action-dropbtn {&#13;
+    background-color: #4d6a8c;&#13;
+    color: white;&#13;
+    padding: 16px;&#13;
+    font-size: 16px;&#13;
+    border: none;&#13;
+    cursor: pointer;&#13;
+    border-radius: 50%;&#13;
+    width: 25px;&#13;
+    height: 25px;&#13;
+    padding: 0;&#13;
+    border: 1px solid #4d6a8c;&#13;
+    box-shadow: 0 0 1px 0px #8a63638c;&#13;
+}&#13;
+&#13;
+.action-dropbtn:hover, .action-dropbtn:focus {&#13;
+    background-color: #47607d;&#13;
+    color: #fff;&#13;
+}&#13;
+&#13;
+.action-dropdown {&#13;
+    position: relative;&#13;
+    display: inline-block;&#13;
+}&#13;
+&#13;
+.action-dropdown-content {&#13;
+    display: none;&#13;
+    margin-top: 3px;&#13;
+    border-radius: 5px;&#13;
+    right: 0;&#13;
+    position: absolute;&#13;
+    background-color: #ffffff;&#13;
+    min-width: 160px;&#13;
+    overflow: auto;&#13;
+    border: 1px solid #d2d2d2;&#13;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);&#13;
+    z-index: 1;&#13;
+}&#13;
+&#13;
+.action-dropdown-content a {&#13;
+    color: #777777;&#13;
+    padding: 10px 14px;&#13;
+    text-decoration: none;&#13;
+    display: block;&#13;
+}&#13;
+&#13;
+.action-dropdown a:hover {background-color: #fbfbfb;}&#13;
+&#13;
+.open {display:block;}&#13;
+&#13;
+.action-dropdown .glyphicon {&#13;
+   font-size: 12px;&#13;
+}&#13;
+&#13;
 &#13;
 &#13;
 &#13;
@@ -553,14 +545,14 @@ table .sort-icon {&#13;
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:48:59</sys_created_on>
         <sys_id>c15d08dddb530300180ad170cf961922</sys_id>
-        <sys_mod_count>90</sys_mod_count>
+        <sys_mod_count>97</sys_mod_count>
         <sys_name>testcommvaultstyles</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>content_css_c15d08dddb530300180ad170cf961922</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-05 13:04:56</sys_updated_on>
+        <sys_updated_on>2018-03-06 07:41:36</sys_updated_on>
         <type>local</type>
         <url/>
     </content_css>

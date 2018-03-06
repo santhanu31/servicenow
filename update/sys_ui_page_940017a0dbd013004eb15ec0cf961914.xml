@@ -228,8 +228,7 @@
 												<th class="clickable" ng-click="sort('client.versionInfo.version')">Version
 													<span class="glyphicon sort-icon" ng-show="sortKey=='client.versionInfo.version'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
 												</th>
-												<th>Perform backup</th>
-												<th>Activity control</th>
+												<th class="text-center">Actions</th>
 												<!-- <th>Operating System</th>
 												<th>Location</th>
 												<th>Created By</th> -->
@@ -245,23 +244,14 @@
 												</td>
 												<td>{{clientProperty.client.osInfo.OsDisplayInfo.OSName}}</td>
 												<td>{{clientProperty.client.versionInfo.version}}</td>
-												<td>
-													<!--<div class="option-btn-container" ng-class="{'open': clientProperty.actionDropdownSelected}">
-														  
-														  <div class="options-icon-holder">	
-															  <span class="glyphicon glyphicon-option-horizontal options-icon option-btn" ng-click="toggleActionDropdown(clientProperty)"></span>	
-														  </div>	  
-														  <div class="option-btn-dropdown-content">
-															<a href="#">Link 1</a>
-															<a href="#">Link 2</a>
-															<a href="#">Link 3</a>
+												<td class="text-center">
+													<div class="action-dropdown">
+														<button role="button" class="btn action-dropbtn" ng-click="toggleActionDropdown(clientProperty)"><span class="glyphicon glyphicon-option-horizontal button-icon"></span></button>
+														  <div class="action-dropdown-content" ng-class="{'open':clientProperty.showActionDropdown}">
+															<a ng-click="getSubclients(clientProperty.client.clientEntity.clientId)" class="text-left">Backup</a>
+															<a ng-click="doActivityControl(clientProperty.client.clientEntity.clientId)" class="text-left">Activity control</a>
 														  </div>
-													</div>-->
-													<!--<button type="button" class="btn actionBtn" ng-click="getSubclients(clientProperty.client.clientEntity.clientId)">Backup</button>-->
-													<a ng-click="getSubclients(clientProperty.client.clientEntity.clientId)">Backup</a>
-												</td>
-												<td>
-													<a ng-click="doActivityControl(clientProperty.client.clientEntity.clientId)">Activity control</a>
+													</div>
 												</td>
 											</tr>
 										</tbody>
@@ -283,13 +273,13 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-02-12 13:07:19</sys_created_on>
         <sys_id>940017a0dbd013004eb15ec0cf961914</sys_id>
-        <sys_mod_count>92</sys_mod_count>
+        <sys_mod_count>106</sys_mod_count>
         <sys_name>ViewClients</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_page_940017a0dbd013004eb15ec0cf961914</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-05 13:02:01</sys_updated_on>
+        <sys_updated_on>2018-03-06 07:44:28</sys_updated_on>
     </sys_ui_page>
 </record_update>
