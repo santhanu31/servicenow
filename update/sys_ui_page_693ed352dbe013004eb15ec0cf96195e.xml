@@ -8,21 +8,76 @@
         <endpoint>x_183199_testcommv_VirtualMachines.do</endpoint>
         <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
 <j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"></link>
+	<link href="c15d08dddb530300180ad170cf961922.cssdbx" rel="stylesheet" type="text/css"></link> 
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
 	<script src="https://code.highcharts.com/stock/highstock.src.js"></script>
 	<script src="https://rawgithub.com/pablojim/highcharts-ng/master/src/highcharts-ng.js"></script>
-	
-	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"></link>
-	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 	<g:requires name="x_183199_testcommv.dirPagination.jsdbx"/>
 	<script src="x_183199_testcommv.angular_app_client_lo.jsdbx"></script>
-
-	<link href="c15d08dddb530300180ad170cf961922.cssdbx" rel="stylesheet" type="text/css"></link> 
+	
+	
+	<script>
+          var $j_commvault = jQuery.noConflict(true);
+    </script>
 	
 	
 	<div id="cvapp" ng-app="angularapp" class="ng-cloak">
 		
 		<div ng-controller="VMController as vmctrl" class="appContainer">
+			
+			
+			<!-- Backup Modal -->
+
+			<div class="modal backupModal fade" id="backupModal" tabindex="-1" role="dialog">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="close btn" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&#xD7;</span></button>
+							<h4 class="modal-title"> Backup client</h4>
+						</div>
+						<div class="modal-body">
+							<div class="chooseBackupLevel">
+								<div class="row">
+									<div class="col-xs-4 text-center">
+										<div class="modal-col-heading">Choose backup level</div>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-xs-12">
+										<div class="btn-group full-width" role="group">
+										  <button type="button" class="btn one-third-width" ng-click="onBackupLevelSelection('FULL')" ng-class="{'selected-level': selectedBackupLevel === 'FULL'}">Full</button>
+										  <button type="button" class="btn one-third-width" ng-click="onBackupLevelSelection('INCREMENTAL')" ng-class="{'selected-level': selectedBackupLevel === 'INCREMENTAL'}">Incremental</button>
+										  <button type="button" class="btn one-third-width" ng-click="onBackupLevelSelection('DIFFERENTIAL')" ng-class="{'selected-level': selectedBackupLevel === 'DIFFERENTIAL'}" >Differential</button>
+										</div>  
+									</div>
+								</div>
+							</div>
+							
+							<div class="error-text-container">
+								<div class="row">
+									<div class="col-xs-12 text-center">
+										<span class="error-text">{{errorText}}</span>
+										<span class="info-text">{{infoText}}</span>
+									</div>
+								</div>
+							</div>	
+							
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn actionBtn modalClose" data-dismiss="modal">Close</button>
+							<button type="button" class="btn actionBtn" ng-click="onRunBackup()"> Backup</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Backup Modal End -->
+			
+			
 			<div class="row">
 				<div class="col-xs-12">
 					<div class="form-container">
@@ -98,6 +153,7 @@
 												<th class="clickable" ng-click="sort('proxyClient.clientName')">Proxy
 													<span class="glyphicon sort-icon" ng-show="sortKey=='proxyClient.clientName'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
 												</th>
+												<th class="text-center">Actions</th>
 											</tr>
 										</thead>
 										<tbody class="table-hover">
@@ -110,6 +166,14 @@
 												<td>{{vm.bkpStartTime * 1000 | date : "medium"}}</td>
 												<td>{{vm.vmHost}}</td>
 												<td>{{vm.proxyClient.clientName}}</td>
+												<td class="text-center">
+													<div class="action-dropdown">
+														<button role="button" class="btn action-dropbtn" ng-click="toggleActionDropdown(vm)"><span class="glyphicon glyphicon-option-horizontal button-icon"></span></button>
+														  <div class="action-dropdown-content" ng-class="{'open':vm.showActionDropdown}">
+															<a ng-click="showBackupModal(vm)" class="text-left">Backup</a>
+														  </div>
+													</div>
+												</td>
 											</tr>
 										</tbody>
 									</table>
@@ -130,13 +194,13 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-03-02 10:53:57</sys_created_on>
         <sys_id>693ed352dbe013004eb15ec0cf96195e</sys_id>
-        <sys_mod_count>14</sys_mod_count>
+        <sys_mod_count>16</sys_mod_count>
         <sys_name>VirtualMachines</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_page_693ed352dbe013004eb15ec0cf96195e</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-05 13:38:38</sys_updated_on>
+        <sys_updated_on>2018-03-06 09:47:10</sys_updated_on>
     </sys_ui_page>
 </record_update>

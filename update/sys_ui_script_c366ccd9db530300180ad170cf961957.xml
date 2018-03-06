@@ -80,9 +80,80 @@ angular.module('angularapp').controller('VMController', function($scope){
 		$scope.sortKey = keyname;
 		$scope.reverse = !$scope.reverse; 
 	};
+	
+	$scope.toggleActionDropdown = function (vm) {
+		vm.showActionDropdown = !vm.showActionDropdown;
+		if(vm.showActionDropdown) {
+			if($scope.openDropdownVm) {
+				if($scope.openDropdownVm !== vm) {
+					$scope.openDropdownVm.showActionDropdown = false;
+				}	
+			}
+			$scope.openDropdownVm = vm;
+		}		
+	};
+
+	window.onclick = function(event) {
+		if (!event.target.matches('.action-dropbtn') && !event.target.matches('.action-dropbtn .button-icon')) {
+			if($scope.openDropdownVm) {
+				$scope.openDropdownVm.showActionDropdown = false;
+				$scope.$apply();
+			}
+		}
+	};
 
 	$scope.pageSizeList = [5, 10, 20, 50, 100];
 	$scope.pageSize = $scope.pageSizeList[2];
+	
+	$scope.showBackupModal = function (vm) {
+		$scope.errorText = '';
+		$scope.infoText = '';
+		$j_commvault('#backupModal').modal({
+			keyboard: false,
+			backdrop: 'static'
+		});
+		$j_commvault('#backupModal').modal('show');
+		$scope.selectedVm = vm;
+	};
+	
+	$scope.onBackupLevelSelection = function(selectedBackupLevel) {
+		$scope.selectedBackupLevel = selectedBackupLevel;
+	};
+
+	$scope.runBackupCallback = function(response) {
+		var answer = response.responseXML.documentElement.getAttribute("answer");
+		$scope.runBackupResponse = JSON.parse(answer);
+		console.log($scope.runBackupResponse);
+		$scope.infoText = '';
+		$j_commvault('#backupModal').modal('hide');
+	};
+
+	$scope.onRunBackup = function() {
+		$scope.errorText = "";
+		if(!$scope.selectedBackupLevel)	{
+			$scope.errorText = "Please select a backup level";
+			return;
+		}
+		if(!$scope.selectedVm)	{
+			$scope.errorText = "Please select a vm";
+			return;
+		}
+
+
+		$scope.infoText = 'Please wait...';
+		var runBackupEndpoint = new GlideAjax('TestCommvaultEndpoint');
+		runBackupEndpoint.addParam('sysparm_name','runBackup');
+		runBackupEndpoint.addParam('sysparm_clientId', $scope.clientId);
+		runBackupEndpoint.addParam('sysparm_subclientId', $scope.selectedSubclient.subclientId);
+		runBackupEndpoint.addParam('sysparm_subclientName', $scope.selectedSubclient.subclientName);
+		runBackupEndpoint.addParam('sysparm_backupsetId', $scope.selectedBackupset.backupsetId);
+		runBackupEndpoint.addParam('sysparm_backupsetName', $scope.selectedBackupset.backupsetName);
+		runBackupEndpoint.addParam('sysparm_appId', $scope.selectedApp.applicationId);
+		runBackupEndpoint.addParam('sysparm_appName', $scope.selectedApp.appName);
+		runBackupEndpoint.addParam('sysparm_backupLevel',$scope.selectedBackupLevel);
+
+		runBackupEndpoint.getXML($scope.runBackupCallback);
+	};
 	
 	$scope.getVMList();
 });
@@ -263,6 +334,8 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 					$scope.onAjax = true;
 					$scope.selectedBackupset = null;
 					$scope.selectedBackupLevel = null;
+					$scope.infoText = '';
+					$scope.errorText = '';
 					$scope.onGetSubclients = function(response) {
 						$scope.appList = [];
 						$scope.backupSetList = [];
@@ -426,11 +499,76 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 							};
 							
 							$scope.doActivityControl = function(clientId) {
-								$j_commvault('#activityModal').modal({
-									keyboard: false,
-									backdrop: 'static'
-								});
-								$j_commvault('#activityModal').modal('show');
+								
+								$scope.selectedClientId = clientId;
+								$scope.onAjax = true;
+								
+								$scope.initialBackupState = null;
+								$scope.initialRestoreState = null;
+								
+								$scope.onGetClientProperties = function(response) {
+									$scope.onAjax = false;
+									var answer = response.responseXML.documentElement.getAttribute("answer");
+									$scope.clientPropertiesResponse = JSON.parse(answer);
+									
+									angular.forEach($scope.clientPropertiesResponse.clientProperties[0].clientProps.clientActivityControl.activityControlOptions, function(control, cIndex){
+										if(control.activityType === 1) {
+											$scope.initialBackupState = control.enableActivityType;
+											$scope.enabledBackup = control.enableActivityType;
+										}
+										if(control.activityType === 2) {
+											$scope.initialRestoreState = control.enableActivityType;
+											$scope.enabledRestore = control.enableActivityType;
+										}
+										$scope.$apply();
+									});
+									
+									$scope.infoText = '';
+									$scope.errorText = '';
+									
+									$j_commvault('#activityModal').modal({
+										keyboard: false,
+										backdrop: 'static'
+									});
+									$j_commvault('#activityModal').modal('show');
+								};
+								
+								var getClientPropertiesEndpoint = new GlideAjax('TestCommvaultEndpoint');
+								getClientPropertiesEndpoint.addParam('sysparm_name','getClientProperties');
+								getClientPropertiesEndpoint.addParam('sysparm_clientId', clientId);
+								getClientPropertiesEndpoint.getXML($scope.onGetClientProperties);
+							};
+							
+							$scope.onSetActivityControlBackup = function(response) {
+								var answer = response.responseXML.documentElement.getAttribute("answer");
+								console.log('backup response');
+								console.log(JSON.parse(answer));
+							};
+				
+							$scope.onSetActivityControlRestore = function(response) {
+								var answer = response.responseXML.documentElement.getAttribute("answer");
+								console.log('restore response');
+								console.log(JSON.parse(answer));
+							};
+				
+							$scope.saveActivitySettings = function() {
+								if( $scope.initialBackupState != $scope.enabledBackup )	{
+									var setActivityControlBackupEndpoint = new GlideAjax('TestCommvaultEndpoint');
+									setActivityControlBackupEndpoint.addParam('sysparm_name','setActivityControl');
+									setActivityControlBackupEndpoint.addParam('sysparm_clientId', $scope.selectedClientId);
+									setActivityControlBackupEndpoint.addParam('sysparm_activityType', "1");
+									setActivityControlBackupEndpoint.addParam('sysparm_enableActivityType', $scope.enabledBackup);
+									setActivityControlBackupEndpoint.getXML($scope.onSetActivityControlBackup);
+								}
+								if( $scope.initialRestoreState != $scope.enabledRestore ){
+									var setActivityControlRestoreEndpoint = new GlideAjax('TestCommvaultEndpoint');
+									setActivityControlRestoreEndpoint.addParam('sysparm_name','setActivityControl');
+									setActivityControlRestoreEndpoint.addParam('sysparm_clientId', $scope.selectedClientId);
+									setActivityControlRestoreEndpoint.addParam('sysparm_activityType', "2");
+									setActivityControlRestoreEndpoint.addParam('sysparm_enableActivityType', $scope.enabledRestore);
+									setActivityControlRestoreEndpoint.getXML($scope.onSetActivityControlRestore);
+								}
+								$j_commvault('#activityModal').modal('hide');
 							};
 				
 				
@@ -494,14 +632,14 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>129</sys_mod_count>
+        <sys_mod_count>141</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-06 07:09:13</sys_updated_on>
+        <sys_updated_on>2018-03-06 14:43:14</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>

@@ -21,7 +21,7 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		gs.info('Getting schedules using token ' + token);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("http://winproxy1.commvault.com:9001/webconsole/RestServlet/VM?forUser=true&status=0");
+		sm.setEndpoint("https://winproxy1.commvault.com:9001/webconsole/RestServlet/VM?forUser=true&status=0");
 		sm.setHttpMethod("get");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -43,7 +43,7 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		gs.info('Getting Data for Dataset ' + dataSetId + ' using token ' + token);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint('http://winproxy1.commvault.com:9001/CustomReportsEngine/rest/reportsplusengine/datasets/' + dataSetId + '/data');
+		sm.setEndpoint('https://winproxy1.commvault.com:9001/CustomReportsEngine/rest/reportsplusengine/datasets/' + dataSetId + '/data');
 		sm.setHttpMethod("get");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -63,7 +63,7 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		gs.info('Getting SLA Reports using token ' + token);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("http://winproxy1.commvault.com:9001/CustomReportsEngine/rest/reportsplusengine/reports/name:Servers%20SLA?includeDrafts=false&version=0");
+		sm.setEndpoint("https://winproxy1.commvault.com:9001/CustomReportsEngine/rest/reportsplusengine/reports/name:Servers%20SLA?includeDrafts=false&version=0");
 		sm.setHttpMethod("get");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -83,7 +83,7 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		gs.info('Getting schedules using token ' + token);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("http://winproxy1.commvault.com:9001/webconsole/RestServlet/SchedulePolicy");
+		sm.setEndpoint("https://winproxy1.commvault.com:9001/webconsole/RestServlet/SchedulePolicy");
 		sm.setHttpMethod("get");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -104,7 +104,7 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		gs.info('Getting clients using token ' + token);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("http://winproxy1.commvault.com:9001/webconsole/RestServlet/Client?propertylevel=10&Hiddenclients=false&includevm=true");
+		sm.setEndpoint("https://winproxy1.commvault.com:9001/webconsole/RestServlet/Client?propertylevel=10&Hiddenclients=false&includevm=true");
 		sm.setHttpMethod("get");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -126,7 +126,28 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		gs.info('Getting clients using token ' + token);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("http://winproxy1.commvault.com:9001/webconsole/RestServlet/client/" + clientId + "/Hierarchy?backedUp=false");
+		sm.setEndpoint("https://winproxy1.commvault.com:9001/webconsole/RestServlet/client/" + clientId + "/Hierarchy?backedUp=false");
+		sm.setHttpMethod("get");
+		sm.setHttpTimeout(80000);
+		sm.setRequestHeader("Accept","application/json");
+		sm.setRequestHeader("Authtoken", token);
+		sm.setLogLevel("all");
+		
+		var response = sm.execute();
+		var responseBody = response.getBody();
+	
+		gs.info('Returning response' + responseBody);
+		
+		return responseBody;
+	},
+	getClientProperties: function() {
+		var token = this._getToken();
+		var clientId = this.getParameter('sysparm_clientId');
+		
+		gs.info('Getting clients using token ' + token);
+		
+		var sm = new sn_ws.RESTMessageV2();
+		sm.setEndpoint("https://winproxy1.commvault.com:9001/webconsole/RestServlet/client/" + clientId);
 		sm.setHttpMethod("get");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -160,7 +181,36 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		gs.info('Sending backup request' + body);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("http://winproxy1.commvault.com:9001/webconsole/RestServlet/CreateTask");
+		sm.setEndpoint("https://winproxy1.commvault.com:9001/webconsole/RestServlet/CreateTask");
+		sm.setHttpMethod("post");
+		sm.setHttpTimeout(80000);
+		sm.setRequestHeader("Accept","application/json");
+		sm.setRequestHeader("Content-Type","application/xml");
+		sm.setRequestHeader("Authtoken", token);
+		sm.setLogLevel("all");
+		
+		sm.setRequestBody(body);
+		
+		var response = sm.execute();
+		var responseBody = response.getBody();
+		
+		gs.info('Returning response' + responseBody);
+		
+		return responseBody;
+	},
+	setActivityControl: function() {
+		var token = this._getToken();
+		
+		var clientId = this.getParameter('sysparm_clientId');
+		var activityType = this.getParameter('sysparm_activityType');
+		var enableActivityType = this.getParameter('sysparm_enableActivityType');
+		
+		var body = '<App_SetClientPropertiesRequest><clientProperties><clientProps><clientActivityControl><activityControlOptions activityType="' + activityType + '" enableActivityType="' + enableActivityType + '"/></clientActivityControl></clientProps></clientProperties></App_SetClientPropertiesRequest>';
+		
+		gs.info('Sending backup request' + body);
+		
+		var sm = new sn_ws.RESTMessageV2();
+		sm.setEndpoint("https://winproxy1.commvault.com:9001/webconsole/RestServlet/client/" + clientId);
 		sm.setHttpMethod("post");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -181,12 +231,12 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		gs.info("Getting token");
 		
 		var username = 'admin';
-		var password = '';
+		var password = 'Builder!12';
 		
 		var ePassword = gs.base64Encode(password);
 		
 		var sm = new sn_ws.RESTMessageV2();
-		sm.setEndpoint("http://winproxy1.commvault.com:9001/webconsole/RestServlet/Login");
+		sm.setEndpoint("https://winproxy1.commvault.com:9001/webconsole/RestServlet/Login");
 		sm.setHttpMethod("post");
 		sm.setHttpTimeout(80000);
 		sm.setRequestHeader("Accept","application/json");
@@ -222,13 +272,13 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 12:20:08</sys_created_on>
         <sys_id>a1c8f345db530300180ad170cf96191c</sys_id>
-        <sys_mod_count>51</sys_mod_count>
+        <sys_mod_count>58</sys_mod_count>
         <sys_name>TestCommvaultEndpoint</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy>read</sys_policy>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_script_include_a1c8f345db530300180ad170cf96191c</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-05 12:36:43</sys_updated_on>
+        <sys_updated_on>2018-03-06 14:17:19</sys_updated_on>
     </sys_script_include>
 </record_update>
