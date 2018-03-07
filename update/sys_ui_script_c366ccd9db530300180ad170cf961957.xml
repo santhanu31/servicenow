@@ -5,7 +5,8 @@
         <description>Client-side logic for Angular App</description>
         <global>false</global>
         <name>x_183199_testcommv.angular_app_client_lo</name>
-        <script><![CDATA[angular.module('angularapp',['highcharts-ng', 'angularUtils.directives.dirPagination']);
+        <script><![CDATA[(function(){
+angular.module('angularapp',['highcharts-ng', 'angularUtils.directives.dirPagination', 'toaster', 'ngAnimate']);
 
 angular.module('angularapp').filter('capacity', function() {
 	var format = function(number, unit) {
@@ -58,105 +59,106 @@ angular.module('angularapp').filter('statusmap', function() {
 	};
 });
 
-angular.module('angularapp').controller('VMController', function($scope){
-	console.log('In VM controller');
-	$scope.onAjax = true;
-	$scope.getVMList = function() {
-		$scope.onVMList = function(response) {
-			var answer = response.responseXML.documentElement.getAttribute("answer");
-			$scope.vmListResponse = JSON.parse(answer);
-			$scope.vmList = $scope.vmListResponse.vmStatusInfoList;
-			$scope.onAjax = false;
-			$scope.$apply();
-			console.log($scope.vmList);
-		};
-		
-		var getVMListEndpoint = new GlideAjax('TestCommvaultEndpoint');
-		getVMListEndpoint.addParam('sysparm_name','getVMList');
-		getVMListEndpoint.getXML($scope.onVMList);
-	};
-	
-	$scope.sort = function (keyname) {
-		$scope.sortKey = keyname;
-		$scope.reverse = !$scope.reverse; 
-	};
-	
-	$scope.toggleActionDropdown = function (vm) {
-		vm.showActionDropdown = !vm.showActionDropdown;
-		if(vm.showActionDropdown) {
-			if($scope.openDropdownVm) {
-				if($scope.openDropdownVm !== vm) {
-					$scope.openDropdownVm.showActionDropdown = false;
-				}	
-			}
-			$scope.openDropdownVm = vm;
-		}		
-	};
-
-	window.onclick = function(event) {
-		if (!event.target.matches('.action-dropbtn') && !event.target.matches('.action-dropbtn .button-icon')) {
-			if($scope.openDropdownVm) {
-				$scope.openDropdownVm.showActionDropdown = false;
+angular.module('angularapp').controller('VMController', [
+	'$scope',
+	'toasterservice', 
+	function($scope, toasterservice){
+		console.log('In VM controller');
+		$scope.onAjax = true;
+		$scope.getVMList = function() {
+			$scope.onVMList = function(response) {
+				var answer = response.responseXML.documentElement.getAttribute("answer");
+				$scope.vmListResponse = JSON.parse(answer);
+				$scope.vmList = $scope.vmListResponse.vmStatusInfoList;
+				$scope.onAjax = false;
 				$scope.$apply();
+				console.log($scope.vmList);
+			};
+
+			var getVMListEndpoint = new GlideAjax('TestCommvaultEndpoint');
+			getVMListEndpoint.addParam('sysparm_name','getVMList');
+			getVMListEndpoint.getXML($scope.onVMList);
+		};
+
+		$scope.sort = function (keyname) {
+			$scope.sortKey = keyname;
+			$scope.reverse = !$scope.reverse; 
+		};
+
+		$scope.toggleActionDropdown = function (vm) {
+			vm.showActionDropdown = !vm.showActionDropdown;
+			if(vm.showActionDropdown) {
+				if($scope.openDropdownVm) {
+					if($scope.openDropdownVm !== vm) {
+						$scope.openDropdownVm.showActionDropdown = false;
+					}	
+				}
+				$scope.openDropdownVm = vm;
+			}		
+		};
+
+		window.onclick = function(event) {
+			if (!event.target.matches('.action-dropbtn') && !event.target.matches('.action-dropbtn .button-icon')) {
+				if($scope.openDropdownVm) {
+					$scope.openDropdownVm.showActionDropdown = false;
+					$scope.$apply();
+				}
 			}
-		}
-	};
+		};
 
-	$scope.pageSizeList = [5, 10, 20, 50, 100];
-	$scope.pageSize = $scope.pageSizeList[2];
-	
-	$scope.showBackupModal = function (vm) {
-		$scope.errorText = '';
-		$scope.infoText = '';
-		$j_commvault('#backupModal').modal({
-			keyboard: false,
-			backdrop: 'static'
-		});
-		$j_commvault('#backupModal').modal('show');
-		$scope.selectedVm = vm;
-	};
-	
-	$scope.onBackupLevelSelection = function(selectedBackupLevel) {
-		$scope.selectedBackupLevel = selectedBackupLevel;
-	};
+		$scope.pageSizeList = [5, 10, 20, 50, 100];
+		$scope.pageSize = $scope.pageSizeList[2];
 
-	$scope.runBackupCallback = function(response) {
-		var answer = response.responseXML.documentElement.getAttribute("answer");
-		$scope.runBackupResponse = JSON.parse(answer);
-		console.log($scope.runBackupResponse);
-		$scope.infoText = '';
-		$j_commvault('#backupModal').modal('hide');
-	};
+		$scope.showBackupModal = function (vm) {
+			$scope.errorText = '';
+			$scope.infoText = '';
+			$j_commvault('#backupModal').modal({
+				keyboard: false,
+				backdrop: 'static'
+			});
+			$j_commvault('#backupModal').modal('show');
+			$scope.selectedVm = vm;
+			$scope.$apply();
+		};
 
-	$scope.onRunBackup = function() {
-		$scope.errorText = "";
-		if(!$scope.selectedBackupLevel)	{
-			$scope.errorText = "Please select a backup level";
-			return;
-		}
-		if(!$scope.selectedVm)	{
-			$scope.errorText = "Please select a vm";
-			return;
-		}
+		$scope.onBackupLevelSelection = function(selectedBackupLevel) {
+			$scope.selectedBackupLevel = selectedBackupLevel;
+		};
+
+		$scope.runBackupVmCallback = function(response) {
+			var answer = response.responseXML.documentElement.getAttribute("answer");
+			$scope.runBackupResponse = JSON.parse(answer);
+			$scope.infoText = '';
+			$j_commvault('#backupModal').modal('hide');
+			toasterservice.showInfoToast('Backup', 'Vm backup started with Job Id: ' + $scope.runBackupResponse.jobIds[0]);
+			$scope.$apply();
+			console.log($scope.runBackupResponse);
+		};
+
+		$scope.onRunBackupVm = function() {
+			$scope.errorText = "";
+			if(!$scope.selectedBackupLevel)	{
+				$scope.errorText = "Please select a backup level";
+				return;
+			}
+			if(!$scope.selectedVm)	{
+				$scope.errorText = "Please select a vm";
+				return;
+			}
 
 
-		$scope.infoText = 'Please wait...';
-		var runBackupEndpoint = new GlideAjax('TestCommvaultEndpoint');
-		runBackupEndpoint.addParam('sysparm_name','runBackup');
-		runBackupEndpoint.addParam('sysparm_clientId', $scope.clientId);
-		runBackupEndpoint.addParam('sysparm_subclientId', $scope.selectedSubclient.subclientId);
-		runBackupEndpoint.addParam('sysparm_subclientName', $scope.selectedSubclient.subclientName);
-		runBackupEndpoint.addParam('sysparm_backupsetId', $scope.selectedBackupset.backupsetId);
-		runBackupEndpoint.addParam('sysparm_backupsetName', $scope.selectedBackupset.backupsetName);
-		runBackupEndpoint.addParam('sysparm_appId', $scope.selectedApp.applicationId);
-		runBackupEndpoint.addParam('sysparm_appName', $scope.selectedApp.appName);
-		runBackupEndpoint.addParam('sysparm_backupLevel',$scope.selectedBackupLevel);
+			$scope.infoText = 'Please wait...';
+			var runBackupVmEndpoint = new GlideAjax('TestCommvaultEndpoint');
+			runBackupVmEndpoint.addParam('sysparm_name','runBackupVm');
+			runBackupVmEndpoint.addParam('sysparm_vmGuid', $scope.selectedVm.strGUID);
+			runBackupVmEndpoint.addParam('sysparm_subclientId', $scope.selectedVm.subclientId);
+			runBackupVmEndpoint.addParam('sysparm_backupLevel',$scope.selectedBackupLevel);
 
-		runBackupEndpoint.getXML($scope.runBackupCallback);
-	};
-	
-	$scope.getVMList();
-});
+			runBackupVmEndpoint.getXML($scope.runBackupVmCallback);
+		};
+
+		$scope.getVMList();
+}]);
 
 angular.module('angularapp').controller('SLAReportController', function($scope){
 	console.log('In SLA Report controller');
@@ -304,7 +306,10 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 				$scope.getSchedules();
 			});
 			
-			angular.module('angularapp').controller('ViewClientsController', function($scope){
+			angular.module('angularapp').controller('ViewClientsController', [
+				'$scope',
+				'toasterservice',
+				function($scope, toasterservice){
 				
 				$scope.onAjax = true;
 				$scope.tabeLoaded = false;
@@ -454,9 +459,11 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 							$scope.runBackupCallback = function(response) {
 								var answer = response.responseXML.documentElement.getAttribute("answer");
 								$scope.runBackupResponse = JSON.parse(answer);
-								console.log($scope.runBackupResponse);
 								$scope.infoText = '';
 								$j_commvault('#backupModal').modal('hide');
+								toasterservice.showInfoToast('Backup', 'Data backup started with Job Id: ' + $scope.runBackupResponse.jobIds[0]);
+								$scope.$apply();
+								console.log($scope.runBackupResponse);
 							};
 							
 							$scope.onRunBackup = function() {
@@ -505,6 +512,8 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 								
 								$scope.initialBackupState = null;
 								$scope.initialRestoreState = null;
+								$scope.infoText = '';
+								$scope.errorText = '';
 								
 								$scope.onGetClientProperties = function(response) {
 									$scope.onAjax = false;
@@ -523,9 +532,6 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 										$scope.$apply();
 									});
 									
-									$scope.infoText = '';
-									$scope.errorText = '';
-									
 									$j_commvault('#activityModal').modal({
 										keyboard: false,
 										backdrop: 'static'
@@ -541,14 +547,18 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 							
 							$scope.onSetActivityControlBackup = function(response) {
 								var answer = response.responseXML.documentElement.getAttribute("answer");
-								console.log('backup response');
-								console.log(JSON.parse(answer));
+								var acresponse = JSON.parse(answer);
+								var clientName = acresponse.response[0].entity.clientName;
+								toasterservice.showInfoToast('Activity control', 'Data backup ' + ($scope.enabledBackup ? 'enabled' : 'disabled') + ' for ' + clientName);
+								$scope.$apply();
 							};
 				
 							$scope.onSetActivityControlRestore = function(response) {
 								var answer = response.responseXML.documentElement.getAttribute("answer");
-								console.log('restore response');
-								console.log(JSON.parse(answer));
+								var acresponse = JSON.parse(answer);
+								var clientName = acresponse.response[0].entity.clientName;
+								toasterservice.showInfoToast('Activity control', 'Data restore ' + ($scope.enabledRestore ? 'enabled' : 'disabled') + ' for ' + clientName);
+								$scope.$apply();
 							};
 				
 							$scope.saveActivitySettings = function() {
@@ -602,7 +612,7 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 							$scope.pageSize = $scope.pageSizeList[2];
 							
 							$scope.getClients();
-						});
+						}]);
 						
 						angular.module('angularapp').controller('AngularAppCtrl', function($scope){
 							$scope.myVar = "This is the value of myVar";
@@ -626,20 +636,22 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 								
 								getHelloAddr.getXML($scope.callback);
 							};
-						});]]></script>
+						});
+	
+})();]]></script>
         <script_name>angular_app_client_lo</script_name>
         <sys_class_name>sys_ui_script</sys_class_name>
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>141</sys_mod_count>
+        <sys_mod_count>184</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-06 14:43:14</sys_updated_on>
+        <sys_updated_on>2018-03-07 13:42:56</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>

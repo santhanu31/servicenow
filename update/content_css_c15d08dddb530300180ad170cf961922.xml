@@ -527,8 +527,9 @@ table .sort-icon {&#13;
    font-size: 12px;&#13;
 }&#13;
 &#13;
-&#13;
-&#13;
+.toast-info{&#13;
+    background-color: #235463;&#13;
+}&#13;
 &#13;
 &#13;
 &#13;
@@ -545,14 +546,14 @@ table .sort-icon {&#13;
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:48:59</sys_created_on>
         <sys_id>c15d08dddb530300180ad170cf961922</sys_id>
-        <sys_mod_count>97</sys_mod_count>
+        <sys_mod_count>98</sys_mod_count>
         <sys_name>testcommvaultstyles</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>content_css_c15d08dddb530300180ad170cf961922</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-06 07:41:36</sys_updated_on>
+        <sys_updated_on>2018-03-07 10:18:33</sys_updated_on>
         <type>local</type>
         <url/>
     </content_css>
