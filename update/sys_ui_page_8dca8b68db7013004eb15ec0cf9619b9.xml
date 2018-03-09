@@ -61,7 +61,7 @@
 							</div>
 							
 							<div class="col-xs-5">
-								<dir-pagination-controls on-page-change="pageChanged(newPageNumber)" auto-hide="false" >
+								<dir-pagination-controls on-page-change="pageChanged(newPageNumber)" auto-hide="false" max-size="5" boundary-links="true">
 								</dir-pagination-controls>
 							</div>
 										
@@ -119,13 +119,13 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-03-09 09:15:54</sys_created_on>
         <sys_id>8dca8b68db7013004eb15ec0cf9619b9</sys_id>
-        <sys_mod_count>15</sys_mod_count>
+        <sys_mod_count>17</sys_mod_count>
         <sys_name>ViewJobs</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_page_8dca8b68db7013004eb15ec0cf9619b9</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-09 13:44:00</sys_updated_on>
+        <sys_updated_on>2018-03-09 17:22:37</sys_updated_on>
     </sys_ui_page>
 </record_update>
