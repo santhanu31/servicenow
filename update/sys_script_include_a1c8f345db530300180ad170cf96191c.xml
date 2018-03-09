@@ -256,6 +256,51 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
 		
 		return responseBody;
 	},
+	getJobs: function() {
+		var token = this._getToken();
+		
+		var category = this.getParameter('sysparm_category');
+		var sortField = this.getParameter('sysparm_sortField');
+		var sortDirection = this.getParameter('sysparm_sortDirection');
+		var offset = this.getParameter('sysparm_offset');
+		var limit = this.getParameter('sysparm_limit');
+		var completedJobLookupTime = this.getParameter('sysparm_completedJobLookupTime');
+		
+		if(!sortField) {
+			sortField = 'sizeOfApplication';
+		}
+		if(!sortDirection) {
+			sortDirection = 1;
+		}
+		if(!offset) {
+			offset = 0;
+		}
+		if(!completedJobLookupTime) {
+			completedJobLookupTime = 86400;
+		}
+		
+		var body = '<JobManager_JobListRequest scope="1" category="' + category + '"><pagingConfig sortField="' + sortField + '" sortDirection="' + sortDirection + '" offset="' + offset + '" limit="' + limit + '"/><jobFilter completedJobLookupTime="' + completedJobLookupTime + '" showAgedJobs="0"/></JobManager_JobListRequest>';
+		
+		gs.info('Sending view jobs request' + body);
+		
+		var sm = new sn_ws.RESTMessageV2();
+		sm.setEndpoint("http://winproxy1.commvault.com:9001/webconsole/RestServlet/jobs");
+		sm.setHttpMethod("post");
+		sm.setHttpTimeout(80000);
+		sm.setRequestHeader("Accept","application/json");
+		sm.setRequestHeader("Content-Type","application/xml");
+		sm.setRequestHeader("Authtoken", token);
+		sm.setLogLevel("all");
+		
+		sm.setRequestBody(body);
+		
+		var response = sm.execute();
+		var responseBody = response.getBody();
+		
+		gs.info('Returning response' + responseBody);
+		
+		return responseBody;
+	},
 	_getToken: function() {
 		gs.info("Getting token");
 		
@@ -301,13 +346,13 @@ TestCommvaultEndpoint.prototype = Object.extendsObject(global.AbstractAjaxProces
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 12:20:08</sys_created_on>
         <sys_id>a1c8f345db530300180ad170cf96191c</sys_id>
-        <sys_mod_count>61</sys_mod_count>
+        <sys_mod_count>62</sys_mod_count>
         <sys_name>TestCommvaultEndpoint</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy>read</sys_policy>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_script_include_a1c8f345db530300180ad170cf96191c</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-07 13:27:39</sys_updated_on>
+        <sys_updated_on>2018-03-09 09:14:14</sys_updated_on>
     </sys_script_include>
 </record_update>
