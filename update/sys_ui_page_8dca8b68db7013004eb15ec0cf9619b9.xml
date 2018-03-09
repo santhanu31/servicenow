@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script/>
+        <description/>
+        <direct>false</direct>
+        <endpoint>x_183199_testcommv_ViewJobs.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"></link>
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/angularjs-toaster/1.1.0/toaster.min.css" rel="stylesheet" />
+	<link href="c15d08dddb530300180ad170cf961922.cssdbx" rel="stylesheet" type="text/css"></link> 
+
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+	<script src="https://code.angularjs.org/1.6.4/angular-animate.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/angularjs-toaster/1.1.0/toaster.min.js"></script>
+	<script src="https://code.highcharts.com/stock/highstock.src.js"></script>
+	<script src="https://rawgithub.com/pablojim/highcharts-ng/master/src/highcharts-ng.js"></script>
+	<g:requires name="x_183199_testcommv.dirPagination.jsdbx"/>
+	<script src="x_183199_testcommv.angular_app_client_lo.jsdbx"></script>	
+	<script src="x_183199_testcommv.toaster.svc.jsdbx"></script>
+	
+	
+	<script>
+          var $j_commvault = jQuery.noConflict(true);
+    </script>
+	
+	
+	<div id="cvapp" ng-app="angularapp" class="ng-cloak">
+		
+		<div ng-controller="ViewJobsController as vjctrl" class="appContainer">
+			
+			<toaster-container toaster-options="{'position-class': 'toast-bottom-right'}"></toaster-container>
+			
+			<div class="row">
+				<div class="col-xs-12">
+					<div class="form-container">
+						<h4 class="imageHeading"><img src="commvault_logo.png" width="300" height="49"/><span class="module-name">View jobs</span>
+							<div class="cos_load_holder" ng-show="onAjax">
+								<div class="cos_load">
+									<div class="cos_spinner">
+										<div class="cos_mask">
+											<div class="cos_maskedCircle"></div>
+										</div>
+									</div>
+								</div>
+							</div>			
+						</h4>
+						<hr/>
+						
+						
+						<div class="row table-action-bar">
+							<div class="col-xs-1">
+							  <select class="page-size-select" ng-model="pageSize" ng-options="pg for pg in pageSizeList">
+							  </select>
+							</div>
+							
+							<div class="col-xs-5">
+								<dir-pagination-controls on-page-change="pageChanged(newPageNumber)" auto-hide="false" >
+								</dir-pagination-controls>
+							</div>
+										
+						</div>
+						
+						<div class="row">
+							<div class="col-xs-12 text-center">
+								<div class="table-container" ng-show="tabeLoaded">
+									<table class="table-snow">
+										<thead>
+											<tr>
+												<th class="clickable" ng-click="sort('jobId')">Job ID
+													<span class="glyphicon sort-icon" ng-show="sortField=='jobId'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
+												</th>
+												<th>Status</th>
+												<th>Opertaion</th>
+												<th class="clickable" ng-click="sort('jobStartTime')">Start
+													<span class="glyphicon sort-icon" ng-show="sortField=='jobStartTime'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
+												</th>
+												<!--<th class="text-center">Actions</th>-->
+											</tr>
+										</thead>
+										<tbody class="table-hover">
+											<tr dir-paginate="job in jobsList | itemsPerPage:pageSize" total-items="totalJobs" current-page="pagination.current">
+												<td>{{job.jobSummary.jobId}}</td>
+												<td>{{job.jobSummary.status}}</td>
+												<td>{{job.jobSummary.jobType}}</td>
+												<td>{{job.jobSummary.jobStartTime * 1000 | date : "medium"}}</td>
+												<!--<td class="text-center">
+													<div class="action-dropdown">
+														<button role="button" class="btn action-dropbtn" ng-click="toggleActionDropdown(clientProperty)"><span class="glyphicon glyphicon-option-horizontal button-icon"></span></button>
+														  <div class="action-dropdown-content" ng-class="{'open':clientProperty.showActionDropdown}">
+															<a ng-click="getSubclients(clientProperty.client.clientEntity.clientId)" class="text-left">Backup</a>
+															<a ng-click="doActivityControl(clientProperty.client.clientEntity.clientId)" class="text-left">Activity control</a>
+														  </div>
+													</div>
+												</td>-->
+											</tr>
+										</tbody>
+									</table>
+								</div>	
+							</div>
+						</div>
+						
+					</div>	
+				</div>
+			</div>
+			
+		</div>
+	</div>
+</j:jelly>]]></html>
+        <name>ViewJobs</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2018-03-09 09:15:54</sys_created_on>
+        <sys_id>8dca8b68db7013004eb15ec0cf9619b9</sys_id>
+        <sys_mod_count>15</sys_mod_count>
+        <sys_name>ViewJobs</sys_name>
+        <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
+        <sys_update_name>sys_ui_page_8dca8b68db7013004eb15ec0cf9619b9</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2018-03-09 13:44:00</sys_updated_on>
+    </sys_ui_page>
+</record_update>
