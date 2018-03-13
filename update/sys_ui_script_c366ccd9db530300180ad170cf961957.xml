@@ -59,6 +59,24 @@ angular.module('angularapp').filter('statusmap', function() {
 	};
 });
 	
+angular.module('angularapp').filter('elapsedTime', function() {
+	return function(text) {
+		if (text == undefined) {
+			return "...";
+		}
+		var days = Math.floor(text / 60 / 60 / 24);
+		var secondsInDay = text % (60 * 60 * 24);
+		var hrs = Math.floor(secondsInDay / 60 / 60);
+		var min = Math.floor((secondsInDay - hrs * 60 * 60) / 60);
+		var sec = secondsInDay - hrs * 60 * 60 - min * 60;
+		days = (days == 0 ? "" : days + " " + "days" + " ");
+		hrs = (hrs == 0 ? "" : hrs + " " + "hours" + " ");
+		min = (min == 0 ? "" : min + " " + "minutes" + " ");
+		sec = sec + " " + "seconds";
+		return days + hrs + min + sec;
+	};
+});
+	
 angular.module('angularapp').controller('ViewJobsController', [
 	'$scope',
 	'toasterservice',
@@ -68,8 +86,29 @@ angular.module('angularapp').controller('ViewJobsController', [
 		$scope.tabeLoaded = false;
 
 		$scope.pageSizeList = [5, 10, 20, 50, 100];
-		$scope.pageSize = $scope.pageSizeList[0];
+		$scope.pageSize = $scope.pageSizeList[3];
 		$scope.reverse = true;
+		
+		$scope.toggleActionDropdown = function (clientProperty) {
+			clientProperty.showActionDropdown = !clientProperty.showActionDropdown;
+			if(clientProperty.showActionDropdown) {
+				if($scope.openDropdownClientproperty) {
+					if($scope.openDropdownClientproperty !== clientProperty) {
+						$scope.openDropdownClientproperty.showActionDropdown = false;
+					}	
+				}
+				$scope.openDropdownClientproperty = clientProperty;
+			}		
+		};
+
+		window.onclick = function(event) {
+			if (!event.target.matches('.action-dropbtn') && !event.target.matches('.action-dropbtn .button-icon')) {
+				if($scope.openDropdownClientproperty) {
+					$scope.openDropdownClientproperty.showActionDropdown = false;
+					$scope.$apply();
+				}
+			}
+		};
 
 		$scope.sort = function (keyname) {
 			$scope.sortField = keyname;
@@ -79,7 +118,7 @@ angular.module('angularapp').controller('ViewJobsController', [
 		};
 		
 		$scope.jobsList = [];
-		$scope.jobsCategory = 2; // 1 - ACTIVE JOBS, 2 - FINISHED
+		$scope.jobCategory = 2; // 1 - ACTIVE JOBS, 2 - FINISHED
 		
 		$scope.sortField = "jobStartTime";
 		$scope.sortDirection = 1;
@@ -95,12 +134,33 @@ angular.module('angularapp').controller('ViewJobsController', [
 			$scope.offset = ( (newPageNumber - 1) * $scope.pageSize );
 			$scope.getJobs();
 		};
+				
+		$scope.onJobTypeSelection = function(selectedJobType) {
+			$scope.jobCategory = selectedJobType;
+			$scope.getJobs();
+		};
+		
+		$scope.showHelpDialog = function(helpInfo) {
+			$scope.showHelp	= true;
+			$scope.helpInfo = helpInfo;
+		};
+		
+		$scope.hideHelpDialog = function() {
+			$scope.showHelp	= false;
+			$scope.helpInfo = '';
+		};
 		
 		$scope.onGetJobs = function (response) {
 			var answer = response.responseXML.documentElement.getAttribute("answer");
 			$scope.getJobsResponse = JSON.parse(answer);
 			$scope.totalJobs = $scope.getJobsResponse.totalRecordsWithoutPaging;
 			$scope.jobsList = $scope.getJobsResponse.jobs;
+			
+			if(!$scope.jobsList ||  $scope.jobsList.length === 0) {
+				$scope.showHelpDialog('No jobs to display');
+			} else {
+				$scope.hideHelpDialog();
+			}
 			
 			$scope.onAjax = false;
 			$scope.tabeLoaded = true;
@@ -116,7 +176,7 @@ angular.module('angularapp').controller('ViewJobsController', [
 			var getJobsEndpoint = new GlideAjax('TestCommvaultEndpoint');
 			
 			getJobsEndpoint.addParam('sysparm_name','getJobs');
-			getJobsEndpoint.addParam('sysparm_category', String($scope.jobsCategory));
+			getJobsEndpoint.addParam('sysparm_category', String($scope.jobCategory));
 			getJobsEndpoint.addParam('sysparm_sortField', String($scope.sortField));
 			getJobsEndpoint.addParam('sysparm_sortDirection', String($scope.sortDirection));
 			getJobsEndpoint.addParam('sysparm_offset', String($scope.offset));
@@ -127,6 +187,19 @@ angular.module('angularapp').controller('ViewJobsController', [
 			
 		};
 		
+		$scope.showJobDetails = function(job) {
+			$scope.selectedJob = job;
+			$j_commvault('#jobDetailsModal').modal({
+				keyboard: false,
+				backdrop: 'static'
+			});
+			$j_commvault('#jobDetailsModal').modal('show');
+		};
+		
+		$j_commvault('#jobDetailsModal').on('hidden.bs.modal', function (e) {
+			$scope.selectedJob = null;
+		});
+			
 		$scope.getJobs();
 	}
 ]);
@@ -717,14 +790,14 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>201</sys_mod_count>
+        <sys_mod_count>216</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-09 13:45:08</sys_updated_on>
+        <sys_updated_on>2018-03-13 10:06:15</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>

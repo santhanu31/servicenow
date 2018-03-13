@@ -288,6 +288,10 @@
    width: 33%;&#13;
 }&#13;
 &#13;
+.half-width {&#13;
+   width: 50%;&#13;
+}&#13;
+&#13;
 .chooseBackupLevel .btn-group {&#13;
   margin-top: 10px;&#13;
 }&#13;
@@ -437,7 +441,7 @@ table .sort-icon {&#13;
 &#13;
 .page-size-select {&#13;
     border-radius: 5px;&#13;
-    width: 100%;&#13;
+    width: 70px;&#13;
     border: 1px solid #d4d4d4;&#13;
     padding: 7px;&#13;
     outline: none;&#13;
@@ -531,6 +535,70 @@ table .sort-icon {&#13;
     background-color: #235463;&#13;
 }&#13;
 &#13;
+.jobSwitch .btn-group {&#13;
+  margin-top: 10px;&#13;
+}&#13;
+ &#13;
+.jobSwitch button, .jobSwitch button:active, .jobSwitch button:focus {&#13;
+    color: #333;&#13;
+    font-size: 12px;&#13;
+    font-weight: 500;&#13;
+    background-color: #f7f7f7;&#13;
+    outline: none;&#13;
+    transition: all 0.1s ease-in;&#13;
+    border: 1px solid #ddd;&#13;
+}&#13;
+&#13;
+.jobSwitch button:hover {&#13;
+    color: #333;&#13;
+    text-decoration: none;&#13;
+    background-color: #fdfdfd;&#13;
+    box-shadow: none;&#13;
+}&#13;
+&#13;
+.jobSwitch button.selection {&#13;
+    background-color: #2cc185;&#13;
+    border: 1px solid #2cc185;&#13;
+   color: #ffffff;&#13;
+   box-shadow: rgba(0, 0, 0, 0.2) 0 1px 8px inset;&#13;
+}&#13;
+&#13;
+.help-info-container {&#13;
+    border: 1px solid #dcdcdc;&#13;
+    border-radius: 4px;&#13;
+    background-color: #f3f3f3;&#13;
+    color: #5d5d5d;&#13;
+    padding: 60px;&#13;
+    font-size: 28px;&#13;
+    letter-spacing: 1px;&#13;
+}&#13;
+&#13;
+ .info-list {&#13;
+    list-style: none;&#13;
+    letter-spacing: 0.5px;&#13;
+    font-size: 14px;&#13;
+}&#13;
+&#13;
+.info-list li {&#13;
+    float: left;&#13;
+    padding: 5px 0;&#13;
+}&#13;
+&#13;
+.info-list .info-type {&#13;
+    clear: left;&#13;
+    font-weight: 600;&#13;
+    width: 38%;&#13;
+    text-align: right;&#13;
+    color: #424242;&#13;
+    overflow-wrap: break-word;&#13;
+}&#13;
+&#13;
+.info-list .info-disc {&#13;
+    width: 60%;&#13;
+    padding-left: 100px;&#13;
+    overflow-wrap: break-word;&#13;
+}&#13;
+&#13;
 &#13;
 &#13;
 &#13;
@@ -546,14 +614,14 @@ table .sort-icon {&#13;
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:48:59</sys_created_on>
         <sys_id>c15d08dddb530300180ad170cf961922</sys_id>
-        <sys_mod_count>98</sys_mod_count>
+        <sys_mod_count>106</sys_mod_count>
         <sys_name>testcommvaultstyles</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>content_css_c15d08dddb530300180ad170cf961922</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-07 10:18:33</sys_updated_on>
+        <sys_updated_on>2018-03-13 09:22:04</sys_updated_on>
         <type>local</type>
         <url/>
     </content_css>

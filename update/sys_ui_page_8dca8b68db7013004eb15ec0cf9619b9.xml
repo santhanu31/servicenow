@@ -37,6 +37,93 @@
 			
 			<toaster-container toaster-options="{'position-class': 'toast-bottom-right'}"></toaster-container>
 			
+			<!-- Job Details Modal -->
+			
+			<div class="modal jobDetailsModal fade" id="jobDetailsModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="close btn" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&#xD7;</span></button>
+							<h4 class="modal-title" id="myModalLabel"> Job details</h4>
+						</div>
+						<div class="modal-body">
+							<ul class="info-list clearfix">
+								<div ng-if="selectedJob.jobSummary.jobId">
+									<li class="info-type">Job ID</li>
+									<li class="info-disc">{{selectedJob.jobSummary.jobId}}</li>
+								</div>
+								<div ng-if="selectedJob.jobSummary.jobType">
+									<li class="info-type">Operation</li>
+									<li class="info-disc">{{selectedJob.jobSummary.jobType}}</li>
+								</div>
+								<div ng-if="selectedJob.jobSummary.status">
+									<li class="info-type">Status</li>
+									<li class="info-disc">{{selectedJob.jobSummary.status}}</li>
+								</div>
+								<div ng-if="selectedJob.jobSummary.destClientName">
+									<li class="info-type">Server</li>
+									<li class="info-disc">{{selectedJob.jobSummary.destClientName}}</li>
+								</div>
+								<div ng-if="selectedJob.jobSummary.appTypeName">
+									<li class="info-type">Agent type</li>
+									<li class="info-disc">{{selectedJob.jobSummary.appTypeName}}</li>
+								</div>
+								<div ng-if="selectedJob.jobSummary.subclientName">
+									<li class="info-type">Subclient</li>
+									<li class="info-disc">{{selectedJob.jobSummary.subclientName}}</li>
+								</div>
+								<div ng-if="selectedJob.jobSummary.backupLevelName">
+									<li class="info-type">Backup type</li>
+									<li class="info-disc">{{selectedJob.jobSummary.backupLevelName}}</li>
+								</div>
+								
+								<div ng-if="selectedJob.jobSummary.sizeOfApplication">	
+									<li class="info-type">Size</li>
+									<li class="info-disc">{{selectedJob.jobSummary.sizeOfApplication}}</li>
+								</div>
+								<div ng-if="selectedJob.jobSummary.jobStartTime">
+									<li class="info-type">Start</li>
+									<li class="info-disc">{{selectedJob.jobSummary.jobStartTime * 1000 | date : "medium"}}</li>
+								</div>
+								<div ng-if="selectedJob.jobSummary.jobEndTime">
+									<li class="info-type">End</li>
+									<li class="info-disc">{{selectedJob.jobSummary.jobEndTime * 1000 | date : "medium"}}</li>
+								</div>
+								<div ng-if="selectedJob.jobSummary.lastUpdateTime">
+									<li class="info-type">Last update</li>
+									<li class="info-disc">{{selectedJob.jobSummary.lastUpdateTime * 1000 | date : "medium"}}</li>
+								</div>
+								<div ng-if="selectedJob.jobSummary.jobElapsedTime">
+									<li class="info-type">Elapsed</li>
+									<li class="info-disc">{{selectedJob.jobSummary.jobElapsedTime | elapsedTime}}</li>
+								</div>
+								<div ng-if="selectedJob.jobSummary.percentComplete">
+									<li class="info-type">Percent complete</li>
+									<li class="info-disc">{{selectedJob.jobSummary.percentComplete}}%</li>
+								</div>
+								<div ng-if="selectedJob.jobSummary.subclient.instanceName">
+									<li class="info-type">Instance</li>
+									<li class="info-disc">{{selectedJob.jobSummary.subclient.instanceName}}</li>
+								</div>
+								<div ng-if="selectedJob.jobSummary.backupSetName">
+									<li class="info-type">Backup set</li>
+									<li class="info-disc">{{selectedJob.jobSummary.backupSetName}}</li>
+								</div>
+								<div ng-if="selectedJob.jobSummary.pendingReason">
+									<li class="info-type">Delay reason</li>
+									<li class="info-disc">{{selectedJob.jobSummary.pendingReason}}</li>
+								</div>
+							</ul>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn actionBtn modalClose" data-dismiss="modal">Close</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Job Details Modal End -->
+			
 			<div class="row">
 				<div class="col-xs-12">
 					<div class="form-container">
@@ -64,12 +151,24 @@
 								<dir-pagination-controls on-page-change="pageChanged(newPageNumber)" auto-hide="false" max-size="5" boundary-links="true">
 								</dir-pagination-controls>
 							</div>
+							
+							<div class="col-xs-4 col-xs-offset-2 jobSwitch">
+								<div class="btn-group full-width" role="group">
+										  <button type="button" class="btn half-width" ng-click="onJobTypeSelection(1)" ng-class="{'selection': jobCategory === 1}">Active jobs</button>
+										  <button type="button" class="btn half-width" ng-click="onJobTypeSelection(2)" ng-class="{'selection': jobCategory === 2}">Job history</button>
+								</div>  
+							</div>	
 										
 						</div>
 						
 						<div class="row">
 							<div class="col-xs-12 text-center">
-								<div class="table-container" ng-show="tabeLoaded">
+								<div class="help-info-container" ng-show="showHelp">
+									<div class="help-text">
+										{{helpInfo}}
+									</div>    
+								</div>
+								<div class="table-container" ng-show="tabeLoaded &#38;&#38; !showHelp">
 									<table class="table-snow">
 										<thead>
 											<tr>
@@ -80,8 +179,14 @@
 												<th>Opertaion</th>
 												<th class="clickable" ng-click="sort('jobStartTime')">Start
 													<span class="glyphicon sort-icon" ng-show="sortField=='jobStartTime'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
+												</th>	
+												<th class="clickable" ng-click="sort('jobEndTime')">End
+													<span class="glyphicon sort-icon" ng-show="sortField=='jobEndTime'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
 												</th>
-												<!--<th class="text-center">Actions</th>-->
+												<th class="clickable" ng-click="sort('jobElapsedTime')">Elapsed time
+													<span class="glyphicon sort-icon" ng-show="sortField=='jobElapsedTime'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
+												</th>
+												<th class="text-center">Actions</th>
 											</tr>
 										</thead>
 										<tbody class="table-hover">
@@ -90,15 +195,16 @@
 												<td>{{job.jobSummary.status}}</td>
 												<td>{{job.jobSummary.jobType}}</td>
 												<td>{{job.jobSummary.jobStartTime * 1000 | date : "medium"}}</td>
-												<!--<td class="text-center">
+												<td>{{job.jobSummary.jobEndTime * 1000 | date : "medium"}}</td>
+												<td>{{job.jobSummary.jobElapsedTime | elapsedTime}}</td>
+												<td class="text-center">
 													<div class="action-dropdown">
-														<button role="button" class="btn action-dropbtn" ng-click="toggleActionDropdown(clientProperty)"><span class="glyphicon glyphicon-option-horizontal button-icon"></span></button>
-														  <div class="action-dropdown-content" ng-class="{'open':clientProperty.showActionDropdown}">
-															<a ng-click="getSubclients(clientProperty.client.clientEntity.clientId)" class="text-left">Backup</a>
-															<a ng-click="doActivityControl(clientProperty.client.clientEntity.clientId)" class="text-left">Activity control</a>
+														<button role="button" class="btn action-dropbtn" ng-click="toggleActionDropdown(job)"><span class="glyphicon glyphicon-option-horizontal button-icon"></span></button>
+														  <div ng-click="showJobDetails(job)" class="action-dropdown-content" ng-class="{'open':job.showActionDropdown}">
+															<a class="text-left">View job details</a>
 														  </div>
 													</div>
-												</td>-->
+												</td>
 											</tr>
 										</tbody>
 									</table>
@@ -119,13 +225,13 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-03-09 09:15:54</sys_created_on>
         <sys_id>8dca8b68db7013004eb15ec0cf9619b9</sys_id>
-        <sys_mod_count>17</sys_mod_count>
+        <sys_mod_count>33</sys_mod_count>
         <sys_name>ViewJobs</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_page_8dca8b68db7013004eb15ec0cf9619b9</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-09 17:22:37</sys_updated_on>
+        <sys_updated_on>2018-03-13 12:41:36</sys_updated_on>
     </sys_ui_page>
 </record_update>
