@@ -28,7 +28,7 @@
 	
 	<script>
           var $j_commvault = jQuery.noConflict(true);
-    </script>
+	</script>
 	
 	
 	<div id="cvapp" ng-app="angularapp" class="ng-cloak">
@@ -82,6 +82,64 @@
 			</div>
 
 			<!-- Backup Modal End -->
+			
+			<!-- Restore Modal -->
+
+			<div class="modal restoreModal fade" id="restoreModal" tabindex="-1" role="dialog">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="close btn" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&#xD7;</span></button>
+							<h4 class="modal-title"> Restore virtual machine</h4>
+						</div>
+						<div class="modal-body">
+							<div class="row">
+								<div class="col-xs-12">
+									<div class="checkbox">
+										<label>
+											<input type="checkbox" ng-model="vmPowerOn"> Power on VMs after restore</input>
+										</label>
+									</div>
+								</div>
+							</div>
+							<div class="row">
+								<div class="col-xs-12">
+									<div class="checkbox">
+										<label>
+											<input id="vmOverwrite" type="checkbox" ng-model="vmOverwrite"> Unconditionally overwrite if it already exists</input>
+										</label>
+									</div>	
+								</div>
+							</div>
+							
+							<div class="row margin-top-15">
+								<div class="col-xs-12">
+									<div class="input-group">
+										<span class="input-group-addon">New VM name</span>
+										<input id="newName" type="text" class="form-control" name="newName" ng-model="newName"></input>
+									  </div>
+								</div>
+							</div>
+							
+							<div class="error-text-container">
+								<div class="row">
+									<div class="col-xs-12 text-center">
+										<span class="error-text">{{errorText}}</span>
+										<span class="info-text">{{infoText}}</span>
+									</div>
+								</div>
+							</div>	
+								
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn actionBtn modalClose" data-dismiss="modal">Close</button>
+							<button type="button" class="btn actionBtn" ng-click="onFullVmRestore()"> Restore</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Restore Modal End -->
 			
 			
 			<div class="row">
@@ -177,6 +235,7 @@
 														<button role="button" class="btn action-dropbtn" ng-click="toggleActionDropdown(vm)"><span class="glyphicon glyphicon-option-horizontal button-icon"></span></button>
 														  <div class="action-dropdown-content" ng-class="{'open':vm.showActionDropdown}">
 															<a ng-click="showBackupModal(vm)" class="text-left">Backup</a>
+															<a ng-click="showRestoreModal(vm)" class="text-left">Restore</a>
 														  </div>
 													</div>
 												</td>
@@ -200,13 +259,13 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-03-02 10:53:57</sys_created_on>
         <sys_id>693ed352dbe013004eb15ec0cf96195e</sys_id>
-        <sys_mod_count>26</sys_mod_count>
+        <sys_mod_count>39</sys_mod_count>
         <sys_name>VirtualMachines</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_page_693ed352dbe013004eb15ec0cf96195e</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-14 06:15:30</sys_updated_on>
+        <sys_updated_on>2018-03-16 11:34:19</sys_updated_on>
     </sys_ui_page>
 </record_update>

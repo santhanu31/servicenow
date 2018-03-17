@@ -599,6 +599,34 @@ table .sort-icon {&#13;
     overflow-wrap: break-word;&#13;
 }&#13;
 &#13;
+.margin-top-15 {&#13;
+    margin-top: 15px;&#13;
+}&#13;
+&#13;
+.margin-top-20 {&#13;
+    margin-top: 20px;&#13;
+}&#13;
+&#13;
+.floating-label {&#13;
+    position: absolute;&#13;
+    left: 28px;&#13;
+    top: 9px;&#13;
+    font-size: 12px;&#13;
+    pointer-events: none;&#13;
+    transition: all .1s ease;&#13;
+    font-weight: 500;&#13;
+    color: #6d6d6d&#13;
+    letter-spacing: 0.5px;&#13;
+}&#13;
+&#13;
+input:focus ~ .floating-label,&#13;
+input:not(:focus):valid ~ .floating-label {&#13;
+    font-size: 11px;&#13;
+    font-weight: 600;&#13;
+    left: 18px;&#13;
+    top: -18px;&#13;
+    color: #3e3e3e;&#13;
+}&#13;
 &#13;
 &#13;
 &#13;
@@ -614,14 +642,14 @@ table .sort-icon {&#13;
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:48:59</sys_created_on>
         <sys_id>c15d08dddb530300180ad170cf961922</sys_id>
-        <sys_mod_count>106</sys_mod_count>
+        <sys_mod_count>112</sys_mod_count>
         <sys_name>testcommvaultstyles</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>content_css_c15d08dddb530300180ad170cf961922</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-13 09:22:04</sys_updated_on>
+        <sys_updated_on>2018-03-16 10:55:10</sys_updated_on>
         <type>local</type>
         <url/>
     </content_css>

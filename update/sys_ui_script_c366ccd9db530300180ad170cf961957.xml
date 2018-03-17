@@ -125,6 +125,8 @@ angular.module('angularapp').controller('ViewJobsController', [
 		$scope.offset = 0;
 		$scope.completedJobLookupTime = 7776000;
 		
+		$scope.categorySwitch = false;
+		
 		$scope.totalJobs = 0;
 		$scope.pagination = {
 			current: 1
@@ -137,6 +139,7 @@ angular.module('angularapp').controller('ViewJobsController', [
 				
 		$scope.onJobTypeSelection = function(selectedJobType) {
 			$scope.jobCategory = selectedJobType;
+			$scope.categorySwitch = true;
 			$scope.getJobs();
 		};
 		
@@ -164,6 +167,8 @@ angular.module('angularapp').controller('ViewJobsController', [
 			
 			$scope.onAjax = false;
 			$scope.tabeLoaded = true;
+			
+			$scope.categorySwitch = false;
 			
 			$scope.$apply();
 			
@@ -209,6 +214,7 @@ angular.module('angularapp').controller('VMController', [
 	'toasterservice', 
 	function($scope, toasterservice){
 		console.log('In VM controller');
+
 		$scope.onAjax = true;
 		$scope.getVMList = function() {
 			$scope.onVMList = function(response) {
@@ -264,6 +270,65 @@ angular.module('angularapp').controller('VMController', [
 			$j_commvault('#backupModal').modal('show');
 			$scope.selectedVm = vm;
 		};
+		
+		$scope.showRestoreModal = function(vm) {
+			$scope.errorText = '';
+			$scope.infoText = '';
+			$j_commvault('#restoreModal').modal({
+				keyboard: false,
+				backdrop: 'static'
+			});
+			$j_commvault('#restoreModal').modal('show');
+			$scope.selectedVmForFullRestore = vm;
+			$scope.vmOverwrite = true;
+			$scope.vmPowerOn = true;
+			$scope.newName = $scope.selectedVmForFullRestore.name;
+		};
+		
+		$scope.runFullVmRestoreCallback = function(response) {
+			var answer = response.responseXML.documentElement.getAttribute("answer");
+			$scope.runFullVmRestoreResponse = JSON.parse(answer);
+			$scope.infoText = '';
+			$scope.errorText = '';
+			$j_commvault('#restoreModal').modal('hide');
+			toasterservice.showInfoToast('Full VM Restore', 'Vm restore started with Job Id: ' + $scope.runFullVmRestoreResponse.jobIds[0]);
+			$scope.$apply();
+			console.log($scope.runFullVmRestoreResponse);
+		};
+		
+		$scope.onFullVmRestore = function() {
+			$scope.errorText = '';
+			$scope.infoText = '';
+			if(($scope.newName === $scope.selectedVmForFullRestore.name) && ($scope.vmOverwrite === false)) {
+				$scope.errorText = 'Select overwrite option if the new vm name is same as the old name';
+				return;
+			}
+			if($scope.newName.trim().length === 0) {
+				$scope.errorText = 'Please specify a name for the vm';
+				return;
+			}
+			if(!$scope.selectedVmForFullRestore) {
+				$scope.errorText = 'Please select a vm';
+				return;
+			}
+			
+			$scope.unconditionalOverwrite = $scope.vmOverwrite ? 1 : 0;
+			$scope.powerOnVmAfterRestore = $scope.vmPowerOn ? 1 : 0;
+			
+			$scope.infoText = 'Please wait...';
+			var runFullVmRestore = new GlideAjax('TestCommvaultEndpoint');
+			runFullVmRestore.addParam('sysparm_name','runFullVmRestore');
+			runFullVmRestore.addParam('sysparm_newName', String($scope.newName));
+			runFullVmRestore.addParam('sysparm_unconditionalOverwrite', String($scope.unconditionalOverwrite));
+			runFullVmRestore.addParam('sysparm_powerOnVmAfterRestore', String($scope.powerOnVmAfterRestore));
+			runFullVmRestore.addParam('sysparm_destClientId', String($scope.selectedVmForFullRestore.proxyClient.clientId));
+			runFullVmRestore.addParam('sysparm_destClientName', String($scope.selectedVmForFullRestore.proxyClient.clientName));
+			runFullVmRestore.addParam('sysparm_subclientId', String($scope.selectedVmForFullRestore.subclientId));
+			runFullVmRestore.addParam('sysparm_vmGuid', String($scope.selectedVmForFullRestore.strGUID));
+			runFullVmRestore.addParam('sysparm_vmName', String($scope.selectedVmForFullRestore.name));
+
+			runFullVmRestore.getXML($scope.runFullVmRestoreCallback);
+		};
 
 		$scope.onBackupLevelSelection = function(selectedBackupLevel) {
 			$scope.selectedBackupLevel = selectedBackupLevel;
@@ -273,6 +338,7 @@ angular.module('angularapp').controller('VMController', [
 			var answer = response.responseXML.documentElement.getAttribute("answer");
 			$scope.runBackupResponse = JSON.parse(answer);
 			$scope.infoText = '';
+			$scope.errorText = '';
 			$j_commvault('#backupModal').modal('hide');
 			toasterservice.showInfoToast('Backup', 'Vm backup started with Job Id: ' + $scope.runBackupResponse.jobIds[0]);
 			$scope.$apply();
@@ -344,6 +410,9 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 			}
 		}
 	};
+	
+	$scope.pageSizeList = [5, 10, 20, 50, 100];
+	$scope.pageSize = $scope.pageSizeList[2];
 	
 	$scope.tableHeaders = [];
 	$scope.tableData = [];
@@ -790,14 +859,14 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>217</sys_mod_count>
+        <sys_mod_count>231</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-14 06:11:32</sys_updated_on>
+        <sys_updated_on>2018-03-16 12:55:56</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>

@@ -142,7 +142,7 @@
 						<hr/>
 						
 						
-						<div class="row table-action-bar">
+						<div class="row table-action-bar" ng-hide="categorySwitch">
 							<div class="col-xs-1">
 							  <select class="page-size-select" ng-model="pageSize" ng-options="pg for pg in pageSizeList">
 							  </select>
@@ -153,7 +153,7 @@
 								</dir-pagination-controls>
 							</div>
 							
-							<div class="col-xs-4 col-xs-offset-2 jobSwitch">
+							<div class="col-xs-4 col-xs-offset-2 jobSwitch" ng-hide="onAjax">
 								<div class="btn-group full-width" role="group">
 										  <button type="button" class="btn half-width" ng-click="onJobTypeSelection(1)" ng-class="{'selection': jobCategory === 1}">Active jobs</button>
 										  <button type="button" class="btn half-width" ng-click="onJobTypeSelection(2)" ng-class="{'selection': jobCategory === 2}">Job history</button>
@@ -169,7 +169,7 @@
 										{{helpInfo}}
 									</div>    
 								</div>
-								<div class="table-container" ng-show="tabeLoaded &#38;&#38; !showHelp">
+								<div class="table-container" ng-show="tabeLoaded &#38;&#38; !showHelp &#38;&#38; !categorySwitch">
 									<table class="table-snow">
 										<thead>
 											<tr>
@@ -181,7 +181,7 @@
 												<th class="clickable" ng-click="sort('jobStartTime')">Start
 													<span class="glyphicon sort-icon" ng-show="sortField=='jobStartTime'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
 												</th>	
-												<th class="clickable" ng-click="sort('jobEndTime')">End
+												<th class="clickable" ng-click="sort('jobEndTime')" ng-if="jobCategory === 2">End
 													<span class="glyphicon sort-icon" ng-show="sortField=='jobEndTime'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
 												</th>
 												<th class="clickable" ng-click="sort('jobElapsedTime')">Elapsed time
@@ -196,7 +196,7 @@
 												<td>{{job.jobSummary.status}}</td>
 												<td>{{job.jobSummary.jobType}}</td>
 												<td>{{job.jobSummary.jobStartTime * 1000 | date : "medium"}}</td>
-												<td>{{job.jobSummary.jobEndTime * 1000 | date : "medium"}}</td>
+												<td ng-if="jobCategory === 2">{{job.jobSummary.jobEndTime * 1000 | date : "medium"}}</td>
 												<td>{{job.jobSummary.jobElapsedTime | elapsedTime}}</td>
 												<td class="text-center">
 													<div class="action-dropdown">
@@ -226,13 +226,13 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-03-09 09:15:54</sys_created_on>
         <sys_id>8dca8b68db7013004eb15ec0cf9619b9</sys_id>
-        <sys_mod_count>34</sys_mod_count>
+        <sys_mod_count>48</sys_mod_count>
         <sys_name>ViewJobs</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_page_8dca8b68db7013004eb15ec0cf9619b9</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-14 06:11:30</sys_updated_on>
+        <sys_updated_on>2018-03-14 13:22:58</sys_updated_on>
     </sys_ui_page>
 </record_update>
