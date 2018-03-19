@@ -214,6 +214,12 @@ angular.module('angularapp').controller('VMController', [
 	'toasterservice', 
 	function($scope, toasterservice){
 		console.log('In VM controller');
+		
+		/*$j_commvault('#loginModal').modal({
+				keyboard: false,
+				backdrop: 'static'
+			});
+		$j_commvault('#loginModal').modal('show');*/
 
 		$scope.onAjax = true;
 		$scope.getVMList = function() {
@@ -271,7 +277,7 @@ angular.module('angularapp').controller('VMController', [
 			$scope.selectedVm = vm;
 		};
 		
-		$scope.showRestoreModal = function(vm) {
+		$scope.showFullVmRestoreModal = function(vm) {
 			$scope.errorText = '';
 			$scope.infoText = '';
 			$j_commvault('#restoreModal').modal({
@@ -328,6 +334,79 @@ angular.module('angularapp').controller('VMController', [
 			runFullVmRestore.addParam('sysparm_vmName', String($scope.selectedVmForFullRestore.name));
 
 			runFullVmRestore.getXML($scope.runFullVmRestoreCallback);
+		};
+		
+		$scope.showFileLevelRestoreModal = function(vm) {
+			$scope.errorText = '';
+			$scope.infoText = '';
+			$scope.selectedVmForFileLevelRestore = vm;
+			$j_commvault('#flvmrestoreModal').modal({
+				keyboard: false,
+				backdrop: 'static'
+			});
+			$j_commvault('#flvmrestoreModal').modal('show');
+		};
+		
+		$j_commvault('#flvmrestoreModal').on('hidden.bs.modal', function (e) {
+			$scope.errorText = '';
+			$scope.infoText = '';
+			$scope.vmusername = '';
+			$scope.vmpassword = '';
+			$scope.vmFileOverwrite = '';
+			$scope.vmFileSourcePath = '';
+			$scope.vmFileDestPath = '';
+			$scope.selectedVmForFileLevelRestore = null;
+			$scope.$apply();
+		});
+		
+		$scope.runFileLevelVmRestoreCallback = function(response) {
+			var answer = response.responseXML.documentElement.getAttribute("answer");
+			$scope.runFileLevelVmRestoreResponse = JSON.parse(answer);
+			$scope.infoText = '';
+			$scope.errorText = '';
+			$j_commvault('#flvmrestoreModal').modal('hide');
+			toasterservice.showInfoToast('File level VM Restore', 'Restore started with Job Id: ' + $scope.runFileLevelVmRestoreResponse.jobIds[0]);
+			$scope.$apply();
+			console.log($scope.runFileLevelVmRestoreResponse);	
+		};
+		
+		$scope.onFileLevelVmRestore = function () {
+			if(!$scope.vmusername || !$scope.vmpassword || $scope.vmusername.trim().length === 0 || $scope.vmpassword.trim().length === 0) {
+				$scope.errorText = 'Please provide guest vm credentials';
+				return;
+			}
+			if(!$scope.vmFileSourcePath || $scope.vmFileSourcePath.trim().length === 0) {
+				$scope.errorText = 'Please provide source file path to restore';
+				return;
+			}
+			if(!$scope.vmFileDestPath || $scope.vmFileDestPath.trim().length === 0) {
+				$scope.errorText = 'Please provide destination file path';
+				return;
+			}
+			if(!$scope.selectedVmForFileLevelRestore) {
+				$scope.errorText = 'Please select a vm to restore';
+				return;
+			}
+			
+			var overwriteFiles = $scope.vmFileOverwrite ? 1 : 0;
+			var sourcePath = "\\" + $scope.selectedVmForFileLevelRestore.strGUID + "\\" + $scope.vmFileSourcePath;
+			var destPath = "\\" + $scope.selectedVmForFileLevelRestore.strGUID + "\\" + $scope.vmFileDestPath;
+			
+			$scope.infoText = 'Please wait...';
+			var runFileLevelVmRestore = new GlideAjax('TestCommvaultEndpoint');
+			runFileLevelVmRestore.addParam('sysparm_name','runFileLevelVmRestore');
+			runFileLevelVmRestore.addParam('sysparm_subclientId', String($scope.selectedVmForFileLevelRestore.subclientId));
+			runFileLevelVmRestore.addParam('sysparm_destPath', String(destPath));
+			runFileLevelVmRestore.addParam('sysparm_destClientId', String($scope.selectedVmForFileLevelRestore.proxyClient.clientId));
+			runFileLevelVmRestore.addParam('sysparm_destClientName', String($scope.selectedVmForFileLevelRestore.proxyClient.clientName));
+			runFileLevelVmRestore.addParam('sysparm_serverName', String($scope.selectedVmForFileLevelRestore.pseudoClient.clientName));
+			runFileLevelVmRestore.addParam('sysparm_vmGuid', String($scope.selectedVmForFileLevelRestore.strGUID));
+			runFileLevelVmRestore.addParam('sysparm_vmUsername', String($scope.vmusername));
+			runFileLevelVmRestore.addParam('sysparm_vmPassword', String($scope.vmpassword));
+			runFileLevelVmRestore.addParam('sysparm_sourcePath', String(sourcePath));
+			runFileLevelVmRestore.addParam('sysparm_overwriteFiles', String(overwriteFiles));
+
+			runFileLevelVmRestore.getXML($scope.runFileLevelVmRestoreCallback);
 		};
 
 		$scope.onBackupLevelSelection = function(selectedBackupLevel) {
@@ -859,14 +938,14 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>231</sys_mod_count>
+        <sys_mod_count>244</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-16 12:55:56</sys_updated_on>
+        <sys_updated_on>2018-03-19 11:02:03</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>
