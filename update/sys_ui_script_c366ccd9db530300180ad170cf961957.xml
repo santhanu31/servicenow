@@ -140,6 +140,7 @@ angular.module('angularapp').controller('ViewJobsController', [
 		$scope.onJobTypeSelection = function(selectedJobType) {
 			$scope.jobCategory = selectedJobType;
 			$scope.categorySwitch = true;
+			$scope.hideHelpDialog();
 			$scope.getJobs();
 		};
 		
@@ -602,8 +603,9 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 			
 			angular.module('angularapp').controller('ViewClientsController', [
 				'$scope',
+				'$timeout',
 				'toasterservice',
-				function($scope, toasterservice){
+				function($scope, $timeout, toasterservice){
 				
 				$scope.onAjax = true;
 				$scope.tabeLoaded = false;
@@ -624,12 +626,28 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 					getClientsEndpoint.addParam('sysparm_name','getClients');
 					getClientsEndpoint.getXML($scope.onGetClients);
 				};
+					
+				$j_commvault('#backupModal').on('hidden.bs.modal', function (e) {
+					$scope.errorText = '';
+					$scope.infoText = '';
+					$scope.appList = [];
+					$scope.backupSetList = [];
+					$scope.subclientList = [];
+					$scope.selectedApp = null;
+					$scope.selectedBackupset = null;
+					$scope.selectedSubclient = null;
+					$scope.selectedBackupLevel = null;
+					$scope.$apply();
+				});
+				
 				
 				$scope.appList = [];
 				$scope.backupSetList = [];
 				$scope.subclientList = [];
-				$scope.getSubclients = function(clientId) {
-					$scope.clientId = clientId;
+				$scope.getSubclients = function(clientEntity, optype) {
+					$scope.clientId = clientEntity.clientId;
+					$scope.clientName = clientEntity.clientName;
+					$scope.backupModalOptype = optype;
 					$scope.onAjax = true;
 					$scope.selectedBackupset = null;
 					$scope.selectedBackupLevel = null;
@@ -639,6 +657,14 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 						$scope.appList = [];
 						$scope.backupSetList = [];
 						$scope.subclientList = [];
+						$scope.restoreOptions = {
+							fsFileDestPath: '',
+							fsRestoreOrigLocation: true,
+							fsFileOverwrite: true,
+							fsusername: '',
+							fspassword: '',
+							fsFileSourcePath: ''
+						};
 						var answer = response.responseXML.documentElement.getAttribute("answer");
 						$scope.subclientResponse = JSON.parse(answer);
 						$scope.onAjax = false;
@@ -687,11 +713,15 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 							}
 							return false;
 						};
-						angular.forEach($scope.subclientResponse.entity, function(record, rIndex){
+						
+						$timeout(function(){ 
+							angular.forEach($scope.subclientResponse.entity, function(record, rIndex){
 							if(!isBackupSetPresent(record.backupsetId) && record.applicationId === $scope.selectedApp.applicationId) {
 								$scope.backupSetList.push({backupsetId:record.backupsetId, backupsetName:record.backupsetName});
 								}
 							});
+						}, 200);
+						
 						};
 						
 						$scope.getSubclient = function(backupset) {
@@ -704,11 +734,14 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 								}
 								return false;
 							};
+							
+							$timeout(function(){ 
 							angular.forEach($scope.subclientResponse.entity, function(record, rIndex){
 								if(!isSubclientPresent(record.subclientId) && record.applicationId === $scope.selectedApp.applicationId && record.backupsetId === $scope.selectedBackupset.backupsetId) {
 									$scope.subclientList.push({subclientId:record.subclientId, subclientName:record.subclientName});
 									}
 								});
+							}, 200);
 							};
 							
 							$scope.selectedApp = null;
@@ -797,6 +830,96 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
 								runBackupEndpoint.addParam('sysparm_backupLevel',$scope.selectedBackupLevel);
 								
 								runBackupEndpoint.getXML($scope.runBackupCallback);
+							};
+					
+							$scope.fsRestoreOrigLocationStateChanged = function() {
+								$scope.restoreOptions.fsFileDestPath = '';
+							};
+					
+							$scope.runFsRestoreCallback = function(response) {
+								var answer = response.responseXML.documentElement.getAttribute("answer");
+								$scope.runFsRestoreResponse = JSON.parse(answer);
+								$scope.infoText = '';
+								$scope.errorText = '';
+								$j_commvault('#backupModal').modal('hide');
+								toasterservice.showInfoToast('Backup', 'Data restore started with Job Id: ' + $scope.runFsRestoreResponse.jobIds[0]);
+								$scope.$apply();
+								console.log($scope.runFsRestoreResponse);
+							};
+					
+							$scope.onRunRestore = function() {
+								$scope.errorText = "";
+								$scope.infoText = "";
+								if(!$scope.selectedApp)	{
+									$scope.errorText = "Please select an application";
+									return;
+								}
+								if(!$scope.selectedBackupset)	{
+									$scope.errorText = "Please select a backupset";
+									return;
+								}
+								if(!$scope.selectedSubclient)	{
+									$scope.errorText = "Please select a subclient";
+									return;
+								}
+								if(!$scope.clientId)	{
+									$scope.errorText = "Please select a client";
+									return;
+								}
+								if(!$scope.restoreOptions.fsFileSourcePath || $scope.restoreOptions.fsFileSourcePath.trim().length === 0) {
+										$scope.errorText = "Please provide a source path";
+										return;
+								}
+								if(!$scope.restoreOptions.fsRestoreOrigLocation) {
+									if(!$scope.restoreOptions.fsFileDestPath || $scope.restoreOptions.fsFileDestPath.trim().length === 0) {
+										$scope.errorText = "Please provide a destination path";
+										return;
+									}
+								}
+								if($scope.restoreOptions.fsusername) {
+									if(!$scope.restoreOptions.fspassword || $scope.restoreOptions.fspassword.trim().length === 0) {
+										$scope.errorText = "Please provide impersonate user credentials";
+										return;
+									}
+								}
+								if($scope.restoreOptions.fspassword) {
+									if(!$scope.restoreOptions.fsusername || $scope.restoreOptions.fsusername.trim().length === 0) {
+										$scope.errorText = "Please provide impersonate user credentials";
+										return;
+									}
+								}
+								
+								var inPlace = $scope.restoreOptions.fsRestoreOrigLocation ? 1 : 0;
+								
+								var useImpersonation = 0;
+								if($scope.restoreOptions.fsusername.trim().length>0 && $scope.restoreOptions.fspassword.trim().length>0) {
+									useImpersonation = 1;
+								}
+								
+								var fileOverwrite = $scope.restoreOptions.fsFileOverwrite ? 1 : 0;
+								
+								$scope.infoText = 'Please wait...';
+								var runFsRestore = new GlideAjax('TestCommvaultEndpoint');
+								runFsRestore.addParam('sysparm_name','runFsRestore');
+								runFsRestore.addParam('sysparm_subclientId', String($scope.selectedSubclient.subclientId));
+								runFsRestore.addParam('sysparm_applicationId', String($scope.selectedApp.applicationId));
+								runFsRestore.addParam('sysparm_clientName', String($scope.clientName));
+								runFsRestore.addParam('sysparm_backupsetId', String($scope.selectedBackupset.backupsetId));
+								//runFsRestore.addParam('sysparm_instanceId', String($scope.selectedVmForFullRestore.proxyClient.clientName));
+								runFsRestore.addParam('sysparm_clientId', String($scope.clientId));
+								runFsRestore.addParam('sysparm_subclientName', String($scope.selectedSubclient.subclientName));
+								runFsRestore.addParam('sysparm_backupsetName', String($scope.selectedBackupset.backupsetName));
+								runFsRestore.addParam('sysparm_inPlace', String(inPlace));
+								runFsRestore.addParam('sysparm_destPath', String($scope.restoreOptions.fsFileDestPath));
+								runFsRestore.addParam('sysparm_sourcePath', String($scope.restoreOptions.fsFileSourcePath));
+								runFsRestore.addParam('sysparm_useImpersonation', String(useImpersonation));
+								runFsRestore.addParam('sysparm_userName', String($scope.restoreOptions.fsusername));
+								runFsRestore.addParam('sysparm_password', String($scope.restoreOptions.fspassword));
+								runFsRestore.addParam('sysparm_overwriteFiles', String(fileOverwrite));
+								
+
+								runFsRestore.getXML($scope.runFsRestoreCallback);
+								
 							};
 							
 							$scope.doActivityControl = function(clientId) {
@@ -938,14 +1061,14 @@ angular.module('angularapp').controller('SLAReportController', function($scope){
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>244</sys_mod_count>
+        <sys_mod_count>269</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-19 11:02:03</sys_updated_on>
+        <sys_updated_on>2018-03-20 12:03:24</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>
