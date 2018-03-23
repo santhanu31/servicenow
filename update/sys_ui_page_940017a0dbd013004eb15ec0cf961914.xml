@@ -18,12 +18,14 @@
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
 	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular-sanitize.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular-cookies.min.js"></script>
 	<script src="https://code.angularjs.org/1.6.4/angular-animate.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/angularjs-toaster/1.1.0/toaster.min.js"></script>
 	<script src="https://code.highcharts.com/stock/highstock.src.js"></script>
 	<script src="https://rawgithub.com/pablojim/highcharts-ng/master/src/highcharts-ng.js"></script>
 	<g:requires name="x_183199_testcommv.dirPagination.jsdbx"/>
 	<script src="x_183199_testcommv.angular_app_client_lo.jsdbx"></script>	
+	<script src="x_183199_testcommv.loginDirective.jsdbx"></script>
 	<script src="x_183199_testcommv.toaster.svc.jsdbx"></script>
 	
 	
@@ -34,9 +36,11 @@
 	
 	<div id="cvapp" ng-app="angularapp" class="ng-cloak">
 		
-		<div ng-controller="ViewClientsController as vcctrl" class="appContainer">
+		<div ng-controller="ViewClientsController as vcctrl" class="appContainer" ng-init="getLoginCookie()">
 			
 			<toaster-container toaster-options="{'position-class': 'toast-bottom-right'}"></toaster-container>
+			
+			<commvaultlogin callback="getClients()" cv-login="cvLogin" ng-if="unauthorized"></commvaultlogin>
 			
 			<!-- Backup Modal -->
 			
@@ -357,13 +361,13 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-02-12 13:07:19</sys_created_on>
         <sys_id>940017a0dbd013004eb15ec0cf961914</sys_id>
-        <sys_mod_count>143</sys_mod_count>
+        <sys_mod_count>150</sys_mod_count>
         <sys_name>ViewClients</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_page_940017a0dbd013004eb15ec0cf961914</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-20 11:58:37</sys_updated_on>
+        <sys_updated_on>2018-03-23 06:15:52</sys_updated_on>
     </sys_ui_page>
 </record_update>

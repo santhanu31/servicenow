@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_ui_script">
+    <sys_ui_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description/>
+        <global>false</global>
+        <name>x_183199_testcommv.loginDirective</name>
+        <script><![CDATA[(function () {
+	angular.module('angularapp').directive('commvaultlogin', function(){
+		
+		var directive = {};
+		
+		directive.restrict = 'E';
+		
+		
+		directive.scope = {
+			callback: '&',
+			cvLogin: '='
+		};
+		
+		directive.controller = [
+			'$scope',
+			'$cookies',
+			'toasterservice',
+			function ($scope, $cookies, toasterservice) {
+				$j_commvault('#loginModal').modal({
+					keyboard: false,
+					backdrop: 'static'
+				});
+				$j_commvault('#loginModal').modal('show');
+				
+				
+				//$scope.cvLogin = {};
+				/*try {
+					var cvLoginFromCookie = $cookies.getObject('snow_cvLogin');
+					if(cvLoginFromCookie) {
+						$scope.cvLogin = cvLoginFromCookie;
+					}
+				} catch (e) {
+					console.log('Failed to get cookie');
+				}*/
+
+				$scope.loginparams = {
+					cvusername: '',
+					cvpassword: '',
+					cvwebconsolename: ''
+				};
+				
+				if($scope.cvLogin) {
+					$scope.loginparams.cvusername = $scope.cvLogin.username ? $scope.cvLogin.username : '';
+					$scope.loginparams.cvwebconsolename = $scope.cvLogin.endpoint ? $scope.cvLogin.endpoint : '';
+				}
+
+				$j_commvault('#loginModal').on('shown.bs.modal', function (e) {
+					if($scope.loginparams.cvusername.length > 0 && $scope.loginparams.cvwebconsolename.length > 0)	 {
+						angular.element('#cvpassword').focus();
+					}
+				});
+
+				$j_commvault('#loginModal').on('hidden.bs.modal', function (e) {
+					$scope.errorText = '';
+					$scope.infoText = '';
+					$scope.loginparams = {
+						cvusername: '',
+						cvpassword: '',
+						cvwebconsolename: ''
+					};
+					$scope.$apply();
+				});
+
+				/*$scope.showLoginModal = function() {
+					$j_commvault('#loginModal').modal({
+						keyboard: false,
+						backdrop: 'static'
+					});
+					$j_commvault('#loginModal').modal('show');
+					if($scope.cvLogin) {
+						$scope.loginparams.cvusername = $scope.cvLogin.username ? $scope.cvLogin.username : '';
+						$scope.loginparams.cvwebconsolename = $scope.cvLogin.endpoint ? $scope.cvLogin.endpoint : '';
+					}
+				};*/
+
+				$scope.onDoLogin = function (response) {
+					$scope.makeBtnInactive = false;
+					var answer = response.responseXML.documentElement.getAttribute("answer");
+					var loginResponse = JSON.parse(answer);
+					if (loginResponse) {
+						if (!loginResponse.token || loginResponse.token.length === 0) {
+							if (loginResponse.errList.length === 0) {
+								$scope.errorText = 'Something went wrong. Please make sure that the endpoint url is correct';
+							} else {
+								if (loginResponse.errList[0].errLogMessage) {
+									$scope.errorText = loginResponse.errList[0].errLogMessage;
+								} else {
+									$scope.errorText = 'Something went wrong. Please make sure that the endpoint url is correct';
+								}
+							}
+						} else {
+							var user = $scope.loginparams.cvusername;
+							var endpoint = $scope.loginparams.cvwebconsolename;
+							$j_commvault('#loginModal').modal('hide');
+							var cvLogin = {};
+							$scope.cvLogin.username = user;
+							$scope.cvLogin.token = loginResponse.token;
+							$scope.cvLogin.endpoint = endpoint;
+
+							var expireDate = new Date();
+							expireDate.setDate(expireDate.getDate() + 7);
+
+							$cookies.putObject('snow_cvLogin', $scope.cvLogin, {
+								'expires': expireDate
+							});
+							//$scope.cvLogin = cvLogin;
+							toasterservice.showInfoToast('Commvault login', 'Successfully logged in as ' + user);
+							//$scope.$apply();
+							$scope.callback();
+						}
+					} else {
+						$scope.errorText = 'Something went wrong. Please make sure that the endpoint url is correct';
+					}
+
+					$scope.infoText = '';
+					$scope.$apply();
+				};
+
+				$scope.onLogin = function () {
+					$scope.errorText = '';
+					$scope.infoText = '';
+					if (!$scope.loginparams.cvusername || $scope.loginparams.cvusername.trim().length === 0) {
+						$scope.errorText = 'Please provide a username';
+						return;
+					}
+					if (!$scope.loginparams.cvpassword || $scope.loginparams.cvpassword.trim().length === 0) {
+						$scope.loginparams.cvpassword = '';
+					}
+					if (!$scope.loginparams.cvwebconsolename || $scope.loginparams.cvwebconsolename.trim().length === 0) {
+						$scope.errorText = 'Please provide a webconsole name';
+						return;
+					}
+
+					$scope.infoText = 'Please wait...';
+					$scope.makeBtnInactive = true;
+
+					var doLoginEndpoint = new GlideAjax('TestCommvaultEndpoint');
+					doLoginEndpoint.addParam('sysparm_name', 'doLogin');
+					doLoginEndpoint.addParam('sysparm_cvusername', String($scope.loginparams.cvusername));
+					doLoginEndpoint.addParam('sysparm_cvpassword', String($scope.loginparams.cvpassword));
+					doLoginEndpoint.addParam('sysparm_cvwebconsolename', String($scope.loginparams.cvwebconsolename));
+					doLoginEndpoint.getXML($scope.onDoLogin);
+				};
+			}
+		];
+		
+		
+		directive.template = '<div class="modal loginModal fade" id="loginModal" tabindex="-1" role="dialog"><div class="modal-dialog" role="document"><div class="modal-content"><div class="modal-header"><h4 class="modal-title"> Commvault Login</h4></div><form ng-submit="onLogin()" novalidate="true"><div class="modal-body"><div class="row margin-top-10"><div class="col-xs-12"><div class="form-group"><input type="text" class="form-control" id="cvusername" name="cvusername" required="true" ng-model="loginparams.cvusername"></input><label for="cvusername" class="floating-label">Username</label></div></div></div><div class="row margin-top-10"><div class="col-xs-12"><div class="form-group"><input type="password" class="form-control" id="cvpassword" name="cvpassword" required="true" ng-model="loginparams.cvpassword"></input><label for="cvpassword" class="floating-label">Password</label></div></div></div><div class="row margin-top-10"><div class="col-xs-12"><div class="form-group"><input type="text" class="form-control" id="cvwebconsolename" name="cvwebconsolename" required="true" ng-model="loginparams.cvwebconsolename"></input><label for="cvwebconsolename" class="floating-label">Webconsole</label></div></div></div><div><div class="row"><div class="col-xs-12 text-center"><span class="error-text">{{errorText}}</span><span class="info-text">{{infoText}}</span></div></div></div>	</div><div class="modal-footer"><button type="submit" class="btn actionBtn" ng-class="{\'inactiveBtn\':  makeBtnInactive}"> Login</button></div></form></div></div></div>';
+		
+		return directive;
+		
+	}); 
+})();	]]></script>
+        <script_name>loginDirective</script_name>
+        <sys_class_name>sys_ui_script</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2018-03-22 14:46:43</sys_created_on>
+        <sys_id>36ab4b74db4513004eb15ec0cf9619fc</sys_id>
+        <sys_mod_count>12</sys_mod_count>
+        <sys_name>x_183199_testcommv.loginDirective</sys_name>
+        <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
+        <sys_update_name>sys_ui_script_36ab4b74db4513004eb15ec0cf9619fc</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2018-03-22 17:01:26</sys_updated_on>
+        <use_scoped_format>false</use_scoped_format>
+    </sys_ui_script>
+</record_update>
