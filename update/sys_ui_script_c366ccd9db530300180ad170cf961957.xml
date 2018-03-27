@@ -1115,7 +1115,7 @@
 					
 				if(responseJson.cvStatusCode === 200) {
 					$scope.runFsRestoreResponse = responseJson;
-					toasterservice.showInfoToast('Backup', 'Data restore started with Job Id: ' + $scope.runFsRestoreResponse.jobIds[0]);
+					toasterservice.showInfoToast('Restore', 'Data restore started with Job Id: ' + $scope.runFsRestoreResponse.jobIds[0]);
 					console.log($scope.runFsRestoreResponse);
 				} else if(responseJson.cvStatusCode === 401) {
 					//toasterservice.showInfoToast('Commvault login', 'User is logged out');
@@ -1482,14 +1482,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>324</sys_mod_count>
+        <sys_mod_count>325</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-23 11:39:02</sys_updated_on>
+        <sys_updated_on>2018-03-23 12:29:30</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>
