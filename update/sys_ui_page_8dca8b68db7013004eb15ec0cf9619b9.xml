@@ -4,10 +4,12 @@
         <category>general</category>
         <client_script/>
         <description/>
-        <direct>false</direct>
+        <direct>true</direct>
         <endpoint>x_183199_testcommv_ViewJobs.do</endpoint>
         <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
 <j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+	
 	
 	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"></link>
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/angularjs-toaster/1.1.0/toaster.min.css" rel="stylesheet" />
@@ -27,11 +29,20 @@
 	<script src="x_183199_testcommv.angular_app_client_lo.jsdbx"></script>	
 	<script src="x_183199_testcommv.loginDirective.jsdbx"></script>
 	<script src="x_183199_testcommv.toaster.svc.jsdbx"></script>
-	
+	<script src="x_183199_testcommv.ApiServices.jsdbx"></script>
+	<script src="x_183199_testcommv.jobFactory.jsdbx"></script>
+	<script src="x_183199_testcommv.UtilFactory.jsdbx"></script>
 	
 	<script>
           var $j_commvault = jQuery.noConflict(true);
     </script>
+	
+	<g:evaluate object="true">
+         var g_ck = gs.getSession().getSessionToken(); 
+	</g:evaluate> 
+	<script>     
+			 window.g_ck = "$[g_ck]"; 
+	</script>
 	
 	
 	<div id="cvapp" ng-app="angularapp" class="ng-cloak">
@@ -40,7 +51,322 @@
 			
 			<toaster-container toaster-options="{'position-class': 'toast-bottom-right'}"></toaster-container>
 			
-			<commvaultlogin callback="getJobs()" cv-login="cvLogin" ng-if="unauthorized"></commvaultlogin>
+			<commvaultlogin callback="startScheduler()" cv-login="cvLogin" ng-if="cvLogin.unauthorized"></commvaultlogin>
+			
+			<!-- send log files modal -->
+			
+			<div class="modal sendLogsModal fade" id="sendLogsModal" tabindex="-1" role="dialog">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<button type="button" class="close btn" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&#xD7;</span></button>
+							<h4 class="modal-title"> Send logs</h4>
+						</div>
+						<div class="modal-body">
+							
+							<div class="panel-group" id="sendLogsAccordion">
+								<div class="panel panel-default">
+									<div class="panel-heading" data-toggle="collapse" href="#outputSection">
+										<h4 class="panel-title">
+											Output
+										</h4>
+									</div>
+									<div id="outputSection" class="panel-collapse collapse in">
+										<div class="panel-body">
+											<div class="row">
+												<div class="col-xs-12">
+													<div class="checkbox">
+														<label>
+															<input id="autoUpload" type="checkbox" ng-model="sendLogsModel.autoUpload"> Auto upload</input>
+														</label>
+													</div>	
+												</div>
+											</div>
+											
+											<div class="row">
+												<div class="col-xs-12">
+													<div class="checkbox">
+														<label>
+															<input id="outputTo" type="checkbox" ng-model="sendLogsModel.outputTo"> Output to</input>
+														</label>
+													</div>	
+												</div>
+											</div>
+											
+											<div ng-if="sendLogsModel.outputTo == true">
+											
+												<div class="row">
+													<div class="col-xs-4">
+														<div class="radio">
+														  <label>
+															<input type="radio" id="localPathRadio" ng-model="sendLogsModel.pathSelectionRadio" value="localPath" ng-change="localPathRadioChange()"></input>
+															Local path
+														  </label>
+														</div>	
+													</div>
+													<div class="col-xs-8">
+														<div class="form-group">
+															<input type="text" class="form-control" id="localPath" name="localPath" required="true" ng-model="sendLogsModel.localPath" ng-disabled="sendLogsModel.pathSelectionRadio != 'localPath'"></input>
+															<label for="localPath" class="floating-label">Local path</label>
+														</div>	
+													</div>
+												</div>
+
+												<div class="row margin-top-10">
+													<div class="col-xs-4">
+														<div class="radio">
+														  <label>
+															<input type="radio" id="networkPathRadio" ng-model="sendLogsModel.pathSelectionRadio" value="networkPath" ng-change="networkPathRadioChange()"></input>
+															Network path
+														  </label>
+														</div>	
+													</div>
+													<div class="col-xs-8">
+														<div class="form-group">
+															<input type="text" class="form-control" id="networkPath" name="networkPath" required="true" ng-model="sendLogsModel.networkPath" ng-disabled="sendLogsModel.pathSelectionRadio != 'networkPath'"></input>
+															<label for="networkPath" class="floating-label">Network path</label>
+														</div>
+													</div>
+												</div>
+												<div class="row margin-top-10" ng-if="sendLogsModel.pathSelectionRadio == 'networkPath'">
+													<div class="col-xs-6">
+														<div class="form-group">
+															<input type="text" class="form-control" id="networkUserName" name="networkUserName" required="true" ng-model="sendLogsModel.networkUserName"></input>
+															<label for="networkUserName" class="floating-label">Username</label>
+														</div>
+													</div>
+													<div class="col-xs-6">
+														<div class="form-group">
+															<input type="password" class="form-control" id="networkPassword" name="networkPassword" required="true" ng-model="sendLogsModel.networkPassword"></input>
+															<label for="networkPassword" class="floating-label">Password</label>
+														</div>
+													</div>
+												</div>
+
+											</div>
+											
+										</div>
+									</div>
+								</div>
+								<div class="panel panel-default">
+									<div class="panel-heading" data-toggle="collapse" href="#infoSection">
+										<h4 class="panel-title">
+											Information
+										</h4>
+									</div>
+									<div id="infoSection" class="panel-collapse collapse">
+										<div class="panel-body">
+											
+											<div class="row">
+												<div class="col-xs-6">
+													<div class="checkbox">
+														<label>
+															<input id="isCommservDbLogSelected" type="checkbox" ng-model="sendLogsModel.isCommservDbLogSelected"> Commserve database</input>
+														</label>
+													</div>
+												</div>
+												<div class="col-xs-6">
+													<div class="checkbox">
+														<label>
+															<input id="isLatestDbLogSelected" type="checkbox" ng-model="sendLogsModel.isLatestDbLogSelected" ng-disabled="sendLogsModel.isCommservDbLogSelected == false"> Get latest database(s)</input>
+														</label>
+													</div>
+												</div>
+											</div>	
+											
+											<div class="row">
+												<div class="col-xs-6">
+													<div class="checkbox">
+														<label>
+															<input id="isLogsSelected" type="checkbox" ng-model="sendLogsModel.isLogsSelected"> Logs</input>
+														</label>
+													</div>
+												</div>
+												<div class="col-xs-6">
+													<div class="checkbox">
+														<label>
+															<input id="isDbLogsSelected" type="checkbox" ng-model="sendLogsModel.isDbLogsSelected"> Database logs</input>
+														</label>
+													</div>
+												</div>
+											</div>
+											
+											<div class="row">
+												<div class="col-xs-6">
+													<div class="checkbox">
+														<label>
+															<input id="isMachineConfigSelected" type="checkbox" ng-model="sendLogsModel.isMachineConfigSelected"> Machine configuration</input>
+														</label>
+													</div>
+												</div>
+												<div class="col-xs-6">
+													<div class="checkbox">
+														<label>
+															<input id="isOsLogsSelected" type="checkbox" ng-model="sendLogsModel.isOsLogsSelected"> OS logs</input>
+														</label>
+													</div>
+												</div>
+											</div>
+											
+											<div class="row">
+												<div class="col-xs-6">
+													<div class="checkbox">
+														<label>
+															<input id="isProcessDumpSelected" type="checkbox" ng-model="sendLogsModel.isProcessDumpSelected"> Process dump</input>
+														</label>
+													</div>
+												</div>
+												<div class="col-xs-6">
+													<div class="checkbox">
+														<label>
+															<input id="isJobResultsSelected" type="checkbox" ng-model="sendLogsModel.isJobResultsSelected"> Job results</input>
+														</label>
+													</div>
+												</div>
+											</div>
+											
+											<div class="row">
+												<div class="col-xs-6">
+													<div class="checkbox">
+														<label>
+															<input id="isIndexLogSelected" type="checkbox" ng-model="sendLogsModel.isIndexLogSelected"> Index</input>
+														</label>
+													</div>
+												</div>
+												<div class="col-xs-6">
+													<div class="checkbox">
+														<label>
+															<input id="isTransactionLogsSelected" type="checkbox" ng-model="sendLogsModel.isTransactionLogsSelected"> Index transaction logs</input>
+														</label>
+													</div>
+												</div>
+											</div>
+											
+											<div ng-if="sendLogsModel.isTransactionLogsSelected == true">
+											
+												<div class="row margin-top-5">
+													<div class="col-xs-12">
+														<label>
+															Choose Job Id range
+														</label>
+													</div>	
+												</div>	
+
+												<div class="row margin-top-15">
+													<div class="col-xs-6">
+														<div class="form-group">
+															<input type="text" class="form-control" id="transactionRangeFrom" name="transactionRangeFrom" required="true" ng-model="sendLogsModel.transactionRangeFrom"></input>
+															<label for="transactionRangeFrom" class="floating-label">From</label>
+														</div>
+													</div>
+													<div class="col-xs-6">
+														<div class="form-group">
+															<input type="text" class="form-control" id="transactionRangeTo" name="transactionRangeTo" required="true" ng-model="sendLogsModel.transactionRangeTo"></input>
+															<label for="transactionRangeTo" class="floating-label">To</label>
+														</div>
+													</div>
+												</div>
+											
+											</div>	
+											
+											
+										</div>
+									</div>
+								</div>
+								<div class="panel panel-default">
+									<div class="panel-heading" data-toggle="collapse" href="#notifySection">
+										<h4 class="panel-title">
+											Notification
+										</h4>
+									</div>
+									<div id="notifySection" class="panel-collapse collapse">
+										<div class="panel-body">
+											
+											<div class="row">
+												<div class="col-xs-12">
+													<div class="checkbox">
+														<label>
+															<input id="notifyByEmail" type="checkbox" ng-model="sendLogsModel.notifyByEmail"> Notify by email</input>
+														</label>
+													</div>	
+												</div>
+											</div>
+											
+											<div ng-if="sendLogsModel.notifyByEmail == true">
+											
+												<div class="row">
+													<div class="col-xs-6">
+																Users and user groups
+													</div>
+													<div class="col-xs-6">
+														<div class="form-group">
+															<input type="text" class="form-control" id="userSelection" name="userSelection" required="true" ng-model="sendLogsModel.userSelection"></input>
+															<label for="userSelection" class="floating-label">Select users</label>
+														</div>
+													</div>
+												</div>
+
+												<div class="row">
+													<div class="col-xs-6">
+														<div class="checkbox">
+															<label>
+																<input id="isIncludeMe" type="checkbox" ng-model="sendLogsModel.isIncludeMe"> Include me in mail</input>
+															</label>
+														</div>
+													</div>
+													<div class="col-xs-6">
+														<div class="checkbox">
+															<label>
+																<input id="isAttachLogs" type="checkbox" ng-model="sendLogsModel.isAttachLogs"> Attach logs(not recommended)</input>
+															</label>
+														</div>
+													</div>
+												</div>
+
+												<div class="row margin-top-15">
+													<div class="col-xs-12">
+														<div class="form-group">
+															<input type="text" class="form-control" id="emailSubject" name="emailSubject" required="true" ng-model="sendLogsModel.emailSubject"></input>
+															<label for="emailSubject" class="floating-label">Subject</label>
+														</div>
+													</div>
+												</div>
+
+												<div class="row">
+													<div class="col-xs-6">
+															Problem description
+													</div>
+													<div class="col-xs-6">
+														<textarea class="form-control" rows="3" ng-model="sendLogsModel.problemDescription"></textarea>
+													</div>
+												</div>
+											
+											</div>
+											
+										</div>
+									</div>
+								</div>
+							</div> 
+							
+							<div class="error-text-container">
+								<div class="row">
+									<div class="col-xs-12 text-center">
+										<span class="error-text">{{sendLogsModel.errorText}}</span>
+										<span class="info-text">{{sendLogsModel.infoText}}</span>
+									</div>
+								</div>
+							</div>	
+								
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn actionBtn modalClose" data-dismiss="modal">Close</button>
+							<button type="button" class="btn actionBtn" ng-click="onSendLogsSubmit()"> Submit</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<!-- send log files modal end -->
 			
 			<!-- Job Details Modal -->
 			
@@ -173,7 +499,7 @@
 										{{helpInfo}}
 									</div>    
 								</div>
-								<div class="table-container" ng-show="tabeLoaded &#38;&#38; !showHelp &#38;&#38; !categorySwitch">
+								<div class="table-container" ng-show="tableLoaded &#38;&#38; !showHelp &#38;&#38; !categorySwitch">
 									<table class="table-snow">
 										<thead>
 											<tr>
@@ -181,16 +507,17 @@
 													<span class="glyphicon sort-icon" ng-show="sortField=='jobId'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
 												</th>
 												<th>Status</th>
-												<th>Opertaion</th>
-												<th class="clickable" ng-click="sort('jobStartTime')">Start
+												<th class="width-15">Opertaion</th>
+												<th class="clickable width-20" ng-click="sort('jobStartTime')">Start
 													<span class="glyphicon sort-icon" ng-show="sortField=='jobStartTime'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
 												</th>	
 												<th class="clickable" ng-click="sort('jobEndTime')" ng-if="jobCategory === 2">End
 													<span class="glyphicon sort-icon" ng-show="sortField=='jobEndTime'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
 												</th>
-												<th class="clickable" ng-click="sort('jobElapsedTime')">Elapsed time
+												<th class="clickable width-15" ng-click="sort('jobElapsedTime')">Elapsed time
 													<span class="glyphicon sort-icon" ng-show="sortField=='jobElapsedTime'" ng-class="{'glyphicon-chevron-up':reverse,'glyphicon-chevron-down':!reverse}"></span>
 												</th>
+												<th ng-if="jobCategory === 1" class="width-20">Progress</th>
 												<th class="text-center">Actions</th>
 											</tr>
 										</thead>
@@ -202,11 +529,22 @@
 												<td>{{job.jobSummary.jobStartTime * 1000 | date : "medium"}}</td>
 												<td ng-if="jobCategory === 2">{{job.jobSummary.jobEndTime * 1000 | date : "medium"}}</td>
 												<td>{{job.jobSummary.jobElapsedTime | elapsedTime}}</td>
+												<td ng-if="jobCategory === 1">
+														<div class="progress job">
+														  <div class="progress-bar progress-bar-info" role="progressbar" style='width: {{job.jobSummary.percentComplete}}%'>
+															<span class="percent-text">{{job.jobSummary.percentComplete}}%</span>
+														  </div>
+														</div>
+												</td>
 												<td class="text-center">
 													<div class="action-dropdown">
 														<button role="button" class="btn action-dropbtn" ng-click="toggleActionDropdown(job)"><span class="glyphicon glyphicon-option-horizontal button-icon"></span></button>
-														  <div ng-click="showJobDetails(job)" class="action-dropdown-content" ng-class="{'open':job.showActionDropdown}">
-															<a class="text-left">View job details</a>
+														  <div class="action-dropdown-content" ng-class="{'open':job.showActionDropdown}">
+															<a class="text-left" ng-if="isActionAllowed('job_kill', job.jobSummary)" ng-click="performJobOpertaion('job_kill', job.jobSummary.jobId)">Kill</a>
+															<a class="text-left" ng-if="isActionAllowed('job_suspend', job.jobSummary)" ng-click="performJobOpertaion('job_suspend', job.jobSummary.jobId)">Suspend</a>
+															<a class="text-left" ng-if="isActionAllowed('job_resume', job.jobSummary)" ng-click="performJobOpertaion('job_resume', job.jobSummary.jobId)">Resume</a>
+															<a class="text-left" ng-click="showSendLogsModal(job)">Send logs</a>
+															<a ng-click="showJobDetails(job)" class="text-left">View job details</a>
 														  </div>
 													</div>
 												</td>
@@ -230,13 +568,13 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-03-09 09:15:54</sys_created_on>
         <sys_id>8dca8b68db7013004eb15ec0cf9619b9</sys_id>
-        <sys_mod_count>51</sys_mod_count>
+        <sys_mod_count>98</sys_mod_count>
         <sys_name>ViewJobs</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_page_8dca8b68db7013004eb15ec0cf9619b9</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-23 06:16:06</sys_updated_on>
+        <sys_updated_on>2018-05-02 13:13:41</sys_updated_on>
     </sys_ui_page>
 </record_update>

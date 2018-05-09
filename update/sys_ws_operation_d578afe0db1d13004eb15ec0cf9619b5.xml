@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_ws_operation">
+    <sys_ws_operation action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <consumes>application/json,application/xml,text/xml</consumes>
+        <consumes_customized>false</consumes_customized>
+        <default_operation_uri/>
+        <enforce_acl>cf9d01d3e73003009d6247e603f6a990</enforce_acl>
+        <http_method>GET</http_method>
+        <name>getSLAReport</name>
+        <operation_script><![CDATA[(function process(/*RESTAPIRequest*/ request, /*RESTAPIResponse*/ response) {
+	var headers = request.headers;
+	var token = headers['cvtoken'];
+	var endpoint = headers['cvendpoint'];
+
+	//gs.info('Getting schedules using token ' + token);
+		
+	var sm = new sn_ws.RESTMessageV2();
+	sm.setEndpoint(endpoint + "/CustomReportsEngine/rest/reportsplusengine/reports/name:Servers%20SLA?includeDrafts=false&version=0");
+	sm.setHttpMethod("get");
+	sm.setHttpTimeout(80000);
+	sm.setRequestHeader("Accept","application/json");
+	sm.setRequestHeader("Authtoken", token);
+	sm.setLogLevel("all");
+
+	var cvresponse = sm.execute();
+	var cvresponseBody = cvresponse.getBody();
+	var statusCode = cvresponse.getStatusCode();
+
+	gs.info("statusCode " + statusCode);
+	gs.info("responseBody " + cvresponseBody); 
+
+	if(statusCode != 200) {
+		cvresponseBody = "{}";
+	}
+
+	var responseJson = JSON.parse(cvresponseBody);
+	responseJson.cvStatusCode = statusCode;
+
+	gs.info('Response json: ' + responseJson);
+
+	return responseJson;
+
+})(request, response);]]></operation_script>
+        <operation_uri>/api/x_183199_testcommv/cvapi/slareport</operation_uri>
+        <produces>application/json,application/xml,text/xml</produces>
+        <produces_customized>false</produces_customized>
+        <relative_path>/slareport</relative_path>
+        <request_example/>
+        <requires_acl_authorization>false</requires_acl_authorization>
+        <requires_authentication>true</requires_authentication>
+        <short_description/>
+        <sys_class_name>sys_ws_operation</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2018-04-03 07:57:36</sys_created_on>
+        <sys_id>d578afe0db1d13004eb15ec0cf9619b5</sys_id>
+        <sys_mod_count>0</sys_mod_count>
+        <sys_name>getSLAReport</sys_name>
+        <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
+        <sys_update_name>sys_ws_operation_d578afe0db1d13004eb15ec0cf9619b5</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2018-04-03 07:57:36</sys_updated_on>
+        <web_service_definition display_value="cvapi">d1004b1fdbc513004eb15ec0cf96190b</web_service_definition>
+        <web_service_version/>
+    </sys_ws_operation>
+</record_update>

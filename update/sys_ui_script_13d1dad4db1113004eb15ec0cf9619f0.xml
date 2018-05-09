@@ -1,0 +1,477 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_ui_script">
+    <sys_ui_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description/>
+        <global>false</global>
+        <name>x_183199_testcommv.ApiServices</name>
+        <script><![CDATA[(function(){
+angular.module('angularapp').service('restservice', [
+	'$http', 
+	'utilFactory',
+	function($http, utilFactory) {
+		this.getSchedules = function(snow_usertoken, cvtoken, cvendpoint) {
+			return $http.get('/api/x_183199_testcommv/cvapi/schedules', {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.getClients = function(snow_usertoken, cvtoken, cvendpoint, includeVM) {
+			return $http.get('/api/x_183199_testcommv/cvapi/clients', {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				},
+				params: {
+					'includeVM' : includeVM
+				}
+			});
+		};
+		
+		this.getClientGroups = function(snow_usertoken, cvtoken, cvendpoint) {
+			return $http.get('/api/x_183199_testcommv/cvapi/clientgroups', {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.getClientGroupProperties = function(snow_usertoken, cvtoken, cvendpoint, clientGroupId) {
+			return $http.get('/api/x_183199_testcommv/cvapi/clientgroupproperties', {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				},
+				params: {
+					'clientGroupId' : clientGroupId
+				}
+			});
+		};
+		
+		this.getClientsForClientGroup = function(snow_usertoken, cvtoken, cvendpoint, clientGroupId) {
+			return $http.get('/api/x_183199_testcommv/cvapi/getclientsforclientgroup', {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				},
+				params: {
+					'clientGroupId' : clientGroupId
+				}
+			});
+		};
+		
+		this.postClientGroupOperation = function(snow_usertoken, cvtoken, cvendpoint, clientGroupOperationInfo) {
+			return $http.post('/api/x_183199_testcommv/cvapi/clientgroup', clientGroupOperationInfo, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.deleteClientGroupOperation = function(snow_usertoken, cvtoken, cvendpoint, clientGroupId) {
+			return $http.post('/api/x_183199_testcommv/cvapi/deleteclientgroup', {}, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				},
+				params: {
+					'clientGroupId' : clientGroupId
+				}
+			});
+		};
+		
+		this.getSubclients = function(snow_usertoken, cvtoken, cvendpoint, clientId) {
+			return $http.get('/api/x_183199_testcommv/cvapi/subclients', {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				},
+				params: {
+					'clientId' : clientId
+				}
+			});
+		};
+		
+		this.runFsBackup = function(snow_usertoken, cvtoken, cvendpoint, backupInfo) {
+			return $http.post('/api/x_183199_testcommv/cvapi/fsbackup', backupInfo, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.runFsRestore = function(snow_usertoken, cvtoken, cvendpoint, restoreInfo) {
+			return $http.post('/api/x_183199_testcommv/cvapi/fsrestore', restoreInfo, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		
+		this.getClientProperties = function(snow_usertoken, cvtoken, cvendpoint, clientId) {
+			return $http.get('/api/x_183199_testcommv/cvapi/clientproperties', {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				},
+				params: {
+					'clientId' : clientId
+				}
+			});
+		};
+		
+		this.setActivityControl = function(snow_usertoken, cvtoken, cvendpoint, clientId, activityInfo) {
+			return $http.post('/api/x_183199_testcommv/cvapi/activitycontrol', activityInfo, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				},
+				params: {
+					'clientId': clientId
+				}
+			});
+		};
+		
+		this.getJobs = function(snow_usertoken, cvtoken, cvendpoint, jobsInfo) {
+			return $http.post('/api/x_183199_testcommv/cvapi/getjobs', jobsInfo, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.getVMList = function(snow_usertoken, cvtoken, cvendpoint) {
+			return $http.get('/api/x_183199_testcommv/cvapi/vmlist', {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.runFullVmRestore = function(snow_usertoken, cvtoken, cvendpoint, restoreInfo) {
+			return $http.post('/api/x_183199_testcommv/cvapi/vmrestore', restoreInfo, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.runFileLevelVmRestore = function(snow_usertoken, cvtoken, cvendpoint, restoreInfo) {
+			return $http.post('/api/x_183199_testcommv/cvapi/vmfilerestore', restoreInfo, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.runBackupVm = function(snow_usertoken, cvtoken, cvendpoint, backupInfo) {
+			return $http.post('/api/x_183199_testcommv/cvapi/vmbackup', backupInfo, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.getSLAReport = function(snow_usertoken, cvtoken, cvendpoint) {
+			return $http.get('/api/x_183199_testcommv/cvapi/slareport', {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.getDataForDataset = function(snow_usertoken, cvtoken, cvendpoint, dataSetId) {
+			return $http.get('/api/x_183199_testcommv/cvapi/getdatafordataset', {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				},
+				params: {
+					'dataSetId' : dataSetId
+				}
+			});
+		};
+		
+		this.getVMDetails = function(snow_usertoken, cvtoken, cvendpoint, vmguid) {
+			return $http.get('/api/x_183199_testcommv/cvapi/getvmdetails', {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				},
+				params: {
+					'vmguid' : vmguid
+				}
+			});
+		};
+		
+		this.performJobOpertaion = function (snow_usertoken, cvtoken, cvendpoint, opinfo) {
+			return $http.post('/api/x_183199_testcommv/cvapi/joboperation', opinfo, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.getCommservProperties = function(snow_usertoken, cvtoken, cvendpoint) {
+			return $http.get('/api/x_183199_testcommv/cvapi/commserv', {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.sendLogFilesForJob = function(snow_usertoken, cvtoken, cvendpoint, job, sendLogsModel) {
+			var sendLogsInfo = {};
+			
+			sendLogsInfo.jobid = job.jobSummary.jobId;
+			sendLogsInfo.computersSelected = 0;
+			
+			sendLogsInfo.uploadLogsSelected = sendLogsModel.autoUpload ? 1 : 0;
+			sendLogsInfo.useDefaultUploadOption = sendLogsModel.autoUpload ? 1 : 0;
+			
+			sendLogsInfo.saveToFolderSelected = sendLogsModel.outputTo ? 1 : 0;
+			
+			if(sendLogsInfo.saveToFolderSelected) {
+				if(sendLogsModel.pathSelectionRadio == 'localPath') {
+					sendLogsInfo.saveToLogDir = sendLogsModel.localPath;
+					sendLogsInfo.isNetworkPath = 0;
+					sendLogsInfo.userImpersonate = 0;
+					sendLogsInfo.networkUserName = '';
+					sendLogsInfo.networkPassword = '';
+				} else if (sendLogsModel.pathSelectionRadio == 'networkPath') {
+					sendLogsInfo.isNetworkPath = 1;
+					sendLogsInfo.saveToLogDir = sendLogsModel.networkPath;
+					sendLogsInfo.userImpersonate = 1;
+					sendLogsInfo.networkUserName = sendLogsModel.networkUserName;
+					sendLogsInfo.networkPassword = utilFactory.escapeXml(sendLogsModel.networkPassword);
+				}
+			} else {
+				sendLogsInfo.saveToLogDir = '';
+				sendLogsInfo.isNetworkPath = 0;
+				sendLogsInfo.userImpersonate = 0;
+				sendLogsInfo.networkUserName = '';
+				sendLogsInfo.networkPassword = '';
+			}
+			
+			sendLogsInfo.emailSelected = sendLogsModel.notifyByEmail ? 1 : 0 ;
+			
+			if(sendLogsInfo.emailSelected) {
+				sendLogsInfo.notifyMe = sendLogsModel.isIncludeMe ? 1 : 0;
+				sendLogsInfo.emailDescription = sendLogsModel.problemDescription;
+				sendLogsInfo.doNotIncludeLogs = sendLogsModel.isAttachLogs ? 0 : 1;
+				if(sendLogsModel.userSelection.indexOf(";") == -1) {
+					sendLogsInfo.usersToNotify = [];	
+				} else {
+					sendLogsInfo.usersToNotify = sendLogsModel.userSelection.split(";");
+				}
+				sendLogsInfo.emailSubject = sendLogsModel.emailSubject;
+			} else {
+				sendLogsInfo.notifyMe = 0;
+				sendLogsInfo.emailDescription = '';
+				sendLogsInfo.doNotIncludeLogs = 1;
+				sendLogsInfo.usersToNotify = [];
+				sendLogsInfo.emailSubject = '';
+			}
+			
+			sendLogsInfo.galaxyLogs = sendLogsModel.isLogsSelected ? 1 : 0;
+			sendLogsInfo.crashDump = sendLogsModel.isProcessDumpSelected ? 1 : 0;
+			
+			sendLogsInfo.csDatabase = sendLogsModel.isCommservDbLogSelected ? 1 : 0;
+			
+			if(sendLogsInfo.csDatabase) {
+				sendLogsInfo.getLatestUpdates = sendLogsModel.isLatestDbLogSelected ? 1 : 0;	
+			} else {
+				sendLogsInfo.getLatestUpdates = 0;
+			}
+			
+			sendLogsInfo.actionLogs = sendLogsModel.isTransactionLogsSelected ? 1 : 0;
+			
+			if(sendLogsInfo.actionLogs) {
+				sendLogsInfo.actionLogsStartJobId = sendLogsModel.transactionRangeFrom;
+				sendLogsInfo.actionLogsEndJobId = sendLogsModel.transactionRangeTo;	
+			} else {
+				sendLogsInfo.actionLogsStartJobId = 0;
+				sendLogsInfo.actionLogsEndJobId = 0;	
+			}
+			
+			sendLogsInfo.includeJobResults = sendLogsModel.isJobResultsSelected ? 1 : 0;
+			sendLogsInfo.machineInformation = sendLogsModel.isMachineConfigSelected ? 1 : 0;
+			sendLogsInfo.osLogs = sendLogsModel.isOsLogsSelected ? 1 : 0;
+			sendLogsInfo.includeIndex = sendLogsModel.isIndexLogSelected ? 1 : 0;
+			sendLogsInfo.databaseLogs = sendLogsModel.isDbLogsSelected ? 1 : 0;
+			
+			return $http.post('/api/x_183199_testcommv/cvapi/sendlogfiles', sendLogsInfo, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.sendLogFilesForClient = function(snow_usertoken, cvtoken, cvendpoint, client, sendLogsModel) {
+			var sendLogsInfo = {};
+			
+			sendLogsInfo.jobid = 0;
+			sendLogsInfo.computersSelected = 1;
+			sendLogsInfo.clientId = client.clientEntity.clientId;
+			
+			sendLogsInfo.uploadLogsSelected = sendLogsModel.autoUpload ? 1 : 0;
+			sendLogsInfo.useDefaultUploadOption = sendLogsModel.autoUpload ? 1 : 0;
+			
+			sendLogsInfo.saveToFolderSelected = sendLogsModel.outputTo ? 1 : 0;
+			
+			if(sendLogsInfo.saveToFolderSelected) {
+				if(sendLogsModel.pathSelectionRadio == 'localPath') {
+					sendLogsInfo.saveToLogDir = sendLogsModel.localPath;
+					sendLogsInfo.isNetworkPath = 0;
+					sendLogsInfo.userImpersonate = 0;
+					sendLogsInfo.networkUserName = '';
+					sendLogsInfo.networkPassword = '';
+				} else if (sendLogsModel.pathSelectionRadio == 'networkPath') {
+					sendLogsInfo.isNetworkPath = 1;
+					sendLogsInfo.saveToLogDir = sendLogsModel.networkPath;
+					sendLogsInfo.userImpersonate = 1;
+					sendLogsInfo.networkUserName = sendLogsModel.networkUserName;
+					sendLogsInfo.networkPassword = utilFactory.escapeXml(sendLogsModel.networkPassword);
+				}
+			} else {
+				sendLogsInfo.saveToLogDir = '';
+				sendLogsInfo.isNetworkPath = 0;
+				sendLogsInfo.userImpersonate = 0;
+				sendLogsInfo.networkUserName = '';
+				sendLogsInfo.networkPassword = '';
+			}
+			
+			sendLogsInfo.emailSelected = sendLogsModel.notifyByEmail ? 1 : 0 ;
+			
+			if(sendLogsInfo.emailSelected) {
+				sendLogsInfo.notifyMe = sendLogsModel.isIncludeMe ? 1 : 0;
+				sendLogsInfo.emailDescription = sendLogsModel.problemDescription;
+				sendLogsInfo.doNotIncludeLogs = sendLogsModel.isAttachLogs ? 0 : 1;
+				if(sendLogsModel.userSelection.indexOf(";") == -1) {
+					sendLogsInfo.usersToNotify = [];	
+				} else {
+					sendLogsInfo.usersToNotify = sendLogsModel.userSelection.split(";");
+				}
+				sendLogsInfo.emailSubject = sendLogsModel.emailSubject;
+			} else {
+				sendLogsInfo.notifyMe = 0;
+				sendLogsInfo.emailDescription = '';
+				sendLogsInfo.doNotIncludeLogs = 1;
+				sendLogsInfo.usersToNotify = [];
+				sendLogsInfo.emailSubject = '';
+			}
+			
+			sendLogsInfo.galaxyLogs = sendLogsModel.isLogsSelected ? 1 : 0;
+			sendLogsInfo.crashDump = sendLogsModel.isProcessDumpSelected ? 1 : 0;
+			
+			sendLogsInfo.csDatabase = sendLogsModel.isCommservDbLogSelected ? 1 : 0;
+			
+			if(sendLogsInfo.csDatabase) {
+				sendLogsInfo.getLatestUpdates = sendLogsModel.isLatestDbLogSelected ? 1 : 0;	
+			} else {
+				sendLogsInfo.getLatestUpdates = 0;
+			}
+			
+			sendLogsInfo.actionLogs = sendLogsModel.isTransactionLogsSelected ? 1 : 0;
+			
+			if(sendLogsInfo.actionLogs) {
+				sendLogsInfo.actionLogsStartJobId = sendLogsModel.transactionRangeFrom;
+				sendLogsInfo.actionLogsEndJobId = sendLogsModel.transactionRangeTo;	
+			} else {
+				sendLogsInfo.actionLogsStartJobId = 0;
+				sendLogsInfo.actionLogsEndJobId = 0;	
+			}
+			
+			sendLogsInfo.includeJobResults = sendLogsModel.isJobResultsSelected ? 1 : 0;
+			sendLogsInfo.machineInformation = sendLogsModel.isMachineConfigSelected ? 1 : 0;
+			sendLogsInfo.osLogs = sendLogsModel.isOsLogsSelected ? 1 : 0;
+			sendLogsInfo.includeIndex = sendLogsModel.isIndexLogSelected ? 1 : 0;
+			sendLogsInfo.databaseLogs = sendLogsModel.isDbLogsSelected ? 1 : 0;
+			
+			return $http.post('/api/x_183199_testcommv/cvapi/sendlogfiles', sendLogsInfo, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.doLogin = function(snow_usertoken, loginInfo) {
+			return $http.post('/api/x_183199_testcommv/cvapi/dologin', loginInfo, {
+				headers: {
+					'X-UserToken': snow_usertoken
+				}
+			});
+		};
+		
+		this.doLogout = function(snow_usertoken, cvtoken, cvendpoint) {
+			return $http.post('/api/x_183199_testcommv/cvapi/dologout', {}, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+	}
+]);
+})();
+]]></script>
+        <script_name>ApiServices</script_name>
+        <sys_class_name>sys_ui_script</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2018-04-02 07:27:08</sys_created_on>
+        <sys_id>13d1dad4db1113004eb15ec0cf9619f0</sys_id>
+        <sys_mod_count>41</sys_mod_count>
+        <sys_name>x_183199_testcommv.ApiServices</sys_name>
+        <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
+        <sys_update_name>sys_ui_script_13d1dad4db1113004eb15ec0cf9619f0</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2018-05-08 12:26:25</sys_updated_on>
+        <use_scoped_format>false</use_scoped_format>
+    </sys_ui_script>
+</record_update>

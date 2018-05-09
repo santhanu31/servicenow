@@ -6,7 +6,7 @@
         <global>false</global>
         <name>x_183199_testcommv.angular_app_client_lo</name>
         <script><![CDATA[(function () {
-    angular.module('angularapp', ['highcharts-ng', 'angularUtils.directives.dirPagination', 'toaster', 'ngAnimate', 'ngSanitize', 'ngCookies']);
+    angular.module('angularapp', ['highcharts-ng', 'angularUtils.directives.dirPagination', 'toaster', 'ngAnimate', 'ngSanitize', 'ngCookies'/*, 'isteven-multi-select'*/]);
 
     angular.module('angularapp').filter('capacity', function () {
         var format = function (number, unit) {
@@ -77,13 +77,38 @@
         };
     });
 
+    angular.module('angularapp').constant('JOB_STATUS', {
+        RUNNING: 'running',
+        PENDING: 'pending',
+        SUSPENDED: 'suspended',
+        QUEUED: 'queued',
+        WAITING: 'waiting',
+        COMPLETED: 'completed',
+        COMPLETED_WITH_ERRORS: 'completed w/ one or more errors',
+        KILLED: 'killed',
+        FAILED: 'failed',
+        FAILED_TO_START: 'failed to start'
+    });
+
+    angular.module('angularapp').constant('JOB_ACTION', {
+        SUSPEND: 'job_suspend',
+        KILL: 'job_kill',
+        RESUME: 'job_resume',
+        RESUBMIT: 'job_resubmit',
+        RESTORE: 'job_restore'
+    });
+
     angular.module('angularapp').controller('ViewJobsController', [
         '$scope',
-		'$cookies',
+        '$cookies',
         'toasterservice',
-        function ($scope, $cookies, toasterservice) {
+        'restservice',
+        '$interval',
+        'jobFactory',
+        'JOB_ACTION',
+        function ($scope, $cookies, toasterservice, restservice, $interval, jobFactory, JOB_ACTION) {
 
-            $scope.tabeLoaded = false;
+            $scope.tableLoaded = false;
 
             $scope.pageSizeList = [5, 10, 20, 50, 100];
             $scope.pageSize = $scope.pageSizeList[3];
@@ -118,7 +143,7 @@
             };
 
             $scope.jobsList = [];
-            $scope.jobCategory = 2; // 1 - ACTIVE JOBS, 2 - FINISHED
+            $scope.jobCategory = 1; // 1 - ACTIVE JOBS, 2 - FINISHED
 
             $scope.sortField = "jobStartTime";
             $scope.sortDirection = 1;
@@ -155,56 +180,53 @@
             };
 
             $scope.onGetJobs = function (response) {
-                var answer = response.responseXML.documentElement.getAttribute("answer");
-				var responseJson = JSON.parse(answer);
-				
-				if(responseJson.cvStatusCode === 200) {
-					$scope.getJobsResponse = responseJson;
-					$scope.totalJobs = $scope.getJobsResponse.totalRecordsWithoutPaging;
-					$scope.jobsList = $scope.getJobsResponse.jobs;
-					$scope.tabeLoaded = true;
-					if (!$scope.jobsList || $scope.jobsList.length === 0) {
-						$scope.showHelpDialog('No jobs to display');
-					} else {
-						$scope.hideHelpDialog();
-					}
-				} else if(responseJson.cvStatusCode === 401) {
-					//toasterservice.showInfoToast('Commvault login', 'User is logged out');
-					//$scope.showLoginModal();
-					$scope.unauthorized = true;
-					//$scope.cvLogin = {};
-				} else {
-					toasterservice.showErrorToast('Commvault error', 'Could not fetch jobs. Something went wrong');
-				}
-				
-                
+                //var answer = response.responseXML.documentElement.getAttribute("answer");
+                var responseJson = response.data.result;
+
+                if (responseJson.cvStatusCode === 200) {
+                    $scope.getJobsResponse = responseJson;
+                    $scope.totalJobs = $scope.getJobsResponse.totalRecordsWithoutPaging;
+                    $scope.jobsList = $scope.getJobsResponse.jobs;
+                    $scope.tableLoaded = true;
+                    if (!$scope.jobsList || $scope.jobsList.length === 0) {
+                        $scope.showHelpDialog('No jobs to display');
+                    } else {
+                        $scope.hideHelpDialog();
+                    }
+                } else if (responseJson.cvStatusCode === 401) {
+                    //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                    //$scope.showLoginModal();
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                } else {
+                    toasterservice.showErrorToast('Commvault error', 'Could not fetch jobs. Something went wrong');
+                }
 
                 $scope.onAjax = false;
-                
 
                 $scope.categorySwitch = false;
-
-                $scope.$apply();
 
                 console.log($scope.getJobsResponse);
             };
 
             $scope.getJobs = function () {
+                console.log('getting jobs');
                 $scope.onAjax = true;
 
-                var getJobsEndpoint = new GlideAjax('TestCommvaultEndpoint');
+                var jobsInfo = {
+                    category: $scope.jobCategory,
+                    sortField: $scope.sortField,
+                    sortDirection: $scope.sortDirection,
+                    offset: $scope.offset,
+                    limit: $scope.pageSize,
+                    completedJobLookupTime: $scope.completedJobLookupTime
+                };
 
-                getJobsEndpoint.addParam('sysparm_name', 'getJobs');
-				getJobsEndpoint.addParam('sysparm_token', $scope.cvLogin.token);
-				getJobsEndpoint.addParam('sysparm_endpoint', $scope.cvLogin.endpoint);
-                getJobsEndpoint.addParam('sysparm_category', String($scope.jobCategory));
-                getJobsEndpoint.addParam('sysparm_sortField', String($scope.sortField));
-                getJobsEndpoint.addParam('sysparm_sortDirection', String($scope.sortDirection));
-                getJobsEndpoint.addParam('sysparm_offset', String($scope.offset));
-                getJobsEndpoint.addParam('sysparm_limit', String($scope.pageSize));
-                getJobsEndpoint.addParam('sysparm_completedJobLookupTime', String($scope.completedJobLookupTime));
-
-                getJobsEndpoint.getXML($scope.onGetJobs);
+                restservice.getJobs(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, jobsInfo).then($scope.onGetJobs,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
 
             };
 
@@ -221,35 +243,301 @@
                 $scope.selectedJob = null;
             });
 
-            
-			$scope.cvLogin = {};
-			$scope.getLoginCookie = function() {
-				$scope.unauthorized = true;
-				try {
-					var cvLoginFromCookie = $cookies.getObject('snow_cvLogin');
-					if(cvLoginFromCookie) {
-						$scope.cvLogin = cvLoginFromCookie;
-						$scope.unauthorized = false;
-					}
-				} catch (e) {
-					console.log('Failed to get cookie');
-				}
-				if($scope.cvLogin.token && $scope.cvLogin.token.length>0) {
-					$scope.getJobs();
-				} else {
-					$scope.unauthorized = true;
-					//$scope.cvLogin = {};
-				}
+            /***************************************************************************************/
+
+            $scope.isActionAllowed = function (action, jobSummary) {
+                return jobFactory.isActionAllowed(action, jobSummary);
+            };
+
+            $scope.performJobOpertaion = function (action, jobId) {
+                var onPerformJobOpertaion = function (response) {
+                    var responseJson = response.data.result;
+
+                    if (responseJson.cvStatusCode === 200) {
+                        $scope.getJobs();
+                        try {
+                            if (responseJson.errors[0].errList[0].errorCode === 0) {
+                                var opstring = 'operated';
+                                switch (response.config.data.action) {
+                                    case JOB_ACTION.KILL:
+                                        opstring = 'killed';
+                                        break;
+                                    case JOB_ACTION.SUSPEND:
+                                        opstring = 'suspended';
+                                        break;
+                                    case JOB_ACTION.RESUME:
+                                        opstring = 'resumed';
+                                        break;
+                                }
+                                toasterservice.showInfoToast('Job operation', 'Successfully ' + opstring + ' job with Id ' + response.config.data.jobId);
+                            } else {
+                                toasterservice.showErrorToast('Job operation error', responseJson.errors[0].errList[0].errLogMessage);
+                            }
+                        } catch (e) {
+                            console.log('Failed to evaluate error code');
+                        }
+
+                    } else if (responseJson.cvStatusCode === 401) {
+                        //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                        //$scope.showLoginModal();
+                        $scope.cvLogin.unauthorized = true;
+                        //$scope.cvLogin = {};
+                    } else {
+                        toasterservice.showErrorToast('Commvault error', 'Could not fetch jobs. Something went wrong');
+                    }
+
+                };
+
+                var opinfo = {
+                    action: action,
+                    jobId: jobId
+                };
+                restservice.performJobOpertaion(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, opinfo).then(onPerformJobOpertaion,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
+            };
+			
+			$scope.showSendLogsModal = function (job) {
+				$scope.selectedJobForSendLogs = job;
+				$scope.sendLogsModel.emailSubject = "Logs for job " + job.jobSummary.jobId;
+                $j_commvault('#sendLogsModal').modal({
+                    keyboard: false,
+                    backdrop: 'static'
+                });
+                $j_commvault('#sendLogsModal').modal('show');
 			};
+			
+			$scope.onSendLogsSubmit = function () {
+				var selectedJobForSendLogs = $scope.selectedJobForSendLogs;
+				
+				$scope.sendLogsModel.errorText = '';
+				$scope.sendLogsModel.infoText = '';
+				
+				if($scope.sendLogsModel.autoUpload === false && $scope.sendLogsModel.outputTo === false) {
+					$scope.sendLogsModel.errorText = 'Please select either auto upload or output to path';
+					return;
+				}
+				
+				if($scope.sendLogsModel.outputTo === true) {
+					if($scope.sendLogsModel.pathSelectionRadio != 'localPath' && $scope.sendLogsModel.pathSelectionRadio != 'networkPath') {
+						$scope.sendLogsModel.errorText = 'Please specify a local path or network path';
+						return;
+					}
+					
+					if($scope.sendLogsModel.pathSelectionRadio == 'localPath') {
+						if(!$scope.sendLogsModel.localPath || $scope.sendLogsModel.localPath.trim().length === 0) {
+							$scope.sendLogsModel.errorText = 'Please specify a local path';
+							return;
+						} 
+					}
+					
+					if($scope.sendLogsModel.pathSelectionRadio == 'networkPath') {
+						if(!$scope.sendLogsModel.networkPath || $scope.sendLogsModel.networkPath.trim().length === 0) {
+							$scope.sendLogsModel.errorText = 'Please specify a network path';
+							return;
+						}
+						if(!$scope.sendLogsModel.networkUserName || $scope.sendLogsModel.networkUserName.trim().length === 0) {
+							$scope.sendLogsModel.errorText = 'Please specify network path credentials';
+							return;
+						}
+						if(!$scope.sendLogsModel.networkPassword || $scope.sendLogsModel.networkPassword.trim().length === 0) {
+							$scope.sendLogsModel.errorText = 'Please specify network path credentials';
+							return;
+						} 
+					}
+				}
+				
+				if($scope.sendLogsModel.notifyByEmail) {
+					if((!$scope.sendLogsModel.userSelection || $scope.sendLogsModel.userSelection.trim().length === 0) && !$scope.sendLogsModel.isIncludeMe) {
+						$scope.sendLogsModel.errorText = 'Please select users to notify';
+						return;
+					}
+					
+					if(!$scope.sendLogsModel.emailSubject || $scope.sendLogsModel.emailSubject.trim().length === 0) {
+						$scope.sendLogsModel.errorText = 'Please provide a subject to the email';
+						return;
+					}
+					
+				}
+				
+				if($scope.sendLogsModel.isTransactionLogsSelected == true) {
+					if($scope.sendLogsModel.transactionRangeFrom.trim().length === 0) {
+						$scope.sendLogsModel.errorText = 'Please provide job Id range';
+						return;
+					}
+					if($scope.sendLogsModel.transactionRangeTo.trim().length === 0) {
+						$scope.sendLogsModel.errorText = 'Please provide job Id range';
+						return;
+					}
+					if(!Number.isInteger(+$scope.sendLogsModel.transactionRangeFrom) || !Number.isInteger(+$scope.sendLogsModel.transactionRangeTo)) {
+						$scope.sendLogsModel.errorText = 'Please provide valid job Id range';
+						return;
+					}
+				}
+				
+				$scope.sendLogsModel.errorText = '';
+				$scope.sendLogsModel.infoText = 'Please wait...';
+				
+				var onSendLogFiles = function(response) {
+					var responseJson = response.data.result;
+					
+					$j_commvault('#sendLogsModal').modal('hide');
+					
+                    if (responseJson.cvStatusCode === 200) {
+						toasterservice.showInfoToast('Send log files', 'Job started with Job Id: ' + responseJson.jobIds[0]);
+                    } else if (responseJson.cvStatusCode === 401) {
+                        //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                        //$scope.showLoginModal();
+                        $scope.cvLogin.unauthorized = true;
+                        //$scope.cvLogin = {};
+                    } else {
+                        toasterservice.showErrorToast('Commvault error', 'Could not submit send logs request. Something went wrong');
+                    }
+				};
+				
+				restservice.sendLogFilesOperation(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, selectedJobForSendLogs, $scope.sendLogsModel).then(onSendLogFiles,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
+				
+				
+			};
+			
+			$j_commvault('#sendLogsModal').on('hidden.bs.modal', function (e) {
+                $scope.sendLogsModel = {
+					 autoUpload: false,
+					 outputTo: false,
+					 pathSelectionRadio: 'localPath',
+					 localPath: '',
+					 networkPath: '',
+					 isCommservDbLogSelected: false,
+					 isLatestDbLogSelected: false,
+					 isLogsSelected: true,
+					 isDbLogsSelected: false,
+					 isMachineConfigSelected: true,
+					 isOsLogsSelected: true,
+					 isProcessDumpSelected: true,
+					 isJobResultsSelected: false,
+					 isIndexLogSelected: false,
+					 isTransactionLogsSelected: false,
+					 transactionRangeFrom: '',
+					 transactionRangeTo: '',	
+					 notifyByEmail: false,
+					 userSelection: '',
+					 isIncludeMe: true,
+					 isAttachLogs: false,
+					 emailSubject: '',
+					 problemDescription: '',
+					 userImpersonate: false,
+					 networkUserName: '',
+					 networkPassword: ''
+				};
+                $scope.$apply();
+            });
+			
+			 $scope.sendLogsModel = {
+				 autoUpload: false,
+				 outputTo: false,
+				 pathSelectionRadio: 'localPath',
+				 localPath: '',
+				 networkPath: '',
+				 isCommservDbLogSelected: false,
+				 isLatestDbLogSelected: false,
+				 isLogsSelected: true,
+				 isDbLogsSelected: false,
+				 isMachineConfigSelected: true,
+				 isOsLogsSelected: true,
+				 isProcessDumpSelected: true,
+				 isJobResultsSelected: false,
+				 isIndexLogSelected: false,
+				 isTransactionLogsSelected: false,
+				 transactionRangeFrom: '',
+				 transactionRangeTo: '',	
+				 notifyByEmail: false,
+				 userSelection: '',
+				 isIncludeMe: true,
+				 isAttachLogs: false,
+				 emailSubject: '',
+				 problemDescription: '',
+				 userImpersonate: false,
+				 networkUserName: '',
+				 networkPassword: ''
+			};
+			
+			$scope.localPathRadioChange = function() {
+				$scope.sendLogsModel.localPath = '';
+				$scope.sendLogsModel.networkPath = '';
+				$scope.sendLogsModel.networkUserName = '';
+				$scope.sendLogsModel.networkPassword = '';
+			};
+			
+			$scope.networkPathRadioChange = function() {
+				$scope.sendLogsModel.localPath = '';
+				$scope.sendLogsModel.networkPath = '';
+				$scope.sendLogsModel.networkUserName = '';
+				$scope.sendLogsModel.networkPassword = '';
+			};
+			
+
+            /***************************************************************************************/
+
+            var scheduler;
+            $scope.startScheduler = function () {
+                $scope.getJobs();
+                if (angular.isDefined(scheduler)) return;
+                scheduler = $interval($scope.getJobs, 60 * 1000);
+            };
+            $scope.stopScheduler = function () {
+                console.log('Stopping scheduler');
+                if (angular.isDefined(scheduler)) {
+                    $interval.cancel(scheduler);
+                    scheduler = undefined;
+                }
+            };
+            $scope.$on('$destroy', function () {
+                $scope.stopScheduler();
+            });
+
+            $scope.cvLogin = {};
+            $scope.getLoginCookie = function () {
+                $scope.cvLogin.unauthorized = true;
+                try {
+                    var cvLoginFromCookie = $cookies.getObject('snow_cvLogin');
+                    if (cvLoginFromCookie) {
+                        $scope.cvLogin = cvLoginFromCookie;
+                        $scope.cvLogin.unauthorized = false;
+                    }
+                } catch (e) {
+                    console.log('Failed to get cookie');
+                }
+                if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
+                    $scope.startScheduler();
+                } else {
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                }
+            };
         }
     ]);
 
     angular.module('angularapp').controller('VMController', [
         '$scope',
-		'$cookies',
+        '$cookies',
         'toasterservice',
-        function ($scope, $cookies, toasterservice) {
+        'restservice',
+        function ($scope, $cookies, toasterservice, restservice) {
             console.log('In VM controller');
+			
+			$scope.modernBrowsers = [
+				{  name: "Opera",              maker: "(Opera Software)",        ticked: true  },
+				{  name: "Internet Explorer",  maker: "(Microsoft)",             ticked: false },
+				{  name: "Firefox",            maker: "(Mozilla Foundation)",    ticked: true  },
+				{  name: "Safari",             maker: "(Apple)",                 ticked: false },
+				{  name: "Chrome",             maker: "(Google)",                ticked: true  }
+			];
 
             /*$j_commvault('#loginModal').modal({
             		keyboard: false,
@@ -259,34 +547,35 @@
 
             $scope.getVMList = function () {
                 $scope.onVMList = function (response) {
-                    var answer = response.responseXML.documentElement.getAttribute("answer");
-					
-					var responseJson = JSON.parse(answer);
-					
-					if(responseJson.cvStatusCode === 200) {
-						$scope.vmListResponse = responseJson;
-						$scope.vmList = $scope.vmListResponse.vmStatusInfoList;
-					} else if(responseJson.cvStatusCode === 401) {
-						//toasterservice.showInfoToast('Commvault login', 'User is logged out');
-						//$scope.showLoginModal();
-						$scope.unauthorized = true;
-						//$scope.cvLogin = {};
-					} else {
-						toasterservice.showErrorToast('Commvault error', 'Could not fetch vm list. Something went wrong');
-					}
-					
-                    
+                    //var answer = response.responseXML.documentElement.getAttribute("answer");
+
+                    var responseJson = response.data.result;
+
+                    if (responseJson.cvStatusCode === 200) {
+                        $scope.vmListResponse = responseJson;
+                        $scope.vmList = $scope.vmListResponse.vmStatusInfoList;
+                    } else if (responseJson.cvStatusCode === 401) {
+                        //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                        //$scope.showLoginModal();
+                        $scope.cvLogin.unauthorized = true;
+                        //$scope.cvLogin = {};
+                    } else {
+                        toasterservice.showErrorToast('Commvault error', 'Could not fetch vm list. Something went wrong');
+                    }
+
+
                     $scope.onAjax = false;
-                    $scope.$apply();
                     console.log($scope.vmList);
                 };
-				
-				$scope.onAjax = true;
-                var getVMListEndpoint = new GlideAjax('TestCommvaultEndpoint');
-                getVMListEndpoint.addParam('sysparm_name', 'getVMList');
-				getVMListEndpoint.addParam('sysparm_token', $scope.cvLogin.token);
-				getVMListEndpoint.addParam('sysparm_endpoint', $scope.cvLogin.endpoint);
-                getVMListEndpoint.getXML($scope.onVMList);
+
+                $scope.onAjax = true;
+
+                restservice.getVMList(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint).then($scope.onVMList,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
+
             };
 
             $scope.sort = function (keyname) {
@@ -344,27 +633,26 @@
             };
 
             $scope.runFullVmRestoreCallback = function (response) {
-                var answer = response.responseXML.documentElement.getAttribute("answer");
-				
-				var responseJson = JSON.parse(answer);
-				
-				$scope.infoText = '';
+                //var answer = response.responseXML.documentElement.getAttribute("answer");
+
+                var responseJson = response.data.result;
+
+                $scope.infoText = '';
                 $scope.errorText = '';
                 $j_commvault('#restoreModal').modal('hide');
-					
-				if(responseJson.cvStatusCode === 200) {
-					$scope.runFullVmRestoreResponse = responseJson;
-					toasterservice.showInfoToast('Full VM Restore', 'Vm restore started with Job Id: ' + $scope.runFullVmRestoreResponse.jobIds[0]);
-				} else if(responseJson.cvStatusCode === 401) {
-					//toasterservice.showInfoToast('Commvault login', 'User is logged out');
-					//$scope.showLoginModal();
-					$scope.unauthorized = true;
-					//$scope.cvLogin = {};
-				} else {
-					toasterservice.showErrorToast('Commvault error', 'Could not run restore. Something went wrong');
-				}
-				
-                $scope.$apply();
+
+                if (responseJson.cvStatusCode === 200) {
+                    $scope.runFullVmRestoreResponse = responseJson;
+                    toasterservice.showInfoToast('Full VM Restore', 'Vm restore started with Job Id: ' + $scope.runFullVmRestoreResponse.jobIds[0]);
+                } else if (responseJson.cvStatusCode === 401) {
+                    //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                    //$scope.showLoginModal();
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                } else {
+                    toasterservice.showErrorToast('Commvault error', 'Could not run restore. Something went wrong');
+                }
+
                 console.log($scope.runFullVmRestoreResponse);
             };
 
@@ -388,20 +676,23 @@
                 $scope.powerOnVmAfterRestore = $scope.vmPowerOn ? 1 : 0;
 
                 $scope.infoText = 'Please wait...';
-                var runFullVmRestore = new GlideAjax('TestCommvaultEndpoint');
-                runFullVmRestore.addParam('sysparm_name', 'runFullVmRestore');
-				runFullVmRestore.addParam('sysparm_token', $scope.cvLogin.token);
-				runFullVmRestore.addParam('sysparm_endpoint', $scope.cvLogin.endpoint);
-                runFullVmRestore.addParam('sysparm_newName', String($scope.newName));
-                runFullVmRestore.addParam('sysparm_unconditionalOverwrite', String($scope.unconditionalOverwrite));
-                runFullVmRestore.addParam('sysparm_powerOnVmAfterRestore', String($scope.powerOnVmAfterRestore));
-                runFullVmRestore.addParam('sysparm_destClientId', String($scope.selectedVmForFullRestore.proxyClient.clientId));
-                runFullVmRestore.addParam('sysparm_destClientName', String($scope.selectedVmForFullRestore.proxyClient.clientName));
-                runFullVmRestore.addParam('sysparm_subclientId', String($scope.selectedVmForFullRestore.subclientId));
-                runFullVmRestore.addParam('sysparm_vmGuid', String($scope.selectedVmForFullRestore.strGUID));
-                runFullVmRestore.addParam('sysparm_vmName', String($scope.selectedVmForFullRestore.name));
 
-                runFullVmRestore.getXML($scope.runFullVmRestoreCallback);
+                var restoreInfo = {
+                    newName: $scope.newName,
+                    unconditionalOverwrite: $scope.unconditionalOverwrite,
+                    powerOnVmAfterRestore: $scope.powerOnVmAfterRestore,
+                    destClientId: $scope.selectedVmForFullRestore.proxyClient.clientId,
+                    destClientName: $scope.selectedVmForFullRestore.proxyClient.clientName,
+                    subclientId: $scope.selectedVmForFullRestore.subclientId,
+                    vmGuid: $scope.selectedVmForFullRestore.strGUID,
+                    vmName: $scope.selectedVmForFullRestore.name
+                };
+
+                restservice.runFullVmRestore(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, restoreInfo).then($scope.runFullVmRestoreCallback,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
             };
 
             $scope.showFileLevelRestoreModal = function (vm) {
@@ -428,26 +719,25 @@
             });
 
             $scope.runFileLevelVmRestoreCallback = function (response) {
-                var answer = response.responseXML.documentElement.getAttribute("answer");
-				
-				var responseJson = JSON.parse(answer);
-				$scope.infoText = '';
+                //var answer = response.responseXML.documentElement.getAttribute("answer");
+
+                var responseJson = response.data.result;
+                $scope.infoText = '';
                 $scope.errorText = '';
                 $j_commvault('#flvmrestoreModal').modal('hide');
-					
-				if(responseJson.cvStatusCode === 200) {
-					$scope.runFileLevelVmRestoreResponse = responseJson;
-					toasterservice.showInfoToast('File level VM Restore', 'Restore started with Job Id: ' + $scope.runFileLevelVmRestoreResponse.jobIds[0]);
-				} else if(responseJson.cvStatusCode === 401) {
-					//toasterservice.showInfoToast('Commvault login', 'User is logged out');
-					//$scope.showLoginModal();
-					$scope.unauthorized = true;
-					//$scope.cvLogin = {};
-				} else {
-					toasterservice.showErrorToast('Commvault error', 'Could not restore. Something went wrong');
-				}
-				
-                $scope.$apply();
+
+                if (responseJson.cvStatusCode === 200) {
+                    $scope.runFileLevelVmRestoreResponse = responseJson;
+                    toasterservice.showInfoToast('File level VM Restore', 'Restore started with Job Id: ' + $scope.runFileLevelVmRestoreResponse.jobIds[0]);
+                } else if (responseJson.cvStatusCode === 401) {
+                    //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                    //$scope.showLoginModal();
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                } else {
+                    toasterservice.showErrorToast('Commvault error', 'Could not restore. Something went wrong');
+                }
+
                 console.log($scope.runFileLevelVmRestoreResponse);
             };
 
@@ -472,25 +762,28 @@
                 var overwriteFiles = $scope.vmFileOverwrite ? 1 : 0;
                 var sourcePath = "\\" + $scope.selectedVmForFileLevelRestore.strGUID + "\\" + $scope.vmFileSourcePath;
                 var destPath = "\\" + $scope.selectedVmForFileLevelRestore.strGUID + "\\" + $scope.vmFileDestPath;
-				
-				$scope.errorText = '';
-                $scope.infoText = 'Please wait...';
-                var runFileLevelVmRestore = new GlideAjax('TestCommvaultEndpoint');
-                runFileLevelVmRestore.addParam('sysparm_name', 'runFileLevelVmRestore');
-				runFileLevelVmRestore.addParam('sysparm_token', $scope.cvLogin.token);
-				runFileLevelVmRestore.addParam('sysparm_endpoint', $scope.cvLogin.endpoint);
-                runFileLevelVmRestore.addParam('sysparm_subclientId', String($scope.selectedVmForFileLevelRestore.subclientId));
-                runFileLevelVmRestore.addParam('sysparm_destPath', String(destPath));
-                runFileLevelVmRestore.addParam('sysparm_destClientId', String($scope.selectedVmForFileLevelRestore.proxyClient.clientId));
-                runFileLevelVmRestore.addParam('sysparm_destClientName', String($scope.selectedVmForFileLevelRestore.proxyClient.clientName));
-                runFileLevelVmRestore.addParam('sysparm_serverName', String($scope.selectedVmForFileLevelRestore.pseudoClient.clientName));
-                runFileLevelVmRestore.addParam('sysparm_vmGuid', String($scope.selectedVmForFileLevelRestore.strGUID));
-                runFileLevelVmRestore.addParam('sysparm_vmUsername', String($scope.vmusername));
-                runFileLevelVmRestore.addParam('sysparm_vmPassword', String($scope.vmpassword));
-                runFileLevelVmRestore.addParam('sysparm_sourcePath', String(sourcePath));
-                runFileLevelVmRestore.addParam('sysparm_overwriteFiles', String(overwriteFiles));
 
-                runFileLevelVmRestore.getXML($scope.runFileLevelVmRestoreCallback);
+                $scope.errorText = '';
+                $scope.infoText = 'Please wait...';
+
+                var restoreInfo = {
+                    subclientId: $scope.selectedVmForFileLevelRestore.subclientId,
+                    destPath: destPath,
+                    destClientId: $scope.selectedVmForFileLevelRestore.proxyClient.clientId,
+                    destClientName: $scope.selectedVmForFileLevelRestore.proxyClient.clientName,
+                    serverName: $scope.selectedVmForFileLevelRestore.pseudoClient.clientName,
+                    vmGuid: $scope.selectedVmForFileLevelRestore.strGUID,
+                    vmUsername: $scope.vmusername,
+                    vmPassword: $scope.vmpassword,
+                    sourcePath: sourcePath,
+                    overwriteFiles: overwriteFiles
+                };
+
+                restservice.runFileLevelVmRestore(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, restoreInfo).then($scope.runFileLevelVmRestoreCallback,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
             };
 
             $scope.onBackupLevelSelection = function (selectedBackupLevel) {
@@ -498,26 +791,25 @@
             };
 
             $scope.runBackupVmCallback = function (response) {
-                var answer = response.responseXML.documentElement.getAttribute("answer");
-				var responseJson = JSON.parse(answer);
-				
-				$scope.infoText = '';
+                //var answer = response.responseXML.documentElement.getAttribute("answer");
+                var responseJson = response.data.result;
+
+                $scope.infoText = '';
                 $scope.errorText = '';
                 $j_commvault('#backupModal').modal('hide');
-				
-				if(responseJson.cvStatusCode === 200) {
-					$scope.runBackupResponse = responseJson;
-					toasterservice.showInfoToast('Backup', 'Vm backup started with Job Id: ' + $scope.runBackupResponse.jobIds[0]);
-				} else if(responseJson.cvStatusCode === 401) {
-					//toasterservice.showInfoToast('Commvault login', 'User is logged out');
-					//$scope.showLoginModal();
-					$scope.unauthorized = true;
-					//$scope.cvLogin = {};
-				} else {
-					toasterservice.showErrorToast('Commvault error', 'Could not run backup. Something went wrong');
-				}
-                
-                $scope.$apply();
+
+                if (responseJson.cvStatusCode === 200) {
+                    $scope.runBackupResponse = responseJson;
+                    toasterservice.showInfoToast('Backup', 'Vm backup started with Job Id: ' + $scope.runBackupResponse.jobIds[0]);
+                } else if (responseJson.cvStatusCode === 401) {
+                    //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                    //$scope.showLoginModal();
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                } else {
+                    toasterservice.showErrorToast('Commvault error', 'Could not run backup. Something went wrong');
+                }
+
                 console.log($scope.runBackupResponse);
             };
 
@@ -534,328 +826,771 @@
 
 
                 $scope.infoText = 'Please wait...';
-                var runBackupVmEndpoint = new GlideAjax('TestCommvaultEndpoint');
-                runBackupVmEndpoint.addParam('sysparm_name', 'runBackupVm');
-				runBackupVmEndpoint.addParam('sysparm_token', $scope.cvLogin.token);
-				runBackupVmEndpoint.addParam('sysparm_endpoint', $scope.cvLogin.endpoint);
-                runBackupVmEndpoint.addParam('sysparm_vmGuid', $scope.selectedVm.strGUID);
-                runBackupVmEndpoint.addParam('sysparm_subclientId', $scope.selectedVm.subclientId);
-                runBackupVmEndpoint.addParam('sysparm_backupLevel', $scope.selectedBackupLevel);
 
-                runBackupVmEndpoint.getXML($scope.runBackupVmCallback);
+                var backupInfo = {
+                    vmGuid: $scope.selectedVm.strGUID,
+                    subclientId: $scope.selectedVm.subclientId,
+                    backupLevel: $scope.selectedBackupLevel
+                };
+
+                restservice.runBackupVm(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, backupInfo).then($scope.runBackupVmCallback,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
+
             };
 
-            
-			$scope.cvLogin = {};
-			$scope.getLoginCookie = function() {
-				$scope.unauthorized = true;
-				try {
-					var cvLoginFromCookie = $cookies.getObject('snow_cvLogin');
-					if(cvLoginFromCookie) {
-						$scope.cvLogin = cvLoginFromCookie;
-						$scope.unauthorized = false;
-					}
-				} catch (e) {
-					console.log('Failed to get cookie');
-				}
-				if($scope.cvLogin.token && $scope.cvLogin.token.length>0) {
-					$scope.getVMList();
-				} else {
-					$scope.unauthorized = true;
-					//$scope.cvLogin = {};
-				}
-			};
+
+            $scope.cvLogin = {};
+            $scope.getLoginCookie = function () {
+                $scope.cvLogin.unauthorized = true;
+                try {
+                    var cvLoginFromCookie = $cookies.getObject('snow_cvLogin');
+                    if (cvLoginFromCookie) {
+                        $scope.cvLogin = cvLoginFromCookie;
+                        $scope.cvLogin.unauthorized = false;
+                    }
+                } catch (e) {
+                    console.log('Failed to get cookie');
+                }
+                if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
+                    $scope.getVMList();
+                } else {
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                }
+            };
         }
     ]);
 
     angular.module('angularapp').controller('SLAReportController', [
-		'$scope',
+        '$scope',
         '$cookies',
         'toasterservice',
-		function ($scope, $cookies, toasterservice) {
-        console.log('In SLA Report controller');
+        'restservice',
+        function ($scope, $cookies, toasterservice, restservice) {
+            console.log('In SLA Report controller');
 
-        $scope.pieData = [];
-        $scope.chartConfig = {
-            chart: {
-                type: 'pie',
-                margin: [0, 200, 0, 0],
-                spacingTop: 0,
-                spacingBottom: 0,
-                spacingLeft: 0,
-                spacingRight: 0
-            },
-            plotOptions: {
-                pie: {
-                    showInLegend: true
+            $scope.pieData = [];
+            $scope.chartConfig = {
+                chart: {
+                    type: 'pie',
+                    margin: [0, 200, 0, 0],
+                    spacingTop: 0,
+                    spacingBottom: 0,
+                    spacingLeft: 0,
+                    spacingRight: 0
+                },
+                plotOptions: {
+                    pie: {
+                        showInLegend: true
+                    }
+                },
+                series: [{
+                    data: $scope.pieData,
+                    id: 'SLA Summary'
+                }],
+                title: {
+                    text: '',
+                },
+                credits: {
+                    enabled: false
+                },
+                legend: {
+                    enabled: true,
+                    layout: 'vertical',
+                    align: 'right',
+                    width: 200,
+                    verticalAlign: 'middle',
+                    useHTML: true,
+                    labelFormatter: function () {
+                        return '<div style="text-align: left; width:130px;float:left;">' + this.name + ' ' + this.y;
+                    }
                 }
-            },
-            series: [{
-                data: $scope.pieData,
-                id: 'SLA Summary'
-            }],
-            title: {
-                text: '',
-            },
-            credits: {
-                enabled: false
-            },
-            legend: {
-                enabled: true,
-                layout: 'vertical',
-                align: 'right',
-                width: 200,
-                verticalAlign: 'middle',
-                useHTML: true,
-                labelFormatter: function () {
-                    return '<div style="text-align: left; width:130px;float:left;">' + this.name + ' ' + this.y;
-                }
-            }
-        };
-
-        $scope.pageSizeList = [5, 10, 20, 50, 100];
-        $scope.pageSize = $scope.pageSizeList[2];
-
-        $scope.tableHeaders = [];
-        $scope.tableData = [];
-
-        $scope.SLAReportObj = [];
-        $scope.getSLAReport = function () {
-            $scope.onGetSLAReport = function (response) {
-                var answer = response.responseXML.documentElement.getAttribute("answer");
-				
-				var responseJson = JSON.parse(answer);
-					
-				if(responseJson.cvStatusCode === 200) {
-					$scope.SLAReport = responseJson;
-					console.log($scope.SLAReport);
-
-					$scope.$apply();
-					angular.forEach($scope.SLAReport.pages, function (page) {
-						angular.forEach(page.dataSets.dataSet, function (value, key) {
-							var currentDataset = value;
-							if (currentDataset.dataSet.dataSetName === 'SLA Details' || currentDataset.dataSet.dataSetName === 'SLA Summary') {
-
-								/* call api to get records using dataset id */
-
-								$scope.onGetData = function (response) {
-									var answer = response.responseXML.documentElement.getAttribute("answer");
-									var responseJson = JSON.parse(answer);
-					
-									if(responseJson.cvStatusCode === 200) {
-										var dataSetData = responseJson;
-
-										console.log('dataSetData' + dataSetData);
-
-										$scope.SLAReportObj[currentDataset.dataSet.dataSetName] = {
-											dataSetID: currentDataset.dataSet.dataSetId,
-											columns: dataSetData.columns,
-											records: dataSetData.records
-										};
-
-										if (currentDataset.dataSet.dataSetName === 'SLA Summary') {
-											angular.forEach(dataSetData.records, function (record, rIndex) {
-												if (record[1] === 'Missed SLA') {
-													$scope.pieData.push({
-														y: record[2],
-														name: record[1],
-														color: "#cc0000"
-													});
-												} else if (record[1] === 'Met SLA ') {
-													$scope.pieData.push({
-														y: record[2],
-														name: record[1],
-														color: "#666699"
-													});
-												}
-												$scope.onAjax = false;
-												$scope.$apply();
-											});
-										} else if (currentDataset.dataSet.dataSetName === 'SLA Details') {
-											$scope.tableHeaders = dataSetData.columns;
-											angular.forEach(dataSetData.records, function (record, rIndex) {
-												var rowData = {};
-												rowData.rowId = record[0]; //sys_rowid
-												rowData.dataSource = record[1]; //Data Source
-												rowData.clientGroups = record[2]; //Client Groups
-												rowData.clientId = record[3]; //ClientId
-												rowData.client = record[4]; //Client
-												rowData.slaStatus = record[5]; //SLA Status
-												rowData.clientOwners = record[6]; //Client Owners
-												rowData.category = record[7]; //Category
-												rowData.slaDays = record[8]; //SLA Days
-
-												$scope.tableData.push(rowData);
-
-												$scope.$apply();
-											});
-										}
-
-										console.log('SLA Report object' + $scope.SLAReportObj);
-									} else if(responseJson.cvStatusCode === 401) {
-										//toasterservice.showInfoToast('Commvault login', 'User is logged out');
-										//$scope.showLoginModal();
-										$scope.unauthorized = true;
-										//$scope.cvLogin = {};
-									} else {
-										toasterservice.showErrorToast('Commvault error', 'Could not fetch report. Something went wrong');
-									}
-									
-								};
-
-								var getDataForDatasetEndpoint = new GlideAjax('TestCommvaultEndpoint');
-								getDataForDatasetEndpoint.addParam('sysparm_name', 'getDataForDataset');
-								getDataForDatasetEndpoint.addParam('sysparm_token', $scope.cvLogin.token);
-								getDataForDatasetEndpoint.addParam('sysparm_endpoint', $scope.cvLogin.endpoint);
-								getDataForDatasetEndpoint.addParam('sysparm_dataSetId', currentDataset.dataSet.dataSetId);
-								getDataForDatasetEndpoint.getXML($scope.onGetData);
-
-							}
-						});
-					});
-				} else if(responseJson.cvStatusCode === 401) {
-					//toasterservice.showInfoToast('Commvault login', 'User is logged out');
-					//$scope.showLoginModal();
-					$scope.unauthorized = true;
-					//$scope.cvLogin = {};
-				} else {
-					toasterservice.showErrorToast('Commvault error', 'Could not fetch report. Something went wrong');
-				}
-
             };
 
-			$scope.onAjax = true;
-            var getSLAReportEndpoint = new GlideAjax('TestCommvaultEndpoint');
-            getSLAReportEndpoint.addParam('sysparm_name', 'getSLAReport');
-			getSLAReportEndpoint.addParam('sysparm_token', $scope.cvLogin.token);
-			getSLAReportEndpoint.addParam('sysparm_endpoint', $scope.cvLogin.endpoint);
-            //getSLAReportEndpoint.addParam('sysparm_dataSetId', 126);
-            getSLAReportEndpoint.getXML($scope.onGetSLAReport);
-        };
+            $scope.pageSizeList = [5, 10, 20, 50, 100];
+            $scope.pageSize = $scope.pageSizeList[2];
 
-        
-		$scope.cvLogin = {};
-		$scope.getLoginCookie = function() {
-			$scope.unauthorized = true;
-			try {
-				var cvLoginFromCookie = $cookies.getObject('snow_cvLogin');
-				if(cvLoginFromCookie) {
-					$scope.cvLogin = cvLoginFromCookie;
-					$scope.unauthorized = false;
-				}
-			} catch (e) {
-				console.log('Failed to get cookie');
-			}
-			if($scope.cvLogin.token && $scope.cvLogin.token.length>0) {
-				$scope.getSLAReport();
-			} else {
-				$scope.unauthorized = true;
-				//$scope.cvLogin = {};
-			}
-		};
-    }]);
+            $scope.tableHeaders = [];
+            $scope.tableData = [];
+
+            $scope.SLAReportObj = [];
+            $scope.getSLAReport = function () {
+                $scope.onGetSLAReport = function (response) {
+                    //var answer = response.responseXML.documentElement.getAttribute("answer");
+
+                    var responseJson = response.data.result;
+
+                    if (responseJson.cvStatusCode === 200) {
+                        $scope.SLAReport = responseJson;
+                        console.log($scope.SLAReport);
+
+                        angular.forEach($scope.SLAReport.pages, function (page) {
+                            angular.forEach(page.dataSets.dataSet, function (value, key) {
+                                var currentDataset = value;
+                                if (currentDataset.dataSet.dataSetName === 'SLA Details' || currentDataset.dataSet.dataSetName === 'SLA Summary') {
+
+                                    /* call api to get records using dataset id */
+
+                                    $scope.onGetData = function (response) {
+                                        //var answer = response.responseXML.documentElement.getAttribute("answer");
+                                        var responseJson = response.data.result;
+
+                                        if (responseJson.cvStatusCode === 200) {
+                                            var dataSetData = responseJson;
+
+                                            console.log('dataSetData' + dataSetData);
+
+                                            $scope.SLAReportObj[currentDataset.dataSet.dataSetName] = {
+                                                dataSetID: currentDataset.dataSet.dataSetId,
+                                                columns: dataSetData.columns,
+                                                records: dataSetData.records
+                                            };
+
+                                            if (currentDataset.dataSet.dataSetName === 'SLA Summary') {
+                                                angular.forEach(dataSetData.records, function (record, rIndex) {
+                                                    if (record[1] === 'Missed SLA') {
+                                                        $scope.pieData.push({
+                                                            y: record[2],
+                                                            name: record[1],
+                                                            color: "#cc0000"
+                                                        });
+                                                    } else if (record[1] === 'Met SLA ') {
+                                                        $scope.pieData.push({
+                                                            y: record[2],
+                                                            name: record[1],
+                                                            color: "#666699"
+                                                        });
+                                                    }
+                                                    $scope.onAjax = false;
+                                                    //$scope.$apply();
+                                                });
+                                            } else if (currentDataset.dataSet.dataSetName === 'SLA Details') {
+                                                $scope.tableHeaders = dataSetData.columns;
+                                                angular.forEach(dataSetData.records, function (record, rIndex) {
+                                                    var rowData = {};
+                                                    rowData.rowId = record[0]; //sys_rowid
+                                                    rowData.dataSource = record[1]; //Data Source
+                                                    rowData.clientGroups = record[2]; //Client Groups
+                                                    rowData.clientId = record[3]; //ClientId
+                                                    rowData.client = record[4]; //Client
+                                                    rowData.slaStatus = record[5]; //SLA Status
+                                                    rowData.clientOwners = record[6]; //Client Owners
+                                                    rowData.category = record[7]; //Category
+                                                    rowData.slaDays = record[8]; //SLA Days
+
+                                                    $scope.tableData.push(rowData);
+
+                                                    //$scope.$apply();
+                                                });
+                                            }
+
+                                            console.log('SLA Report object' + $scope.SLAReportObj);
+                                        } else if (responseJson.cvStatusCode === 401) {
+                                            //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                                            //$scope.showLoginModal();
+                                            $scope.cvLogin.unauthorized = true;
+                                            //$scope.cvLogin = {};
+                                        } else {
+                                            toasterservice.showErrorToast('Commvault error', 'Could not fetch report. Something went wrong');
+                                        }
+
+                                    };
+
+                                    restservice.getDataForDataset(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, currentDataset.dataSet.dataSetId).then($scope.onGetData,
+                                        function () {
+                                            toasterservice.showErrorToast('API Error', 'Something went wrong');
+                                        }
+                                    );
+
+                                }
+                            });
+                        });
+                    } else if (responseJson.cvStatusCode === 401) {
+                        //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                        //$scope.showLoginModal();
+                        $scope.cvLogin.unauthorized = true;
+                        //$scope.cvLogin = {};
+                    } else {
+                        toasterservice.showErrorToast('Commvault error', 'Could not fetch report. Something went wrong');
+                    }
+
+                };
+
+                $scope.onAjax = true;
+
+                restservice.getSLAReport(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint).then($scope.onGetSLAReport,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
+            };
+
+
+            $scope.cvLogin = {};
+            $scope.getLoginCookie = function () {
+                $scope.cvLogin.unauthorized = true;
+                try {
+                    var cvLoginFromCookie = $cookies.getObject('snow_cvLogin');
+                    if (cvLoginFromCookie) {
+                        $scope.cvLogin = cvLoginFromCookie;
+                        $scope.cvLogin.unauthorized = false;
+                    }
+                } catch (e) {
+                    console.log('Failed to get cookie');
+                }
+                if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
+                    $scope.getSLAReport();
+                } else {
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                }
+            };
+        }
+    ]);
 
     angular.module('angularapp').controller('ScheduleController', [
         '$scope',
         '$cookies',
         'toasterservice',
-        function ($scope, $cookies, toasterservice) {
+        'restservice',
+        function ($scope, $cookies, toasterservice, restservice) {
             console.log('In schedule controller');
-			
-			$scope.getSchedules = function () {
+
+            $scope.getSchedules = function () {
                 $scope.onSchedules = function (response) {
-                    var answer = response.responseXML.documentElement.getAttribute("answer");
-					
-                    var responseJson = JSON.parse(answer);
-					
-					if(responseJson.cvStatusCode === 200) {
-						$scope.schedules = JSON.parse(answer);
-					} else if(responseJson.cvStatusCode === 401) {
-						//toasterservice.showInfoToast('Commvault login', 'User is logged out');
-						//$scope.showLoginModal();
-						$scope.unauthorized = true;
-						//$scope.cvLogin = {};
-					} else {
-						toasterservice.showErrorToast('Commvault error', 'Could not fetch schedules. Something went wrong');
-					}
-					
+                    //var answer = response.responseXML.documentElement.getAttribute("answer");
+
+                    var responseJson = response.data.result;
+
+                    if (responseJson.cvStatusCode === 200) {
+                        $scope.schedules = responseJson;
+                    } else if (responseJson.cvStatusCode === 401) {
+                        //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                        //$scope.showLoginModal();
+                        $scope.cvLogin.unauthorized = true;
+                        //$scope.cvLogin = {};
+                    } else {
+                        toasterservice.showErrorToast('Commvault error', 'Could not fetch schedules. Something went wrong');
+                    }
+
                     $scope.onAjax = false;
-                    $scope.$apply();
+                    //$scope.$apply();
                     console.log($scope.schedules);
                 };
-				
-				$scope.onAjax = true;
-                var getScheduleEndpoint = new GlideAjax('TestCommvaultEndpoint');
-                getScheduleEndpoint.addParam('sysparm_name', 'getSchedules');
-				getScheduleEndpoint.addParam('sysparm_token', $scope.cvLogin.token);
-				getScheduleEndpoint.addParam('sysparm_endpoint', $scope.cvLogin.endpoint);
-                getScheduleEndpoint.getXML($scope.onSchedules);
+
+                $scope.onAjax = true;
+                restservice.getSchedules(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint).then($scope.onSchedules,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
             };
 
             $scope.cvLogin = {};
-			$scope.getLoginCookie = function() {
-				$scope.unauthorized = true;
-				try {
-					var cvLoginFromCookie = $cookies.getObject('snow_cvLogin');
-					if(cvLoginFromCookie) {
-						$scope.cvLogin = cvLoginFromCookie;
-						$scope.unauthorized = false;
-					}
-				} catch (e) {
-					console.log('Failed to get cookie');
-				}
-				if($scope.cvLogin.token && $scope.cvLogin.token.length>0) {
-					$scope.getSchedules();
-				} else {
-					$scope.unauthorized = true;
-					//$scope.cvLogin = {};
-				}
-			};
+            $scope.getLoginCookie = function () {
+                $scope.cvLogin.unauthorized = true;
+                try {
+                    var cvLoginFromCookie = $cookies.getObject('snow_cvLogin');
+                    if (cvLoginFromCookie) {
+                        $scope.cvLogin = cvLoginFromCookie;
+                        $scope.cvLogin.unauthorized = false;
+                    }
+                } catch (e) {
+                    console.log('Failed to get cookie');
+                }
+                if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
+                    $scope.getSchedules();
+                } else {
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                }
+            };
         }
     ]);
 
+	
+	angular.module('angularapp').controller('ViewClientGroupsController', [
+        '$scope',
+        '$cookies',
+        '$timeout',
+        '$q',
+        'toasterservice',
+        'restservice',
+        function ($scope, $cookies, $timeout, $q, toasterservice, restservice) {
+			$scope.tableLoaded = false;
+			
+			$j_commvault('#addEditServerGroupModal').on('hidden.bs.modal', function (e) {
+                $scope.addEditServerGroupModel = {};
+                $scope.$apply();
+            });
+			
+			$j_commvault('#deleteModal').on('hidden.bs.modal', function (e) {
+                $scope.clientGroupToDelete = {};
+                $scope.$apply();
+            });
+			
+			var getAllClients = function () {
+				var deferred = $q.defer();
+				
+				var allClientsClientGroupId = 0;
+				
+				restservice.getClientsForClientGroup(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, allClientsClientGroupId).then(
+					function(response) {
+						var responseJson = response.data.result;
 
+						if (responseJson.cvStatusCode === 200) {
+							deferred.resolve(responseJson);
+						} else if (responseJson.cvStatusCode === 401) {
+							//toasterservice.showInfoToast('Commvault login', 'User is logged out');
+							//$scope.showLoginModal();
+							$scope.cvLogin.unauthorized = true;
+							deferred.reject('Could not get all clients');
+							//$scope.cvLogin = {};
+						} else {
+							toasterservice.showErrorToast('Commvault error', 'Could not get all clients. Something went wrong');
+							deferred.reject('Could not get all clients');
+						}
+					},
+					function() {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+						deferred.reject('Could not get all clients');
+                    }
+				);
+				
+				return deferred.promise;
+			};
+			
+			var getAssociatedClients = function (clientGroupId) {
+				var deferred = $q.defer();
+				
+				restservice.getClientGroupProperties(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, clientGroupId).then(
+					function(response) {
+						var responseJson = response.data.result;
+
+						if (responseJson.cvStatusCode === 200) {
+							deferred.resolve(responseJson);
+						} else if (responseJson.cvStatusCode === 401) {
+							//toasterservice.showInfoToast('Commvault login', 'User is logged out');
+							//$scope.showLoginModal();
+							$scope.cvLogin.unauthorized = true;
+							deferred.reject('Could not get associated clients');
+							//$scope.cvLogin = {};
+						} else {
+							toasterservice.showErrorToast('Commvault error', 'Could not get associated clients. Something went wrong');
+							deferred.reject('Could not get associated clients');
+						}
+					},
+					function() {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+						deferred.reject('Could not get associated clients');
+                    }
+				);
+				
+				return deferred.promise;
+			};
+			
+			var showAddEditServerGroupModal = function () {
+				$j_commvault('#addEditServerGroupModal').modal({
+					keyboard: false,
+					backdrop: 'static'
+				});
+				$j_commvault('#addEditServerGroupModal').modal('show');
+			};
+			
+			var getFlattenedClientList = function (originalClients, associatedClients) {
+				var selectedClients = [];
+				if (associatedClients) {
+					associatedClients.forEach(function(c) {
+						selectedClients.push(c.clientId);
+					});
+				}
+				
+				var flattened = [];
+				if (associatedClients && ((((((associatedClients.length > 0))))))) {
+					associatedClients.forEach(function(c) {
+						var clientId = c.clientId;
+						var clientName = c.clientName;
+						var selected = true;
+
+						flattened.push({
+							label : clientName,
+							value : c.clientId,
+							selected : selected,
+						});
+					});
+				}
+				
+				originalClients.forEach(function(c) {
+					var clientId = c.client.clientEntity.clientId;
+					var clientName = c.client.clientEntity.clientName;
+					var selected = selectedClients ? selectedClients.indexOf(clientId) > -1
+					: false;
+					if (!selected) { //Selected clients are already pushed from associatedClients list
+						flattened.push({
+							label : clientName,
+							value : clientId,
+							selected : selected,
+						});
+					}
+				});
+				
+				//$scope.addEditServerGroupModel.selectedClientsCount = selectedClients.length;
+				
+				return flattened;
+			};
+			
+			$scope.onSelectAll = function () {
+				$scope.addEditServerGroupModel.selectAll = !$scope.addEditServerGroupModel.selectAll;
+				var targetState = $scope.addEditServerGroupModel.selectAll;
+				
+				if($scope.addEditServerGroupModel.flattenedClientList && $scope.addEditServerGroupModel.flattenedClientList.length > 0)
+				$scope.addEditServerGroupModel.flattenedClientList.forEach(function(c) {
+					c.selected = targetState;
+				}); 
+			};
+			
+			$scope.onSelectedClientBadgeClick = function(client) {
+				client.selected = false;	
+			};
+			
+			$scope.getClientGroupData = function (opType, clientGroup) {
+				
+				$scope.addEditServerGroupModel = {
+					clientGroupOptype : opType,
+					clientGroupId : 0,
+					clientGroupName : '',
+					showSelected: false,
+					selectAll: false,
+					onSubmitCall: false
+				};
+				
+				if($scope.addEditServerGroupModel.clientGroupOptype === 'CREATE') {
+					
+				}
+				
+				if($scope.addEditServerGroupModel.clientGroupOptype === 'UPDATE') {
+					$scope.addEditServerGroupModel.selectedClientGroupForEdit = clientGroup;
+					$scope.addEditServerGroupModel.clientGroupId = clientGroup.Id;
+					$scope.addEditServerGroupModel.clientGroupName = clientGroup.name;
+					$scope.addEditServerGroupModel.oldClientGroupName = clientGroup.name;
+				}
+				
+				$scope.onAjax = true;
+				
+				getAllClients().then(
+					function(response) {
+						console.log("get all clients");
+						console.log(response);
+						$scope.addEditServerGroupModel.originalClients = response.clientProperties;
+						if($scope.addEditServerGroupModel.clientGroupOptype === 'UPDATE') {
+							return getAssociatedClients(clientGroup.Id);
+						} else {
+							return null;
+						}
+					},
+					function (error) {
+						toasterservice.showErrorToast('API Error', error);
+					}
+				).then(
+					function(response) {
+						console.log("get associated clients");
+						console.log(response);
+						if(response) {
+							$scope.addEditServerGroupModel.associatedClients = response.clientGroupDetail.associatedClients;
+						} else {
+							$scope.addEditServerGroupModel.associatedClients = null;
+						}
+						$scope.addEditServerGroupModel.flattenedClientList = getFlattenedClientList($scope.addEditServerGroupModel.originalClients, $scope.addEditServerGroupModel.associatedClients);
+
+						$scope.addEditServerGroupModel.oldFlattenedClientList = angular.copy($scope.addEditServerGroupModel.flattenedClientList);
+						
+						showAddEditServerGroupModal();
+					}, function(error) {
+						toasterservice.showErrorToast('API Error', error);
+					} 
+				).finally(function() {
+					$scope.onAjax = false;
+				});
+			};
+			
+			$scope.postClientGroupOperationCallback = function (response) {
+				var responseJson = response.data.result;
+
+				if (responseJson.cvStatusCode === 200) {
+					if(responseJson.errorMessage && responseJson.errorMessage.length > 0 && responseJson.errorCode && responseJson.errorCode > 0) {
+						toasterservice.showInfoToast('Client Group', responseJson.errorMessage);
+					} else {
+					
+						var actionString = '';
+						var clientGroupName = $scope.addEditServerGroupModel.clientGroupName;
+						if( $scope.addEditServerGroupModel.clientGroupOptype == 'CREATE') {
+							actionString = 'created';
+						} else if( $scope.addEditServerGroupModel.clientGroupOptype == 'UPDATE') {
+							actionString = 'updated';
+						}
+						toasterservice.showInfoToast('Client Group', clientGroupName + ' successfully ' + actionString);
+						$scope.getClientGroups();
+					}
+					
+				} else if (responseJson.cvStatusCode === 401) {
+					//toasterservice.showInfoToast('Commvault login', 'User is logged out');
+					//$scope.showLoginModal();
+					$scope.cvLogin.unauthorized = true;
+					//$scope.cvLogin = {};
+				} else {
+					toasterservice.showErrorToast('Commvault error', 'Could not perform operation on client group. Something went wrong');
+				}
+				$scope.addEditServerGroupModel.onSubmitCall = false;
+				$j_commvault('#addEditServerGroupModal').modal('hide');
+			};
+			
+			$scope.onAddEditClientGroupSubmit = function () {
+				if(!$scope.addEditServerGroupModel) {
+					toasterservice.showErrorToast('Invalid data', 'Please select a client group');
+					return;
+				}
+				
+				if(!$scope.addEditServerGroupModel.clientGroupName || $scope.addEditServerGroupModel.clientGroupName.trim().length === 0) {
+					$scope.addEditServerGroupModel.errorText = 'Please provide a client group name';
+					return;
+				}
+				
+				$scope.addEditServerGroupModel.errorText = '';
+				$scope.addEditServerGroupModel.infoText = 'Please wait..';
+				
+				var getReducedArray = function (origClientlist) {
+					var reducedClientList = [];
+					origClientlist.forEach(function(c) {
+						if (c.selected) {
+							reducedClientList.push(c.value);
+						} 
+					});
+					return reducedClientList;
+				};
+				
+				if(!angular.equals($scope.addEditServerGroupModel.flattenedClientList, $scope.addEditServerGroupModel.oldFlattenedClientList) || $scope.addEditServerGroupModel.oldClientGroupName != $scope.addEditServerGroupModel.clientGroupName) {
+					
+					var clientGroupInfo = {
+						action: $scope.addEditServerGroupModel.clientGroupOptype,
+						clientGroupId: $scope.addEditServerGroupModel.clientGroupId,
+						clientGroupName: $scope.addEditServerGroupModel.clientGroupName
+					};
+					
+					clientGroupInfo.clientList = getReducedArray($scope.addEditServerGroupModel.flattenedClientList);
+					
+					$scope.addEditServerGroupModel.onSubmitCall = true;
+					restservice.postClientGroupOperation(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, clientGroupInfo).then($scope.postClientGroupOperationCallback,
+						function () {
+							toasterservice.showErrorToast('API Error', 'Something went wrong');
+						}
+					);
+					
+					
+				} else {
+					toasterservice.showInfoToast('Client Group', 'No changes to save');
+					$scope.addEditServerGroupModel.onSubmitCall = false;
+					$j_commvault('#addEditServerGroupModal').modal('hide');
+				}
+			};
+			
+			$scope.showDeleteClientGroupModal = function (clientGroup) {
+				$scope.clientGroupToDelete = clientGroup;
+				
+				$j_commvault('#deleteModal').modal({
+					keyboard: false,
+					backdrop: 'static'
+				});
+				$j_commvault('#deleteModal').modal('show');
+			};
+			
+			$scope.confirmDelete = function (clientGroup) {
+				$scope.deleteClientGroup(clientGroup);
+				$j_commvault('#deleteModal').modal('hide');
+			};
+			
+			$scope.deleteClientGroup = function (clientGroup) {
+				var selectedClientGroupName = clientGroup.name;
+				var selectedClientGroupId = clientGroup.Id;
+				
+				restservice.deleteClientGroupOperation(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, selectedClientGroupId).then(
+					function (response) {
+						var responseJson = response.data.result;
+						if (responseJson.cvStatusCode === 200) {
+							toasterservice.showInfoToast('Client group', 'Successfully deleted ' + selectedClientGroupName);
+							$scope.getClientGroups();
+						} else if (responseJson.cvStatusCode === 401) {
+							//toasterservice.showInfoToast('Commvault login', 'User is logged out');
+							//$scope.showLoginModal();
+							$scope.cvLogin.unauthorized = true;
+							//$scope.cvLogin = {};
+						} else {
+							toasterservice.showErrorToast('Commvault error', 'Could not perform operation on client group. Something went wrong');
+						}
+					},
+					function () {
+						toasterservice.showErrorToast('API Error', 'Something went wrong');
+					}																															
+				);
+			};
+			
+			$scope.getClientGroups = function () {
+                $scope.onGetClientGroups = function (response) {
+                    //var answer = response.responseXML.documentElement.getAttribute("answer");
+
+                    var responseJson = response.data.result;
+
+                    if (responseJson.cvStatusCode === 200) {
+                        $scope.clientGroupResponse = responseJson;
+                        $scope.tableLoaded = true;
+                    } else if (responseJson.cvStatusCode === 401) {
+                        //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                        //$scope.showLoginModal();
+                        $scope.cvLogin.unauthorized = true;
+                        //$scope.cvLogin = {};
+                    } else {
+                        toasterservice.showErrorToast('Commvault error', 'Could not fetch client groups. Something went wrong');
+                    }
+
+                    $scope.onAjax = false;
+                    console.log($scope.clientResponse);
+                };
+
+                $scope.onAjax = true;
+                restservice.getClientGroups(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint).then($scope.onGetClientGroups,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
+            };
+			
+			
+			$scope.sort = function (keyname) {
+                $scope.sortKey = keyname;
+                $scope.reverse = !$scope.reverse;
+            };
+
+            $scope.toggleActionDropdown = function (clientProperty) {
+                clientProperty.showActionDropdown = !clientProperty.showActionDropdown;
+                if (clientProperty.showActionDropdown) {
+                    if ($scope.openDropdownClientproperty) {
+                        if ($scope.openDropdownClientproperty !== clientProperty) {
+                            $scope.openDropdownClientproperty.showActionDropdown = false;
+                        }
+                    }
+                    $scope.openDropdownClientproperty = clientProperty;
+                }
+            };
+
+            window.onclick = function (event) {
+                if (!event.target.matches('.action-dropbtn') && !event.target.matches('.action-dropbtn .button-icon')) {
+                    if ($scope.openDropdownClientproperty) {
+                        $scope.openDropdownClientproperty.showActionDropdown = false;
+                        $scope.$apply();
+                    }
+                }
+            };
+
+            $scope.pageSizeList = [5, 10, 20, 50, 100];
+            $scope.pageSize = $scope.pageSizeList[2];
+
+
+            $scope.cvLogin = {};
+            $scope.getLoginCookie = function () {
+                $scope.cvLogin.unauthorized = true;
+                try {
+                    var cvLoginFromCookie = $cookies.getObject('snow_cvLogin');
+                    if (cvLoginFromCookie) {
+                        $scope.cvLogin = cvLoginFromCookie;
+                        $scope.cvLogin.unauthorized = false;
+                    }
+                } catch (e) {
+                    console.log('Failed to get cookie');
+                }
+                if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
+                    $scope.getClientGroups();
+                } else {
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                }
+            };
+			
+		}
+	]);
+	
 
     angular.module('angularapp').controller('ViewClientsController', [
         '$scope',
-		'$cookies',
+        '$cookies',
         '$timeout',
+        '$q',
         'toasterservice',
-        function ($scope, $cookies, $timeout, toasterservice) {
+        'restservice',
+        function ($scope, $cookies, $timeout, $q, toasterservice, restservice) {
+			
+			$scope.includeVM = false;
 
-            $scope.tabeLoaded = false;
+            $scope.tableLoaded = false;
             $scope.selectedBackupLevel = null;
 
             //$scope.test = "teststring";
             $scope.getClients = function () {
                 $scope.onGetClients = function (response) {
-                    var answer = response.responseXML.documentElement.getAttribute("answer");
-					
-					var responseJson = JSON.parse(answer);
-					
-					if(responseJson.cvStatusCode === 200) {
-						$scope.clientResponse = responseJson;
-						$scope.tabeLoaded = true;
-					} else if(responseJson.cvStatusCode === 401) {
-						//toasterservice.showInfoToast('Commvault login', 'User is logged out');
-						//$scope.showLoginModal();
-						$scope.unauthorized = true;
-						//$scope.cvLogin = {};
-					} else {
-						toasterservice.showErrorToast('Commvault error', 'Could not fetch clients. Something went wrong');
-					}
-					
+                    //var answer = response.responseXML.documentElement.getAttribute("answer");
+
+                    var responseJson = response.data.result;
+
+                    if (responseJson.cvStatusCode === 200) {
+                        $scope.clientResponse = responseJson;
+                        $scope.clientResponse.clientProperties.forEach(function (obj) {
+                            var items = obj.client.idaList;
+                            if (items && items.length) {
+
+                            } else {
+                                //if app is vm
+                                if (obj.clientProps.isVirtualServerDiscoveredClient) {
+                                    obj.client.idaList = [];
+                                    var idaEntityVM = {
+                                        appName: 'Virtul Machine',
+                                        applicationId: ''
+                                    };
+                                    obj.client.idaList.push({
+                                        'idaEntity': idaEntityVM
+                                    });
+                                } else {
+                                    obj.client.idaList = [];
+                                    var idaEntityGeneric = {
+                                        appName: obj.client.clientEntity.clientName,
+                                        applicationId: ''
+                                    };
+                                    obj.client.idaList.push({
+                                        'idaEntity': idaEntityGeneric
+                                    });
+                                }
+                            }
+                        });
+                        $scope.tableLoaded = true;
+                    } else if (responseJson.cvStatusCode === 401) {
+                        //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                        //$scope.showLoginModal();
+                        $scope.cvLogin.unauthorized = true;
+                        //$scope.cvLogin = {};
+                    } else {
+                        toasterservice.showErrorToast('Commvault error', 'Could not fetch clients. Something went wrong');
+                    }
+
                     $scope.onAjax = false;
-                    $scope.$apply();
                     console.log($scope.clientResponse);
                 };
 
-				$scope.onAjax = true;
-                var getClientsEndpoint = new GlideAjax('TestCommvaultEndpoint');
-                getClientsEndpoint.addParam('sysparm_name', 'getClients');
-				getClientsEndpoint.addParam('sysparm_token', $scope.cvLogin.token);
-				getClientsEndpoint.addParam('sysparm_endpoint', $scope.cvLogin.endpoint);
-                getClientsEndpoint.getXML($scope.onGetClients);
+                $scope.onAjax = true;
+                restservice.getClients(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, $scope.includeVM).then($scope.onGetClients,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
             };
 
             $j_commvault('#backupModal').on('hidden.bs.modal', function (e) {
@@ -884,6 +1619,7 @@
                 $scope.selectedBackupLevel = null;
                 $scope.infoText = '';
                 $scope.errorText = '';
+                $scope.autoRunBackup = true;
                 $scope.onGetSubclients = function (response) {
                     $scope.appList = [];
                     $scope.backupSetList = [];
@@ -896,60 +1632,68 @@
                         fspassword: '',
                         fsFileSourcePath: ''
                     };
-                    var answer = response.responseXML.documentElement.getAttribute("answer");
-					
-					var responseJson = JSON.parse(answer);
-					
-					if(responseJson.cvStatusCode === 200) {
-						$scope.subclientResponse = responseJson;
-						$scope.onAjax = false;
+                    //var answer = response.responseXML.documentElement.getAttribute("answer");
 
-						console.log($scope.subclientResponse);
+                    var responseJson = response.data.result;
 
-						var isAppPresent = function (applicationId) {
-							for (var i = 0; i < $scope.appList.length; i++) {
-								if ($scope.appList[i].applicationId === applicationId) {
-									return true;
-								}
-							}
-							return false;
-						};
+                    if (responseJson.cvStatusCode === 200) {
+                        $scope.subclientResponse = responseJson;
+                        $scope.onAjax = false;
 
-						angular.forEach($scope.subclientResponse.entity, function (record, rIndex) {
-							if (!isAppPresent(record.applicationId)) {
-								$scope.appList.push({
-									applicationId: record.applicationId,
-									appName: record.appName
-								});
-							}
-						});
+                        console.log($scope.subclientResponse);
 
-						//$scope.$apply();
+                        var isAppPresent = function (applicationId) {
+                            for (var i = 0; i < $scope.appList.length; i++) {
+                                if ($scope.appList[i].applicationId === applicationId) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        };
 
-						$j_commvault('#backupModal').modal({
-							keyboard: false,
-							backdrop: 'static'
-						});
-						$j_commvault('#backupModal').modal('show');
-					} else if(responseJson.cvStatusCode === 401) {
-						//toasterservice.showInfoToast('Commvault login', 'User is logged out');
-						//$scope.showLoginModal();
-						$scope.unauthorized = true;
-						//$scope.$apply();
-						//$scope.cvLogin = {};
-					} else {
-						toasterservice.showErrorToast('Commvault error', 'Could not run backup. Something went wrong');
-					}
-					
-					$scope.$apply();
+                        angular.forEach($scope.subclientResponse.entity, function (record, rIndex) {
+                            if (!isAppPresent(record.applicationId)) {
+                                $scope.appList.push({
+                                    applicationId: record.applicationId,
+                                    appName: record.appName
+                                });
+                            }
+                        });
+
+                        if ($scope.appList.length > 0) {
+                            $scope.selectApp($scope.appList[0]);
+
+                            if ($scope.appList.length > 1 && $scope.autoRunBackup) {
+                                $scope.autoRunBackup = false;
+                            }
+
+                            //$scope.$apply();
+
+                            $j_commvault('#backupModal').modal({
+                                keyboard: false,
+                                backdrop: 'static'
+                            });
+                            $j_commvault('#backupModal').modal('show');
+                        } else {
+                            toasterservice.showErrorToast('', 'No Apps found for this client');
+                        }
+                    } else if (responseJson.cvStatusCode === 401) {
+                        //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                        //$scope.showLoginModal();
+                        $scope.cvLogin.unauthorized = true;
+                        //$scope.$apply();
+                        //$scope.cvLogin = {};
+                    } else {
+                        toasterservice.showErrorToast('Commvault error', 'Could not run backup. Something went wrong');
+                    }
+
                 };
 
-                var getSubclientsEndpoint = new GlideAjax('TestCommvaultEndpoint');
-                getSubclientsEndpoint.addParam('sysparm_name', 'getSubclients');
-				getSubclientsEndpoint.addParam('sysparm_token', $scope.cvLogin.token);
-				getSubclientsEndpoint.addParam('sysparm_endpoint', $scope.cvLogin.endpoint);
-                getSubclientsEndpoint.addParam('sysparm_clientId', $scope.clientId);
-                getSubclientsEndpoint.getXML($scope.onGetSubclients);
+                restservice.getSubclients(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, $scope.clientId).then($scope.onGetSubclients,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
             };
 
             $scope.getBackupSet = function (app) {
@@ -973,6 +1717,12 @@
                             });
                         }
                     });
+
+                    $scope.selectBackupset($scope.backupSetList[0]);
+                    if ($scope.backupSetList.length > 1 && $scope.autoRunBackup) {
+                        $scope.autoRunBackup = false;
+                    }
+
                 }, 200);
 
             };
@@ -997,6 +1747,13 @@
                             });
                         }
                     });
+
+                    $scope.selectSubclient($scope.subclientList[0]);
+                    if ($scope.subclientList.length > 1 && $scope.autoRunBackup) {
+                        $scope.autoRunBackup = false;
+                    }
+
+
                 }, 200);
             };
 
@@ -1033,6 +1790,10 @@
                 }
                 subclient.selected = true;
                 $scope.selectedSubclient = subclient;
+
+                if ($scope.backupModalOptype === 'BACKUP' && $scope.autoRunBackup) {
+                    $scope.onRunBackup();
+                }
             };
 
             $scope.onBackupLevelSelection = function (selectedBackupLevel) {
@@ -1040,27 +1801,26 @@
             };
 
             $scope.runBackupCallback = function (response) {
-                var answer = response.responseXML.documentElement.getAttribute("answer");
-				
-				var responseJson = JSON.parse(answer);
-					
-				if(responseJson.cvStatusCode === 200) {
-					$scope.runBackupResponse = responseJson;
-					toasterservice.showInfoToast('Backup', 'Data backup started with Job Id: ' + $scope.runBackupResponse.jobIds[0]);
-					console.log($scope.runBackupResponse);
-				} else if(responseJson.cvStatusCode === 401) {
-					//toasterservice.showInfoToast('Commvault login', 'User is logged out');
-					//$scope.showLoginModal();
-					$scope.unauthorized = true;
-					//$scope.cvLogin = {};
-				} else {
-					toasterservice.showErrorToast('Commvault error', 'Could not run backup. Something went wrong');
-				}
-				
-				$j_commvault('#backupModal').modal('hide');
+                //var answer = response.responseXML.documentElement.getAttribute("answer");
+
+                var responseJson = response.data.result;
+
+                if (responseJson.cvStatusCode === 200) {
+                    $scope.runBackupResponse = responseJson;
+                    toasterservice.showInfoToast('Backup', 'Data backup started with Job Id: ' + $scope.runBackupResponse.jobIds[0]);
+                    console.log($scope.runBackupResponse);
+                } else if (responseJson.cvStatusCode === 401) {
+                    //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                    //$scope.showLoginModal();
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                } else {
+                    toasterservice.showErrorToast('Commvault error', 'Could not run backup. Something went wrong');
+                }
+
                 $scope.infoText = '';
-                $scope.$apply();
-                
+                $j_commvault('#backupModal').modal('hide');
+
             };
 
             $scope.onRunBackup = function () {
@@ -1077,10 +1837,10 @@
                     $scope.errorText = "Please select a subclient";
                     return;
                 }
-                if (!$scope.selectedBackupLevel) {
+                /*if (!$scope.selectedBackupLevel) {
                     $scope.errorText = "Please select a backup level";
                     return;
-                }
+                }*/
                 if (!$scope.clientId) {
                     $scope.errorText = "Please select a client";
                     return;
@@ -1088,20 +1848,21 @@
 
 
                 $scope.infoText = 'Please wait...';
-                var runBackupEndpoint = new GlideAjax('TestCommvaultEndpoint');
-                runBackupEndpoint.addParam('sysparm_name', 'runBackup');
-				runBackupEndpoint.addParam('sysparm_token', $scope.cvLogin.token);
-				runBackupEndpoint.addParam('sysparm_endpoint', $scope.cvLogin.endpoint);
-                runBackupEndpoint.addParam('sysparm_clientId', $scope.clientId);
-                runBackupEndpoint.addParam('sysparm_subclientId', $scope.selectedSubclient.subclientId);
-                runBackupEndpoint.addParam('sysparm_subclientName', $scope.selectedSubclient.subclientName);
-                runBackupEndpoint.addParam('sysparm_backupsetId', $scope.selectedBackupset.backupsetId);
-                runBackupEndpoint.addParam('sysparm_backupsetName', $scope.selectedBackupset.backupsetName);
-                runBackupEndpoint.addParam('sysparm_appId', $scope.selectedApp.applicationId);
-                runBackupEndpoint.addParam('sysparm_appName', $scope.selectedApp.appName);
-                runBackupEndpoint.addParam('sysparm_backupLevel', $scope.selectedBackupLevel);
-
-                runBackupEndpoint.getXML($scope.runBackupCallback);
+                var backupInfo = {
+                    clientId: $scope.clientId,
+                    subclientId: $scope.selectedSubclient.subclientId,
+                    subclientName: $scope.selectedSubclient.subclientName,
+                    backupsetId: $scope.selectedBackupset.backupsetId,
+                    backupsetName: $scope.selectedBackupset.backupsetName,
+                    appId: $scope.selectedApp.applicationId,
+                    appName: $scope.selectedApp.appName,
+                    backupLevel: 'INCREMENTAL'
+                };
+                restservice.runFsBackup(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, backupInfo).then($scope.runBackupCallback,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
             };
 
             $scope.fsRestoreOrigLocationStateChanged = function () {
@@ -1109,28 +1870,27 @@
             };
 
             $scope.runFsRestoreCallback = function (response) {
-                var answer = response.responseXML.documentElement.getAttribute("answer");
-				
-				var responseJson = JSON.parse(answer);
-					
-				if(responseJson.cvStatusCode === 200) {
-					$scope.runFsRestoreResponse = responseJson;
-					toasterservice.showInfoToast('Restore', 'Data restore started with Job Id: ' + $scope.runFsRestoreResponse.jobIds[0]);
-					console.log($scope.runFsRestoreResponse);
-				} else if(responseJson.cvStatusCode === 401) {
-					//toasterservice.showInfoToast('Commvault login', 'User is logged out');
-					//$scope.showLoginModal();
-					$scope.unauthorized = true;
-					//$scope.cvLogin = {};
-				} else {
-					toasterservice.showErrorToast('Commvault error', 'Could not run restore. Something went wrong');
-				}
-				
+                //var answer = response.responseXML.documentElement.getAttribute("answer");
+
+                var responseJson = response.data.result;
+
+                if (responseJson.cvStatusCode === 200) {
+                    $scope.runFsRestoreResponse = responseJson;
+                    toasterservice.showInfoToast('Restore', 'Data restore started with Job Id: ' + $scope.runFsRestoreResponse.jobIds[0]);
+                    console.log($scope.runFsRestoreResponse);
+                } else if (responseJson.cvStatusCode === 401) {
+                    //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                    //$scope.showLoginModal();
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                } else {
+                    toasterservice.showErrorToast('Commvault error', 'Could not run restore. Something went wrong');
+                }
+
                 $scope.infoText = '';
                 $scope.errorText = '';
                 $j_commvault('#backupModal').modal('hide');
-                
-                $scope.$apply();
+
             };
 
             $scope.onRunRestore = function () {
@@ -1185,28 +1945,29 @@
                 var fileOverwrite = $scope.restoreOptions.fsFileOverwrite ? 1 : 0;
 
                 $scope.infoText = 'Please wait...';
-                var runFsRestore = new GlideAjax('TestCommvaultEndpoint');
-                runFsRestore.addParam('sysparm_name', 'runFsRestore');
-				runFsRestore.addParam('sysparm_token', $scope.cvLogin.token);
-				runFsRestore.addParam('sysparm_endpoint', $scope.cvLogin.endpoint);
-                runFsRestore.addParam('sysparm_subclientId', String($scope.selectedSubclient.subclientId));
-                runFsRestore.addParam('sysparm_applicationId', String($scope.selectedApp.applicationId));
-                runFsRestore.addParam('sysparm_clientName', String($scope.clientName));
-                runFsRestore.addParam('sysparm_backupsetId', String($scope.selectedBackupset.backupsetId));
-                //runFsRestore.addParam('sysparm_instanceId', String($scope.selectedVmForFullRestore.proxyClient.clientName));
-                runFsRestore.addParam('sysparm_clientId', String($scope.clientId));
-                runFsRestore.addParam('sysparm_subclientName', String($scope.selectedSubclient.subclientName));
-                runFsRestore.addParam('sysparm_backupsetName', String($scope.selectedBackupset.backupsetName));
-                runFsRestore.addParam('sysparm_inPlace', String(inPlace));
-                runFsRestore.addParam('sysparm_destPath', String($scope.restoreOptions.fsFileDestPath));
-                runFsRestore.addParam('sysparm_sourcePath', String($scope.restoreOptions.fsFileSourcePath));
-                runFsRestore.addParam('sysparm_useImpersonation', String(useImpersonation));
-                runFsRestore.addParam('sysparm_userName', String($scope.restoreOptions.fsusername));
-                runFsRestore.addParam('sysparm_password', String($scope.restoreOptions.fspassword));
-                runFsRestore.addParam('sysparm_overwriteFiles', String(fileOverwrite));
 
+                var restoreInfo = {
+                    subclientId: $scope.selectedSubclient.subclientId,
+                    applicationId: $scope.selectedApp.applicationId,
+                    clientName: $scope.clientName,
+                    backupsetId: $scope.selectedBackupset.backupsetId,
+                    clientId: $scope.clientId,
+                    subclientName: $scope.selectedSubclient.subclientName,
+                    backupsetName: $scope.selectedBackupset.backupsetName,
+                    inPlace: inPlace,
+                    destPath: $scope.restoreOptions.fsFileDestPath,
+                    sourcePath: $scope.restoreOptions.fsFileSourcePath,
+                    useImpersonation: useImpersonation,
+                    userName: $scope.restoreOptions.fsusername,
+                    password: $scope.restoreOptions.fspassword,
+                    overwriteFiles: fileOverwrite
+                };
 
-                runFsRestore.getXML($scope.runFsRestoreCallback);
+                restservice.runFsRestore(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, restoreInfo).then($scope.runFsRestoreCallback,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
 
             };
 
@@ -1222,118 +1983,714 @@
 
                 $scope.onGetClientProperties = function (response) {
                     $scope.onAjax = false;
-                    var answer = response.responseXML.documentElement.getAttribute("answer");
-					
-					var responseJson = JSON.parse(answer);
-					
-					if(responseJson.cvStatusCode === 200) {
-						$scope.clientPropertiesResponse = JSON.parse(answer);
+                    //var answer = response.responseXML.documentElement.getAttribute("answer");
 
-						angular.forEach($scope.clientPropertiesResponse.clientProperties[0].clientProps.clientActivityControl.activityControlOptions, function (control, cIndex) {
-							if (control.activityType === 1) {
-								$scope.initialBackupState = control.enableActivityType;
-								$scope.enabledBackup = control.enableActivityType;
-							}
-							if (control.activityType === 2) {
-								$scope.initialRestoreState = control.enableActivityType;
-								$scope.enabledRestore = control.enableActivityType;
-							}
-							
-						});
+                    var responseJson = response.data.result;
 
-						$j_commvault('#activityModal').modal({
-							keyboard: false,
-							backdrop: 'static'
-						});
-						$j_commvault('#activityModal').modal('show');
-					} else if(responseJson.cvStatusCode === 401) {
-						//toasterservice.showInfoToast('Commvault login', 'User is logged out');
-						//$scope.showLoginModal();
-						$scope.unauthorized = true;
-						//$scope.cvLogin = {};
-					} else {
-						toasterservice.showErrorToast('Commvault error', 'Could not fetch client properties. Something went wrong');
-					}
-					
-                    $scope.$apply();
+                    if (responseJson.cvStatusCode === 200) {
+                        $scope.clientPropertiesResponse = responseJson;
+
+                        angular.forEach($scope.clientPropertiesResponse.clientProperties[0].clientProps.clientActivityControl.activityControlOptions, function (control, cIndex) {
+                            if (control.activityType === 1) {
+                                $scope.initialBackupState = control.enableActivityType;
+                                $scope.enabledBackup = control.enableActivityType;
+								$scope.enableAfterADelayBackup = control.enableAfterADelay;
+								$scope.enableAfterDateTimeBackup = control.dateTime;
+                            }
+                            if (control.activityType === 2) {
+                                $scope.initialRestoreState = control.enableActivityType;
+                                $scope.enabledRestore = control.enableActivityType;
+								$scope.enableAfterADelayRestore = control.enableAfterADelay;
+								$scope.enableAfterDateTimeRestore = control.dateTime;
+                            }
+
+                        });
+
+                        $j_commvault('#activityModal').modal({
+                            keyboard: false,
+                            backdrop: 'static'
+                        });
+                        $j_commvault('#activityModal').modal('show');
+                    } else if (responseJson.cvStatusCode === 401) {
+                        //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                        //$scope.showLoginModal();
+                        $scope.cvLogin.unauthorized = true;
+                        //$scope.cvLogin = {};
+                    } else {
+                        toasterservice.showErrorToast('Commvault error', 'Could not fetch client properties. Something went wrong');
+                    }
+
                 };
 
-                var getClientPropertiesEndpoint = new GlideAjax('TestCommvaultEndpoint');
-                getClientPropertiesEndpoint.addParam('sysparm_name', 'getClientProperties');
-				getClientPropertiesEndpoint.addParam('sysparm_token', $scope.cvLogin.token);
-				getClientPropertiesEndpoint.addParam('sysparm_endpoint', $scope.cvLogin.endpoint);
-                getClientPropertiesEndpoint.addParam('sysparm_clientId', clientId);
-                getClientPropertiesEndpoint.getXML($scope.onGetClientProperties);
+                restservice.getClientProperties(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, clientId).then($scope.onGetClientProperties,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
+
             };
 
             $scope.onSetActivityControlBackup = function (response) {
-                var answer = response.responseXML.documentElement.getAttribute("answer");
-				
-				var responseJson = JSON.parse(answer);
-					
-				if(responseJson.cvStatusCode === 200) {
-					var acresponse = responseJson;
-					var clientName = acresponse.response[0].entity.clientName;
-					toasterservice.showInfoToast('Activity control', 'Data backup ' + ($scope.enabledBackup ? 'enabled' : 'disabled') + ' for ' + clientName);
-				} else if(responseJson.cvStatusCode === 401) {
-					//toasterservice.showInfoToast('Commvault login', 'User is logged out');
-					//$scope.showLoginModal();
-					$scope.unauthorized = true;
-					//$scope.cvLogin = {};
-				} else {
-					toasterservice.showErrorToast('Commvault error', 'Something went wrong');
-				}
-				
-                
-                $scope.$apply();
+                //var answer = response.responseXML.documentElement.getAttribute("answer");
+
+                var responseJson = response.data.result;
+
+                if (responseJson.cvStatusCode === 200) {
+                    var acresponse = responseJson;
+                    var clientName = acresponse.response[0].entity.clientName;
+                    toasterservice.showInfoToast('Activity control', 'Data backup ' + ($scope.enabledBackup ? 'enabled' : 'disabled') + ' for ' + clientName);
+                } else if (responseJson.cvStatusCode === 401) {
+                    //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                    //$scope.showLoginModal();
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                } else {
+                    toasterservice.showErrorToast('Commvault error', 'Something went wrong');
+                }
+
             };
 
             $scope.onSetActivityControlRestore = function (response) {
-                var answer = response.responseXML.documentElement.getAttribute("answer");
-				
-				var responseJson = JSON.parse(answer);
-					
-				if(responseJson.cvStatusCode === 200) {
-					var acresponse = responseJson;
-					var clientName = acresponse.response[0].entity.clientName;
-					toasterservice.showInfoToast('Activity control', 'Data restore ' + ($scope.enabledRestore ? 'enabled' : 'disabled') + ' for ' + clientName);
-				} else if(responseJson.cvStatusCode === 401) {
-					//toasterservice.showInfoToast('Commvault login', 'User is logged out');
-					//$scope.showLoginModal();
-					$scope.unauthorized = true;
-					//$scope.cvLogin = {};
-				} else {
-					toasterservice.showErrorToast('Commvault error', 'Something went wrong');
-				}
-				
-                
-                $scope.$apply();
+                //var answer = response.responseXML.documentElement.getAttribute("answer");
+
+                var responseJson = response.data.result;
+
+                if (responseJson.cvStatusCode === 200) {
+                    var acresponse = responseJson;
+                    var clientName = acresponse.response[0].entity.clientName;
+                    toasterservice.showInfoToast('Activity control', 'Data restore ' + ($scope.enabledRestore ? 'enabled' : 'disabled') + ' for ' + clientName);
+                } else if (responseJson.cvStatusCode === 401) {
+                    //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                    //$scope.showLoginModal();
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                } else {
+                    toasterservice.showErrorToast('Commvault error', 'Something went wrong');
+                }
+
+            };
+
+            var getCommservTimezoneForDisableTimer = function (activityInfo) {
+                var deferred = $q.defer();
+                if (activityInfo.enableActivityType) {
+                    deferred.resolve({});
+                } else {
+                    restservice.getCommservProperties(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint).then(
+                        function (response) {
+                            var responseJson = response.data.result;
+
+                            if (responseJson.cvStatusCode === 200) {
+                                try {
+                                    deferred.resolve({
+                                        commservTimezone: responseJson.csTimeZone.TimeZoneID
+                                    });
+                                } catch (e) {
+                                    deferred.reject('Could not get Commserv timezone due to exception');
+                                }
+                            } else if (responseJson.cvStatusCode === 401) {
+                                //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                                //$scope.showLoginModal();
+                                $scope.cvLogin.unauthorized = true;
+                                deferred.reject('Could not get Commserv timezone');
+                                //$scope.cvLogin = {};
+                            } else {
+                                toasterservice.showErrorToast('Commvault error', 'Something went wrong');
+                                deferred.reject('Could not get Commserv timezone');
+                            }
+                        },
+                        function () {
+                            toasterservice.showErrorToast('API Error', 'Something went wrong');
+                            deferred.reject('Could not get Commserv timezone');
+                        }
+                    );
+                }
+                return deferred.promise;
             };
 
             $scope.saveActivitySettings = function () {
+                var delayHours = 24;
                 if ($scope.initialBackupState != $scope.enabledBackup) {
-                    var setActivityControlBackupEndpoint = new GlideAjax('TestCommvaultEndpoint');
-                    setActivityControlBackupEndpoint.addParam('sysparm_name', 'setActivityControl');
-					setActivityControlBackupEndpoint.addParam('sysparm_token', $scope.cvLogin.token);
-					setActivityControlBackupEndpoint.addParam('sysparm_endpoint', $scope.cvLogin.endpoint);
-                    setActivityControlBackupEndpoint.addParam('sysparm_clientId', $scope.selectedClientId);
-                    setActivityControlBackupEndpoint.addParam('sysparm_activityType', "1");
-                    setActivityControlBackupEndpoint.addParam('sysparm_enableActivityType', $scope.enabledBackup);
-                    setActivityControlBackupEndpoint.getXML($scope.onSetActivityControlBackup);
+
+                    var selectedClientBackup = $scope.selectedClientId;
+
+                    var activityInfoBackup = {
+                        activityType: 1,
+                        enableAfterADelay: 0,
+                        enableActivityType: $scope.enabledBackup,
+                        dateTime: {}
+                    };
+
+                    getCommservTimezoneForDisableTimer(activityInfoBackup).then(
+                        function (response) {
+
+                            if (response.commservTimezone) {
+                                activityInfoBackup.enableAfterADelay = 1;
+
+                                var expectedTime = new Date();
+                                expectedTime.setSeconds(0);
+                                expectedTime.setHours(expectedTime.getHours() + delayHours);
+
+                                var dateTime = {
+                                    TimeZoneID: "" == response.commservTimezone || "0" == response.commservTimezone || !response.commservTimezone ? 31 : response.commservTimezone,
+                                    time: expectedTime > 0 ? Math.floor(expectedTime.getTime() / 1000) : 0
+                                };
+
+                                activityInfoBackup.dateTime = dateTime;
+                            }
+
+                            restservice.setActivityControl(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, selectedClientBackup, activityInfoBackup).then($scope.onSetActivityControlBackup,
+                                function () {
+                                    toasterservice.showErrorToast('API Error', 'Something went wrong');
+                                }
+                            );
+                        },
+                        function (error) {
+                            toasterservice.showErrorToast('API Error', error);
+                        });
+
                 }
                 if ($scope.initialRestoreState != $scope.enabledRestore) {
-                    var setActivityControlRestoreEndpoint = new GlideAjax('TestCommvaultEndpoint');
-                    setActivityControlRestoreEndpoint.addParam('sysparm_name', 'setActivityControl');
-					setActivityControlRestoreEndpoint.addParam('sysparm_token', $scope.cvLogin.token);
-					setActivityControlRestoreEndpoint.addParam('sysparm_endpoint', $scope.cvLogin.endpoint);
-                    setActivityControlRestoreEndpoint.addParam('sysparm_clientId', $scope.selectedClientId);
-                    setActivityControlRestoreEndpoint.addParam('sysparm_activityType', "2");
-                    setActivityControlRestoreEndpoint.addParam('sysparm_enableActivityType', $scope.enabledRestore);
-                    setActivityControlRestoreEndpoint.getXML($scope.onSetActivityControlRestore);
+
+                    var selectedClientRestore = $scope.selectedClientId;
+
+                    var activityInfoRestore = {
+                        activityType: 2,
+                        enableAfterADelay: 0,
+                        enableActivityType: $scope.enabledRestore,
+                        dateTime: {}
+                    };
+
+                    getCommservTimezoneForDisableTimer(activityInfoRestore).then(
+                        function (response) {
+
+                            if (response.commservTimezone) {
+                                activityInfoRestore.enableAfterADelay = 1;
+
+                                var expectedTime = new Date();
+                                expectedTime.setSeconds(0);
+                                expectedTime.setHours(expectedTime.getHours() + delayHours);
+
+                                var dateTime = {
+                                    TimeZoneID: "" == response.commservTimezone || "0" == response.commservTimezone || !response.commservTimezone ? 31 : response.commservTimezone,
+                                    time: expectedTime > 0 ? Math.floor(expectedTime.getTime() / 1000) : 0
+                                };
+
+                                activityInfoRestore.dateTime = dateTime;
+                            }
+
+                            restservice.setActivityControl(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, selectedClientRestore, activityInfoRestore).then($scope.onSetActivityControlRestore,
+                                function () {
+                                    toasterservice.showErrorToast('API Error', 'Something went wrong');
+                                }
+                            );
+                        },
+                        function (error) {
+                            toasterservice.showErrorToast('API Error', error);
+                        });
+
                 }
                 $j_commvault('#activityModal').modal('hide');
             };
+			
+			/*-------------------------------------------------------------------------------------------------------------------*/
+			
+			
+			
+			$scope.includeVmCheckBoxChange = function () {
+				$scope.onAjax = true;
+				$scope.getClients();
+			};
+			
+			$scope.addServerModel = {
+				errorText: '',
+				infoText: '',
+				installTypes: [{
+					label: 'Select this method to install software packages on your computer.',
+					value: 1,
+					name: 'PUSH_INSTALL',
+					selected: true
+				}, {
+					label: 'Select this method to complete the installation if software packages are already installed on your computer.',
+					value: 2,
+					name: 'DOCK_INSTALL',
+					selected: false
+				}]
+			};
+			
+			$scope.addServerModel.selectedInstallType = $scope.addServerModel.installTypes[0];
+			
+			$scope.selectInstallSoftwareType = function (installType) {
+				for (var i=0;i<$scope.addServerModel.installTypes.length;i++) {
+					$scope.addServerModel.installTypes[i].selected = false;
+				}
+				installType.selected = true;
+				$scope.addServerModel.selectedInstallType = installType;
+			};
+			
+			$scope.showAddServerModal = function () {
+				$j_commvault('#addServerModal').modal({
+					keyboard: false,
+					backdrop: 'static'
+				});
+				$j_commvault('#addServerModal').modal('show');
+			};
+			
+			/*-------------------------------------------------------------------------------------------------------------------*/
 
+            /*********************************************************************************/
+
+            $scope.getVMDetails = function (vmguid, callback) {
+                restservice.getVMDetails(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, vmguid).then(callback,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
+            };
+
+            $scope.runBackupVmCallback = function (response) {
+                //var answer = response.responseXML.documentElement.getAttribute("answer");
+                var responseJson = response.data.result;
+
+                //$scope.infoText = '';
+                //$scope.errorText = '';
+                //$j_commvault('#backupModal').modal('hide');
+
+                if (responseJson.cvStatusCode === 200) {
+                    $scope.runBackupResponse = responseJson;
+                    toasterservice.showInfoToast('Backup', 'Vm backup started with Job Id: ' + $scope.runBackupResponse.jobIds[0]);
+                } else if (responseJson.cvStatusCode === 401) {
+                    //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                    //$scope.showLoginModal();
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                } else {
+                    toasterservice.showErrorToast('Commvault error', 'Could not run backup. Something went wrong');
+                }
+
+                console.log($scope.runBackupResponse);
+            };
+
+            $scope.doFullVMBackup = function (clientProperty) {
+                var onGetVMDetails = function (response) {
+                    var responseJson = response.data.result;
+
+                    if (responseJson.cvStatusCode === 200) {
+                        console.log(responseJson);
+
+                        var vmInfo = responseJson.vmStatusInfoList[0];
+
+                        var backupInfo = {
+                            vmGuid: vmInfo.strGUID,
+                            subclientId: vmInfo.subclientId,
+                            backupLevel: 'INCREMENTAL'
+                        };
+
+                        restservice.runBackupVm(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, backupInfo).then($scope.runBackupVmCallback,
+                            function () {
+                                toasterservice.showErrorToast('API Error', 'Something went wrong');
+                            }
+                        );
+
+                    } else if (responseJson.cvStatusCode === 401) {
+                        $scope.cvLogin.unauthorized = true;
+                    } else {
+                        toasterservice.showErrorToast('Commvault error', 'Something went wrong');
+                    }
+                };
+                $scope.getVMDetails(clientProperty.client.clientEntity.clientGUID, onGetVMDetails);
+            };
+
+            $scope.runFullVmRestoreCallback = function (response) {
+                //var answer = response.responseXML.documentElement.getAttribute("answer");
+
+                var responseJson = response.data.result;
+
+                $scope.infoText = '';
+                $scope.errorText = '';
+                $j_commvault('#restoreModal').modal('hide');
+
+                if (responseJson.cvStatusCode === 200) {
+                    $scope.runFullVmRestoreResponse = responseJson;
+                    toasterservice.showInfoToast('Full VM Restore', 'Vm restore started with Job Id: ' + $scope.runFullVmRestoreResponse.jobIds[0]);
+                } else if (responseJson.cvStatusCode === 401) {
+                    //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                    //$scope.showLoginModal();
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                } else {
+                    toasterservice.showErrorToast('Commvault error', 'Could not run restore. Something went wrong');
+                }
+
+                console.log($scope.runFullVmRestoreResponse);
+            };
+
+            $scope.onFullVmRestore = function () {
+                $scope.errorText = '';
+                $scope.infoText = '';
+                if (($scope.newName === $scope.selectedVmForFullRestore.name) && ($scope.vmOverwrite === false)) {
+                    $scope.errorText = 'Select overwrite option if the new vm name is same as the old name';
+                    return;
+                }
+                if ($scope.newName.trim().length === 0) {
+                    $scope.errorText = 'Please specify a name for the vm';
+                    return;
+                }
+                if (!$scope.selectedVmForFullRestore) {
+                    $scope.errorText = 'Please select a vm';
+                    return;
+                }
+
+                $scope.unconditionalOverwrite = $scope.vmOverwrite ? 1 : 0;
+                $scope.powerOnVmAfterRestore = $scope.vmPowerOn ? 1 : 0;
+
+                $scope.infoText = 'Please wait...';
+
+                var restoreInfo = {
+                    newName: $scope.newName,
+                    unconditionalOverwrite: $scope.unconditionalOverwrite,
+                    powerOnVmAfterRestore: $scope.powerOnVmAfterRestore,
+                    destClientId: $scope.selectedVmForFullRestore.proxyClient.clientId,
+                    destClientName: $scope.selectedVmForFullRestore.proxyClient.clientName,
+                    subclientId: $scope.selectedVmForFullRestore.subclientId,
+                    vmGuid: $scope.selectedVmForFullRestore.strGUID,
+                    vmName: $scope.selectedVmForFullRestore.name
+                };
+
+                restservice.runFullVmRestore(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, restoreInfo).then($scope.runFullVmRestoreCallback,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
+            };
+
+            $scope.showFullVmRestoreModal = function (clientProperty) {
+                var onGetVMDetailsForRestore = function (response) {
+                    $scope.onAjax = false;
+                    var responseJson = response.data.result;
+
+                    if (responseJson.cvStatusCode === 200) {
+                        console.log(responseJson);
+
+                        $scope.selectedVmForFullRestore = responseJson.vmStatusInfoList[0];
+                        $scope.vmOverwrite = true;
+                        $scope.vmPowerOn = true;
+                        $scope.newName = $scope.selectedVmForFullRestore.name;
+
+                        $scope.errorText = '';
+                        $scope.infoText = '';
+                        $j_commvault('#restoreModal').modal({
+                            keyboard: false,
+                            backdrop: 'static'
+                        });
+                        $j_commvault('#restoreModal').modal('show');
+
+                    } else if (responseJson.cvStatusCode === 401) {
+                        $scope.cvLogin.unauthorized = true;
+                    } else {
+                        toasterservice.showErrorToast('Commvault error', 'Something went wrong');
+                    }
+                };
+                $scope.onAjax = true;
+                $scope.getVMDetails(clientProperty.client.clientEntity.clientGUID, onGetVMDetailsForRestore);
+            };
+
+            $scope.runFileLevelVmRestoreCallback = function (response) {
+                //var answer = response.responseXML.documentElement.getAttribute("answer");
+
+                var responseJson = response.data.result;
+                $scope.infoText = '';
+                $scope.errorText = '';
+                $j_commvault('#flvmrestoreModal').modal('hide');
+
+                if (responseJson.cvStatusCode === 200) {
+                    $scope.runFileLevelVmRestoreResponse = responseJson;
+                    toasterservice.showInfoToast('File level VM Restore', 'Restore started with Job Id: ' + $scope.runFileLevelVmRestoreResponse.jobIds[0]);
+                } else if (responseJson.cvStatusCode === 401) {
+                    //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                    //$scope.showLoginModal();
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                } else {
+                    toasterservice.showErrorToast('Commvault error', 'Could not restore. Something went wrong');
+                }
+
+                console.log($scope.runFileLevelVmRestoreResponse);
+            };
+
+            $scope.onFileLevelVmRestore = function () {
+                if (!$scope.vmusername || !$scope.vmpassword || $scope.vmusername.trim().length === 0 || $scope.vmpassword.trim().length === 0) {
+                    $scope.errorText = 'Please provide guest vm credentials';
+                    return;
+                }
+                if (!$scope.vmFileSourcePath || $scope.vmFileSourcePath.trim().length === 0) {
+                    $scope.errorText = 'Please provide source file path to restore';
+                    return;
+                }
+                if (!$scope.vmFileDestPath || $scope.vmFileDestPath.trim().length === 0) {
+                    $scope.errorText = 'Please provide destination file path';
+                    return;
+                }
+                if (!$scope.selectedVmForFileLevelRestore) {
+                    $scope.errorText = 'Please select a vm to restore';
+                    return;
+                }
+
+                var overwriteFiles = $scope.vmFileOverwrite ? 1 : 0;
+                var sourcePath = "\\" + $scope.selectedVmForFileLevelRestore.strGUID + "\\" + $scope.vmFileSourcePath;
+                var destPath = "\\" + $scope.selectedVmForFileLevelRestore.strGUID + "\\" + $scope.vmFileDestPath;
+
+                $scope.errorText = '';
+                $scope.infoText = 'Please wait...';
+
+                var restoreInfo = {
+                    subclientId: $scope.selectedVmForFileLevelRestore.subclientId,
+                    destPath: destPath,
+                    destClientId: $scope.selectedVmForFileLevelRestore.proxyClient.clientId,
+                    destClientName: $scope.selectedVmForFileLevelRestore.proxyClient.clientName,
+                    serverName: $scope.selectedVmForFileLevelRestore.pseudoClient.clientName,
+                    vmGuid: $scope.selectedVmForFileLevelRestore.strGUID,
+                    vmUsername: $scope.vmusername,
+                    vmPassword: $scope.vmpassword,
+                    sourcePath: sourcePath,
+                    overwriteFiles: overwriteFiles
+                };
+
+                restservice.runFileLevelVmRestore(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, restoreInfo).then($scope.runFileLevelVmRestoreCallback,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
+            };
+
+            $scope.showFileLevelRestoreModal = function (clientProperty) {
+                var onGetVMDetailsForFileLevelRestore = function (response) {
+                    $scope.onAjax = false;
+                    var responseJson = response.data.result;
+
+                    if (responseJson.cvStatusCode === 200) {
+                        console.log(responseJson);
+
+                        $scope.errorText = '';
+                        $scope.infoText = '';
+                        $scope.selectedVmForFileLevelRestore = responseJson.vmStatusInfoList[0];
+                        $j_commvault('#flvmrestoreModal').modal({
+                            keyboard: false,
+                            backdrop: 'static'
+                        });
+                        $j_commvault('#flvmrestoreModal').modal('show');
+
+                    } else if (responseJson.cvStatusCode === 401) {
+                        $scope.cvLogin.unauthorized = true;
+                    } else {
+                        toasterservice.showErrorToast('Commvault error', 'Something went wrong');
+                    }
+                };
+
+                $scope.onAjax = true;
+                $scope.getVMDetails(clientProperty.client.clientEntity.clientGUID, onGetVMDetailsForFileLevelRestore);
+            };
+
+            $j_commvault('#flvmrestoreModal').on('hidden.bs.modal', function (e) {
+                $scope.errorText = '';
+                $scope.infoText = '';
+                $scope.vmusername = '';
+                $scope.vmpassword = '';
+                $scope.vmFileOverwrite = '';
+                $scope.vmFileSourcePath = '';
+                $scope.vmFileDestPath = '';
+                $scope.selectedVmForFileLevelRestore = null;
+                $scope.$apply();
+            });
+
+            /*********************************************************************************/
+			
+			
+			
+			/******        Send log      *****************************************************/
+			
+			$scope.showSendLogsModal = function (client) {
+				$scope.selectedClientForSendLogs = client;
+				$scope.sendLogsModel.emailSubject = "Logs for client " + client.clientEntity.displayName;
+                $j_commvault('#sendLogsModal').modal({
+                    keyboard: false,
+                    backdrop: 'static'
+                });
+                $j_commvault('#sendLogsModal').modal('show');
+			};
+			
+			$scope.onSendLogsSubmit = function () {
+				var selectedClientForSendLogs = $scope.selectedClientForSendLogs;
+				
+				$scope.sendLogsModel.errorText = '';
+				$scope.sendLogsModel.infoText = '';
+				
+				if($scope.sendLogsModel.autoUpload === false && $scope.sendLogsModel.outputTo === false) {
+					$scope.sendLogsModel.errorText = 'Please select either auto upload or output to path';
+					return;
+				}
+				
+				if($scope.sendLogsModel.outputTo === true) {
+					if($scope.sendLogsModel.pathSelectionRadio != 'localPath' && $scope.sendLogsModel.pathSelectionRadio != 'networkPath') {
+						$scope.sendLogsModel.errorText = 'Please specify a local path or network path';
+						return;
+					}
+					
+					if($scope.sendLogsModel.pathSelectionRadio == 'localPath') {
+						if(!$scope.sendLogsModel.localPath || $scope.sendLogsModel.localPath.trim().length === 0) {
+							$scope.sendLogsModel.errorText = 'Please specify a local path';
+							return;
+						} 
+					}
+					
+					if($scope.sendLogsModel.pathSelectionRadio == 'networkPath') {
+						if(!$scope.sendLogsModel.networkPath || $scope.sendLogsModel.networkPath.trim().length === 0) {
+							$scope.sendLogsModel.errorText = 'Please specify a network path';
+							return;
+						}
+						if(!$scope.sendLogsModel.networkUserName || $scope.sendLogsModel.networkUserName.trim().length === 0) {
+							$scope.sendLogsModel.errorText = 'Please specify network path credentials';
+							return;
+						}
+						if(!$scope.sendLogsModel.networkPassword || $scope.sendLogsModel.networkPassword.trim().length === 0) {
+							$scope.sendLogsModel.errorText = 'Please specify network path credentials';
+							return;
+						} 
+					}
+				}
+				
+				if($scope.sendLogsModel.notifyByEmail) {
+					if((!$scope.sendLogsModel.userSelection || $scope.sendLogsModel.userSelection.trim().length === 0) && !$scope.sendLogsModel.isIncludeMe) {
+						$scope.sendLogsModel.errorText = 'Please select users to notify';
+						return;
+					}
+					
+					if(!$scope.sendLogsModel.emailSubject || $scope.sendLogsModel.emailSubject.trim().length === 0) {
+						$scope.sendLogsModel.errorText = 'Please provide a subject to the email';
+						return;
+					}
+					
+				}
+				
+				if($scope.sendLogsModel.isTransactionLogsSelected == true) {
+					if($scope.sendLogsModel.transactionRangeFrom.trim().length === 0) {
+						$scope.sendLogsModel.errorText = 'Please provide job Id range';
+						return;
+					}
+					if($scope.sendLogsModel.transactionRangeTo.trim().length === 0) {
+						$scope.sendLogsModel.errorText = 'Please provide job Id range';
+						return;
+					}
+					if(!Number.isInteger(+$scope.sendLogsModel.transactionRangeFrom) || !Number.isInteger(+$scope.sendLogsModel.transactionRangeTo)) {
+						$scope.sendLogsModel.errorText = 'Please provide valid job Id range';
+						return;
+					}
+				}
+				
+				$scope.sendLogsModel.errorText = '';
+				$scope.sendLogsModel.infoText = 'Please wait...';
+				
+				var onSendLogFiles = function(response) {
+					var responseJson = response.data.result;
+					
+					$j_commvault('#sendLogsModal').modal('hide');
+					
+                    if (responseJson.cvStatusCode === 200) {
+						toasterservice.showInfoToast('Send log files', 'Job started with Job Id: ' + responseJson.jobIds[0]);
+                    } else if (responseJson.cvStatusCode === 401) {
+                        //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                        //$scope.showLoginModal();
+                        $scope.cvLogin.unauthorized = true;
+                        //$scope.cvLogin = {};
+                    } else {
+                        toasterservice.showErrorToast('Commvault error', 'Could not submit send logs request. Something went wrong');
+                    }
+				};
+				
+				restservice.sendLogFilesForClient(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, selectedClientForSendLogs, $scope.sendLogsModel).then(onSendLogFiles,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
+				
+				
+			};
+			
+			$j_commvault('#sendLogsModal').on('hidden.bs.modal', function (e) {
+                $scope.sendLogsModel = {
+					 autoUpload: false,
+					 outputTo: false,
+					 pathSelectionRadio: 'localPath',
+					 localPath: '',
+					 networkPath: '',
+					 isCommservDbLogSelected: false,
+					 isLatestDbLogSelected: false,
+					 isLogsSelected: true,
+					 isDbLogsSelected: false,
+					 isMachineConfigSelected: true,
+					 isOsLogsSelected: true,
+					 isProcessDumpSelected: true,
+					 isJobResultsSelected: false,
+					 isIndexLogSelected: false,
+					 isTransactionLogsSelected: false,
+					 transactionRangeFrom: '',
+					 transactionRangeTo: '',	
+					 notifyByEmail: false,
+					 userSelection: '',
+					 isIncludeMe: true,
+					 isAttachLogs: false,
+					 emailSubject: '',
+					 problemDescription: '',
+					 userImpersonate: false,
+					 networkUserName: '',
+					 networkPassword: ''
+				};
+                $scope.$apply();
+            });
+			
+			 $scope.sendLogsModel = {
+				 autoUpload: false,
+				 outputTo: false,
+				 pathSelectionRadio: 'localPath',
+				 localPath: '',
+				 networkPath: '',
+				 isCommservDbLogSelected: false,
+				 isLatestDbLogSelected: false,
+				 isLogsSelected: true,
+				 isDbLogsSelected: false,
+				 isMachineConfigSelected: true,
+				 isOsLogsSelected: true,
+				 isProcessDumpSelected: true,
+				 isJobResultsSelected: false,
+				 isIndexLogSelected: false,
+				 isTransactionLogsSelected: false,
+				 transactionRangeFrom: '',
+				 transactionRangeTo: '',	
+				 notifyByEmail: false,
+				 userSelection: '',
+				 isIncludeMe: true,
+				 isAttachLogs: false,
+				 emailSubject: '',
+				 problemDescription: '',
+				 userImpersonate: false,
+				 networkUserName: '',
+				 networkPassword: ''
+			};
+			
+			$scope.localPathRadioChange = function() {
+				$scope.sendLogsModel.localPath = '';
+				$scope.sendLogsModel.networkPath = '';
+				$scope.sendLogsModel.networkUserName = '';
+				$scope.sendLogsModel.networkPassword = '';
+			};
+			
+			$scope.networkPathRadioChange = function() {
+				$scope.sendLogsModel.localPath = '';
+				$scope.sendLogsModel.networkPath = '';
+				$scope.sendLogsModel.networkUserName = '';
+				$scope.sendLogsModel.networkPassword = '';
+			};
+			
+			/******        Send log end      *****************************************************/
 
             $scope.sort = function (keyname) {
                 $scope.sortKey = keyname;
@@ -1364,91 +2721,130 @@
             $scope.pageSizeList = [5, 10, 20, 50, 100];
             $scope.pageSize = $scope.pageSizeList[2];
 
-           
-			$scope.cvLogin = {};
-			$scope.getLoginCookie = function() {
-				$scope.unauthorized = true;
-				try {
-					var cvLoginFromCookie = $cookies.getObject('snow_cvLogin');
-					if(cvLoginFromCookie) {
-						$scope.cvLogin = cvLoginFromCookie;
-						$scope.unauthorized = false;
-					}
-				} catch (e) {
-					console.log('Failed to get cookie');
-				}
-				if($scope.cvLogin.token && $scope.cvLogin.token.length>0) {
-					$scope.getClients();
-				} else {
-					$scope.unauthorized = true;
-					//$scope.cvLogin = {};
-				}
-			};
+
+            $scope.cvLogin = {};
+            $scope.getLoginCookie = function () {
+                $scope.cvLogin.unauthorized = true;
+                try {
+                    var cvLoginFromCookie = $cookies.getObject('snow_cvLogin');
+                    if (cvLoginFromCookie) {
+                        $scope.cvLogin = cvLoginFromCookie;
+                        $scope.cvLogin.unauthorized = false;
+                    }
+                } catch (e) {
+                    console.log('Failed to get cookie');
+                }
+                if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
+                    $scope.getClients();
+                } else {
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                }
+            };
         }
     ]);
-	
-	
-	angular.module('angularapp').controller('LogoutController', [
+
+
+    angular.module('angularapp').controller('OnboardingController', [
         '$scope',
         '$cookies',
         'toasterservice',
-        function ($scope, $cookies, toasterservice) {
-            console.log('In logout controller');
-			$scope.showHelp = false;
-			
-			$scope.doLogout = function () {
-                $scope.onDoLogout = function (response) {
-                    var answer = response.responseXML.documentElement.getAttribute("answer");
-					
-                    var responseJson = JSON.parse(answer);
-					
-					if(responseJson.cvStatusCode === 200 || responseJson.cvStatusCode === 401) {
-						$scope.cvLogin.token = '';
-						var expireDate = new Date();
-						expireDate.setDate(expireDate.getDate() + 7);
+        'restservice',
+        function ($scope, $cookies, toasterservice, restservice) {
+            console.log('In Onboarding controller');
 
-						$cookies.putObject('snow_cvLogin', $scope.cvLogin, {
-							'expires': expireDate
-						});
-						$scope.showHelp = true;
-						$scope.helpInfo = "You have been logged out";
-					} else {
-						toasterservice.showErrorToast('Commvault error', 'Something went wrong');
-					}
-					
-                    $scope.onAjax = false;
-                    $scope.$apply();
-                };
-				
-				$scope.onAjax = true;
-                var doLogoutEndpoint = new GlideAjax('TestCommvaultEndpoint');
-                doLogoutEndpoint.addParam('sysparm_name', 'doLogout');
-				doLogoutEndpoint.addParam('sysparm_token', $scope.cvLogin.token);
-				doLogoutEndpoint.addParam('sysparm_endpoint', $scope.cvLogin.endpoint);
-                doLogoutEndpoint.getXML($scope.onDoLogout);
+            $scope.obparams = {
+                cvobusername: '',
+                cvobpassword: '',
+                cvobwebconsolename: '',
+                cvobcompanyname: ''
             };
 
             $scope.cvLogin = {};
-			$scope.getLoginCookie = function() {
-				$scope.unauthorized = true;
-				try {
-					var cvLoginFromCookie = $cookies.getObject('snow_cvLogin');
-					if(cvLoginFromCookie) {
-						$scope.cvLogin = cvLoginFromCookie;
-						$scope.unauthorized = false;
-					}
-				} catch (e) {
-					console.log('Failed to get cookie');
-				}
-				if($scope.cvLogin.token && $scope.cvLogin.token.length>0) {
-					$scope.doLogout();
-				} else {
-					$scope.showHelp = true;
-					$scope.helpInfo = "You have been logged out";
-					//$scope.unauthorized = true;
-					//$scope.cvLogin = {};
-				}
-			};
+            $scope.getLoginCookie = function () {
+                $scope.cvLogin.unauthorized = true;
+                try {
+                    var cvLoginFromCookie = $cookies.getObject('snow_cvLogin');
+                    if (cvLoginFromCookie) {
+                        $scope.cvLogin = cvLoginFromCookie;
+                        $scope.cvLogin.unauthorized = false;
+                    }
+                } catch (e) {
+                    console.log('Failed to get cookie');
+                }
+                if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
+                    //$scope.getSchedules();
+                } else {
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                }
+            };
+        }
+    ]);
+
+
+    angular.module('angularapp').controller('LogoutController', [
+        '$scope',
+        '$cookies',
+        'toasterservice',
+        'restservice',
+        function ($scope, $cookies, toasterservice, restservice) {
+            console.log('In logout controller');
+            $scope.showHelp = false;
+
+            $scope.doLogout = function () {
+                $scope.onDoLogout = function (response) {
+                    //var answer = response.responseXML.documentElement.getAttribute("answer");
+
+                    var responseJson = response.data.result;
+
+                    if (responseJson.cvStatusCode === 200 || responseJson.cvStatusCode === 401) {
+                        $scope.cvLogin.token = '';
+                        var expireDate = new Date();
+                        expireDate.setDate(expireDate.getDate() + 7);
+
+                        $cookies.putObject('snow_cvLogin', $scope.cvLogin, {
+                            'expires': expireDate
+                        });
+                        $scope.showHelp = true;
+                        $scope.helpInfo = "You have been logged out";
+                    } else {
+                        toasterservice.showErrorToast('Commvault error', 'Something went wrong');
+                    }
+
+                    $scope.onAjax = false;
+                };
+
+                $scope.onAjax = true;
+
+                restservice.doLogout(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint).then($scope.onDoLogout,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
+            };
+
+            $scope.cvLogin = {};
+            $scope.getLoginCookie = function () {
+                $scope.cvLogin.unauthorized = true;
+                try {
+                    var cvLoginFromCookie = $cookies.getObject('snow_cvLogin');
+                    if (cvLoginFromCookie) {
+                        $scope.cvLogin = cvLoginFromCookie;
+                        $scope.cvLogin.unauthorized = false;
+                    }
+                } catch (e) {
+                    console.log('Failed to get cookie');
+                }
+                if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
+                    $scope.doLogout();
+                } else {
+                    $scope.showHelp = true;
+                    $scope.helpInfo = "You have been logged out";
+                    //$scope.unauthorized = true;
+                    //$scope.cvLogin = {};
+                }
+            };
         }
     ]);
 
@@ -1482,14 +2878,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>325</sys_mod_count>
+        <sys_mod_count>516</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-23 12:29:30</sys_updated_on>
+        <sys_updated_on>2018-05-08 12:28:11</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>

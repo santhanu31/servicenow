@@ -12,31 +12,31 @@
         <image/>
         <link_type>DIRECT</link_type>
         <map_page/>
-        <mobile_title>Virtual machines</mobile_title>
+        <mobile_title>View client groups</mobile_title>
         <mobile_view_name>Mobile</mobile_view_name>
         <name/>
-        <order>120</order>
+        <order>160</order>
         <override_menu_roles>false</override_menu_roles>
-        <query>x_183199_testcommv_VirtualMachines.do</query>
+        <query>x_183199_testcommv_ViewClientGroups.do</query>
         <report/>
         <roles/>
         <sys_class_name>sys_app_module</sys_class_name>
         <sys_created_by>admin</sys_created_by>
-        <sys_created_on>2018-03-02 10:54:53</sys_created_on>
+        <sys_created_on>2018-05-02 09:47:16</sys_created_on>
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
-        <sys_id>075e9752dbe013004eb15ec0cf96199a</sys_id>
+        <sys_id>3fc7d142dbb113004eb15ec0cf96194e</sys_id>
         <sys_mod_count>0</sys_mod_count>
-        <sys_name>Virtual machines</sys_name>
+        <sys_name>View client groups</sys_name>
         <sys_overrides/>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
-        <sys_update_name>sys_app_module_075e9752dbe013004eb15ec0cf96199a</sys_update_name>
+        <sys_update_name>sys_app_module_3fc7d142dbb113004eb15ec0cf96194e</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-02 10:54:53</sys_updated_on>
+        <sys_updated_on>2018-05-02 09:47:16</sys_updated_on>
         <timeline_page/>
-        <title>Virtual machines</title>
+        <title>View client groups</title>
         <uncancelable>false</uncancelable>
         <view_name/>
         <window_name/>

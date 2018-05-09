@@ -27,11 +27,19 @@
 	<script src="x_183199_testcommv.angular_app_client_lo.jsdbx"></script>	
 	<script src="x_183199_testcommv.loginDirective.jsdbx"></script>
 	<script src="x_183199_testcommv.toaster.svc.jsdbx"></script>	
-	
+	<script src="x_183199_testcommv.ApiServices.jsdbx"></script>
+	<script src="x_183199_testcommv.UtilFactory.jsdbx"></script>
 	
 	<script>
           var $j_commvault = jQuery.noConflict(true);
     </script>
+	
+	<g:evaluate object="true">
+         var g_ck = gs.getSession().getSessionToken(); 
+	</g:evaluate> 
+	<script>     
+			 window.g_ck = "$[g_ck]"; 
+	</script>
 	
 	
 	<div id="cvapp" ng-app="angularapp" class="ng-cloak">
@@ -39,7 +47,7 @@
 		<div ng-controller="SLAReportController as slactrl" class="appContainer" ng-init="getLoginCookie()">
 			<toaster-container toaster-options="{'position-class': 'toast-bottom-right'}"></toaster-container>
 			
-			<commvaultlogin callback="getSLAReport()" cv-login="cvLogin" ng-if="unauthorized"></commvaultlogin>
+			<commvaultlogin callback="getSLAReport()" cv-login="cvLogin" ng-if="cvLogin.unauthorized"></commvaultlogin>
 			
 			<div class="row">
 				<div class="col-xs-12">
@@ -131,13 +139,13 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-02-14 10:10:51</sys_created_on>
         <sys_id>71ca3855db5013004eb15ec0cf961957</sys_id>
-        <sys_mod_count>28</sys_mod_count>
+        <sys_mod_count>34</sys_mod_count>
         <sys_name>SLAReport</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_page_71ca3855db5013004eb15ec0cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-23 06:15:34</sys_updated_on>
+        <sys_updated_on>2018-04-25 05:21:22</sys_updated_on>
     </sys_ui_page>
 </record_update>

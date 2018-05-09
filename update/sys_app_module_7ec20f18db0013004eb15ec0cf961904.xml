@@ -15,7 +15,7 @@
         <mobile_title>View schedules</mobile_title>
         <mobile_view_name>Mobile</mobile_view_name>
         <name/>
-        <order>150</order>
+        <order>250</order>
         <override_menu_roles>false</override_menu_roles>
         <query>x_183199_testcommv_ViewSchedules.do</query>
         <report/>
@@ -26,7 +26,7 @@
         <sys_domain>global</sys_domain>
         <sys_domain_path>/</sys_domain_path>
         <sys_id>7ec20f18db0013004eb15ec0cf961904</sys_id>
-        <sys_mod_count>1</sys_mod_count>
+        <sys_mod_count>2</sys_mod_count>
         <sys_name>View schedules</sys_name>
         <sys_overrides/>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
@@ -34,7 +34,7 @@
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_app_module_7ec20f18db0013004eb15ec0cf961904</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-01-30 07:23:05</sys_updated_on>
+        <sys_updated_on>2018-04-24 13:05:47</sys_updated_on>
         <timeline_page/>
         <title>View schedules</title>
         <uncancelable>false</uncancelable>

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_ui_script">
+    <sys_ui_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description/>
+        <global>false</global>
+        <name>x_183199_testcommv.jobFactory</name>
+        <script><![CDATA[(function () {
+    angular.module('angularapp').service('jobFactory', [
+		'JOB_ACTION',
+		'JOB_STATUS',
+        function (JOB_ACTION, JOB_STATUS) {
+			this.escapeXml = function (unsafe) {
+				return unsafe.replace(/[<>&'"]/g, function (c) {
+					switch (c) {
+						case '<': return '&lt;';
+						case '>': return '&gt;';
+						case '&': return '&amp;';
+						case '\'': return '&apos;';
+						case '"': return '&quot;';
+					}
+				});
+			};
+            this.isActionAllowed = function (action, jobSummary) {
+                if (jobSummary.status == undefined) {
+                    return;
+                }
+                status = jobSummary.status.toLowerCase();
+                switch (action.toLowerCase()) {
+                    case JOB_ACTION.SUSPEND:
+                        switch (status) {
+                            case JOB_STATUS.RUNNING:
+                            case JOB_STATUS.PENDING:
+                            case JOB_STATUS.WAITING:
+                            case JOB_STATUS.QUEUED:
+                                return true;
+                            default:
+                                return false;
+                        }
+                    case JOB_ACTION.KILL:
+                        switch (status) {
+                            case JOB_STATUS.RUNNING:
+                            case JOB_STATUS.PENDING:
+                            case JOB_STATUS.SUSPENDED:
+                            case JOB_STATUS.WAITING:
+                            case JOB_STATUS.QUEUED:
+                                return true;
+                            default:
+                                return false;
+                        }
+                    case JOB_ACTION.RESUME:
+                        switch (status) {
+                            case JOB_STATUS.SUSPENDED:
+                            case JOB_STATUS.PENDING:
+                                return true;
+                            default:
+                                return false;
+                        }
+                    case JOB_ACTION.RESUBMIT:
+                        switch (status) {
+                            case JOB_STATUS.COMPLETED:
+                            case JOB_STATUS.COMPLETED_WITH_ERRORS:
+                            case JOB_STATUS.FAILED:
+                            case JOB_STATUS.KILLED:
+                            case JOB_STATUS.FAILED_TO_START:
+                                return true;
+                            default:
+                                return false;
+                        }
+
+                    case JOB_ACTION.RESTORE:
+                        //Cloud apps doesn't support this yet in SP10
+                        if (jobSummary.subclient.applicationId == AppTypes.CLOUD_APPS) {
+                            return false;
+                        }
+                        if (jobSummary.backupLevel) {
+                            if (((jobSummary.backupLevel == "FULL") ||
+                                    (jobSummary.backupLevel === 'DIFFERENTIAL') ||
+                                    (jobSummary.backupLevel == "INCREMANTAL") ||
+                                    (jobSummary.backupLevel == "SYNTHETIC_FULL_AND_INCR") || (jobSummary.backupLevel == "SYNTHETIC_FULL")) &&
+                                ((status == "completed") || (status == "completed w/ one or more errors"))) {
+                                //remove archive
+                                if (jobSummary.opType === 'ARCHIVE') {
+                                    return false;
+                                }
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        } else {
+                            return false;
+                        }
+
+                    default:
+                        switch (status) {
+                            case JOB_STATUS.RUNNING:
+                            case JOB_STATUS.PENDING:
+                            case JOB_STATUS.SUSPENDED:
+                            case JOB_STATUS.WAITING:
+                                return true;
+                            default:
+                                return false;
+                        }
+                }
+            };
+        }
+    ]);
+})();]]></script>
+        <script_name>jobFactory</script_name>
+        <sys_class_name>sys_ui_script</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2018-04-19 07:38:16</sys_created_on>
+        <sys_id>d9dcbdfddbe913004eb15ec0cf96199d</sys_id>
+        <sys_mod_count>2</sys_mod_count>
+        <sys_name>x_183199_testcommv.jobFactory</sys_name>
+        <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
+        <sys_update_name>sys_ui_script_d9dcbdfddbe913004eb15ec0cf96199d</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2018-04-24 15:07:29</sys_updated_on>
+        <use_scoped_format>false</use_scoped_format>
+    </sys_ui_script>
+</record_update>

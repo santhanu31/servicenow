@@ -15,14 +15,16 @@
 		
 		directive.scope = {
 			callback: '&',
-			cvLogin: '='
+			cvLogin: '=',
+			unauthorized: '='
 		};
 		
 		directive.controller = [
 			'$scope',
 			'$cookies',
 			'toasterservice',
-			function ($scope, $cookies, toasterservice) {
+			'restservice',
+			function ($scope, $cookies, toasterservice, restservice) {
 				$j_commvault('#loginModal').modal({
 					keyboard: false,
 					backdrop: 'static'
@@ -58,6 +60,26 @@
 				});
 
 				$j_commvault('#loginModal').on('hidden.bs.modal', function (e) {
+					if($scope.successfullLogin) {
+						var cvLogin = {};
+						var user = $scope.loginparams.cvusername;
+						var endpoint = $scope.loginparams.cvwebconsolename;
+						$scope.cvLogin.username = user;
+						$scope.cvLogin.token = $scope.loginResponse.token;
+						$scope.cvLogin.endpoint = endpoint;
+						$scope.cvLogin.unauthorized = false;
+
+						var expireDate = new Date();
+						expireDate.setDate(expireDate.getDate() + 7);
+
+						$cookies.putObject('snow_cvLogin', $scope.cvLogin, {
+							'expires': expireDate
+						});
+						//$scope.cvLogin = cvLogin;
+						toasterservice.showInfoToast('Commvault login', 'Successfully logged in as ' + user);
+						//$scope.$apply();
+						$scope.callback();
+					}
 					$scope.errorText = '';
 					$scope.infoText = '';
 					$scope.loginparams = {
@@ -82,45 +104,28 @@
 
 				$scope.onDoLogin = function (response) {
 					$scope.makeBtnInactive = false;
-					var answer = response.responseXML.documentElement.getAttribute("answer");
-					var loginResponse = JSON.parse(answer);
-					if (loginResponse) {
-						if (!loginResponse.token || loginResponse.token.length === 0) {
-							if (loginResponse.errList.length === 0) {
+					//var answer = response.responseXML.documentElement.getAttribute("answer");
+					$scope.loginResponse = response.data.result;
+					if ($scope.loginResponse) {
+						if (!$scope.loginResponse.token || $scope.loginResponse.token.length === 0) {
+							if ($scope.loginResponse.errList.length === 0) {
 								$scope.errorText = 'Something went wrong. Please make sure that the endpoint url is correct';
 							} else {
-								if (loginResponse.errList[0].errLogMessage) {
-									$scope.errorText = loginResponse.errList[0].errLogMessage;
+								if ($scope.loginResponse.errList[0].errLogMessage) {
+									$scope.errorText = $scope.loginResponse.errList[0].errLogMessage;
 								} else {
 									$scope.errorText = 'Something went wrong. Please make sure that the endpoint url is correct';
 								}
 							}
 						} else {
-							var user = $scope.loginparams.cvusername;
-							var endpoint = $scope.loginparams.cvwebconsolename;
+							$scope.successfullLogin = true;
 							$j_commvault('#loginModal').modal('hide');
-							var cvLogin = {};
-							$scope.cvLogin.username = user;
-							$scope.cvLogin.token = loginResponse.token;
-							$scope.cvLogin.endpoint = endpoint;
-
-							var expireDate = new Date();
-							expireDate.setDate(expireDate.getDate() + 7);
-
-							$cookies.putObject('snow_cvLogin', $scope.cvLogin, {
-								'expires': expireDate
-							});
-							//$scope.cvLogin = cvLogin;
-							toasterservice.showInfoToast('Commvault login', 'Successfully logged in as ' + user);
-							//$scope.$apply();
-							$scope.callback();
 						}
 					} else {
 						$scope.errorText = 'Something went wrong. Please make sure that the endpoint url is correct';
 					}
 
 					$scope.infoText = '';
-					$scope.$apply();
 				};
 
 				$scope.onLogin = function () {
@@ -140,13 +145,18 @@
 
 					$scope.infoText = 'Please wait...';
 					$scope.makeBtnInactive = true;
-
-					var doLoginEndpoint = new GlideAjax('TestCommvaultEndpoint');
-					doLoginEndpoint.addParam('sysparm_name', 'doLogin');
-					doLoginEndpoint.addParam('sysparm_cvusername', String($scope.loginparams.cvusername));
-					doLoginEndpoint.addParam('sysparm_cvpassword', String($scope.loginparams.cvpassword));
-					doLoginEndpoint.addParam('sysparm_cvwebconsolename', String($scope.loginparams.cvwebconsolename));
-					doLoginEndpoint.getXML($scope.onDoLogin);
+					
+					var loginInfo = {
+						cvusername: $scope.loginparams.cvusername,
+						cvpassword: $scope.loginparams.cvpassword,
+						cvwebconsolename: $scope.loginparams.cvwebconsolename
+					};
+					
+					restservice.doLogin(window.g_ck, loginInfo).then($scope.onDoLogin,
+						function () {
+							toasterservice.showErrorToast('API Error', 'Something went wrong');
+						}
+					);
 				};
 			}
 		];
@@ -163,14 +173,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-03-22 14:46:43</sys_created_on>
         <sys_id>36ab4b74db4513004eb15ec0cf9619fc</sys_id>
-        <sys_mod_count>12</sys_mod_count>
+        <sys_mod_count>21</sys_mod_count>
         <sys_name>x_183199_testcommv.loginDirective</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_36ab4b74db4513004eb15ec0cf9619fc</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-03-22 17:01:26</sys_updated_on>
+        <sys_updated_on>2018-04-03 12:49:22</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>
