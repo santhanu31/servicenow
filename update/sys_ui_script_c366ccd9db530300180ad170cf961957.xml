@@ -6,7 +6,7 @@
         <global>false</global>
         <name>x_183199_testcommv.angular_app_client_lo</name>
         <script><![CDATA[(function () {
-    angular.module('angularapp', ['highcharts-ng', 'angularUtils.directives.dirPagination', 'toaster', 'ngAnimate', 'ngSanitize', 'ngCookies'/*, 'isteven-multi-select'*/]);
+    angular.module('angularapp', ['highcharts-ng', 'angularUtils.directives.dirPagination', 'toaster', 'ngAnimate', 'ngSanitize', 'ngCookies', 'isteven-multi-select']);
 
     angular.module('angularapp').filter('capacity', function () {
         var format = function (number, unit) {
@@ -1526,14 +1526,42 @@
         '$cookies',
         '$timeout',
         '$q',
+		'$rootScope',
         'toasterservice',
         'restservice',
-        function ($scope, $cookies, $timeout, $q, toasterservice, restservice) {
+        function ($scope, $cookies, $timeout, $q, $rootScope, toasterservice, restservice) {
 			
 			$scope.includeVM = false;
 
             $scope.tableLoaded = false;
             $scope.selectedBackupLevel = null;
+			
+			$scope.getCvCommonProperties = function () {
+				$scope.onGetCommservProperties = function (response) {
+                    //var answer = response.responseXML.documentElement.getAttribute("answer");
+
+                    var responseJson = response.data.result;
+
+                    if (responseJson.cvStatusCode === 200) {
+                        $rootScope.cvCommon = responseJson;
+						$scope.getClients();
+                    } else if (responseJson.cvStatusCode === 401) {
+                        //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                        //$scope.showLoginModal();
+                        $scope.cvLogin.unauthorized = true;
+                        //$scope.cvLogin = {};
+                    } else {
+                        toasterservice.showErrorToast('Commvault error', 'Could not fetch clients. Something went wrong');
+                    }
+                };
+				
+				$scope.onAjax = true;
+                restservice.getCommservProperties(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, $scope.includeVM).then($scope.onGetCommservProperties,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
+			};
 
             //$scope.test = "teststring";
             $scope.getClients = function () {
@@ -1661,11 +1689,11 @@
                         });
 
                         if ($scope.appList.length > 0) {
-                            $scope.selectApp($scope.appList[0]);
-
                             if ($scope.appList.length > 1 && $scope.autoRunBackup) {
                                 $scope.autoRunBackup = false;
                             }
+							
+							$scope.selectApp($scope.appList[0]);
 
                             //$scope.$apply();
 
@@ -1718,10 +1746,12 @@
                         }
                     });
 
-                    $scope.selectBackupset($scope.backupSetList[0]);
+                    
                     if ($scope.backupSetList.length > 1 && $scope.autoRunBackup) {
                         $scope.autoRunBackup = false;
                     }
+					
+					$scope.selectBackupset($scope.backupSetList[0]);
 
                 }, 200);
 
@@ -1747,12 +1777,12 @@
                             });
                         }
                     });
-
-                    $scope.selectSubclient($scope.subclientList[0]);
-                    if ($scope.subclientList.length > 1 && $scope.autoRunBackup) {
+					
+					if ($scope.subclientList.length > 1 && $scope.autoRunBackup) {
                         $scope.autoRunBackup = false;
                     }
 
+                    $scope.selectSubclient($scope.subclientList[0]);
 
                 }, 200);
             };
@@ -2075,34 +2105,9 @@
                 if (activityInfo.enableActivityType) {
                     deferred.resolve({});
                 } else {
-                    restservice.getCommservProperties(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint).then(
-                        function (response) {
-                            var responseJson = response.data.result;
-
-                            if (responseJson.cvStatusCode === 200) {
-                                try {
-                                    deferred.resolve({
-                                        commservTimezone: responseJson.csTimeZone.TimeZoneID
-                                    });
-                                } catch (e) {
-                                    deferred.reject('Could not get Commserv timezone due to exception');
-                                }
-                            } else if (responseJson.cvStatusCode === 401) {
-                                //toasterservice.showInfoToast('Commvault login', 'User is logged out');
-                                //$scope.showLoginModal();
-                                $scope.cvLogin.unauthorized = true;
-                                deferred.reject('Could not get Commserv timezone');
-                                //$scope.cvLogin = {};
-                            } else {
-                                toasterservice.showErrorToast('Commvault error', 'Something went wrong');
-                                deferred.reject('Could not get Commserv timezone');
-                            }
-                        },
-                        function () {
-                            toasterservice.showErrorToast('API Error', 'Something went wrong');
-                            deferred.reject('Could not get Commserv timezone');
-                        }
-                    );
+					deferred.resolve({
+						commservTimezone: $rootScope.cvCommon.csTimeZone.TimeZoneID
+					});
                 }
                 return deferred.promise;
             };
@@ -2194,16 +2199,21 @@
 			
 			/*-------------------------------------------------------------------------------------------------------------------*/
 			
-			
+			$j_commvault('#addServerModal').on('hidden.bs.modal', function (e) {
+                
+            });
 			
 			$scope.includeVmCheckBoxChange = function () {
 				$scope.onAjax = true;
 				$scope.getClients();
 			};
 			
-			$scope.addServerModel = {
+			/*$scope.addServerModel = {
 				errorText: '',
 				infoText: '',
+				osType: 'windows',
+				agents: [],
+				selectedAgents: [],
 				installTypes: [{
 					label: 'Select this method to install software packages on your computer.',
 					value: 1,
@@ -2215,9 +2225,9 @@
 					name: 'DOCK_INSTALL',
 					selected: false
 				}]
-			};
+			};*/
 			
-			$scope.addServerModel.selectedInstallType = $scope.addServerModel.installTypes[0];
+			/*$scope.addServerModel.selectedInstallType = $scope.addServerModel.installTypes[0];*/
 			
 			$scope.selectInstallSoftwareType = function (installType) {
 				for (var i=0;i<$scope.addServerModel.installTypes.length;i++) {
@@ -2225,14 +2235,152 @@
 				}
 				installType.selected = true;
 				$scope.addServerModel.selectedInstallType = installType;
+				$scope.addServerModel.errorText = '';
+				$scope.addServerModel.infoText = '';
 			};
 			
-			$scope.showAddServerModal = function () {
+			var populatePackagesDropdown = function () {
+				var packages = restservice.getPackages();
+				var factory = {};
+				factory.windowsPackages = [];
+				factory.unixPackages = [];
+				if (angular.isArray(packages)) {
+					packages.forEach(function(packageObj) {
+						if (packageObj.osType.toUpperCase() == "WINDOWS") {
+							factory.windowsPackages.push(packageObj);
+						} else if (packageObj.osType.toUpperCase() == "UNIX") {
+							factory.unixPackages.push(packageObj);
+						}
+					});
+				}
+				
+				$scope.addServerModel.selectedAgents = [];
+				$scope.addServerModel.agents = ($scope.addServerModel.osType.toUpperCase() === "UNIX") ? factory.unixPackages : factory.windowsPackages;
+			};
+			
+			$scope.addServerOsTypeChange = function () {
+				populatePackagesDropdown();
+			};
+			
+			$scope.showAddServerModal = function () {	
+				$scope.addServerModel = {
+					errorText: '',
+					infoText: '',
+					osType: 'Windows',
+					agents: [],
+					selectedAgents: [],
+					hostnames: '',
+					pushInstallUsername: '',
+					pushInstallPassword: '',
+					dockServerName: '',
+					dockHostname: '',
+					commCellId: $rootScope.cvCommon.commcell.commCellId,
+					onSubmitCall: false,
+					installTypes: [{
+						label: 'Select this method to install software packages on your computer.',
+						value: 1,
+						name: 'PUSH_INSTALL',
+						selected: true
+					}, {
+						label: 'Select this method to complete the installation if software packages are already installed on your computer.',
+						value: 2,
+						name: 'DOCK_INSTALL',
+						selected: false
+					}]
+				};
+				$scope.addServerModel.selectedInstallType = $scope.addServerModel.installTypes[0];
+				populatePackagesDropdown();
 				$j_commvault('#addServerModal').modal({
 					keyboard: false,
 					backdrop: 'static'
 				});
 				$j_commvault('#addServerModal').modal('show');
+			};
+			
+			$scope.onSendInstallSoftwareRequest = function (response) {
+				var responseJson = response.data.result;
+
+                if (responseJson.cvStatusCode === 200) {
+                    toasterservice.showInfoToast('Install software', 'Install software job started with Job Id: ' + responseJson.jobIds[0]);
+                } else if (responseJson.cvStatusCode === 401) {
+                    //toasterservice.showInfoToast('Commvault login', 'User is logged out');
+                    //$scope.showLoginModal();
+                    $scope.cvLogin.unauthorized = true;
+                    //$scope.cvLogin = {};
+                } else {
+                    toasterservice.showErrorToast('Commvault error', 'Could not run install software job. Something went wrong');
+                }
+				
+				$scope.addServerModel.onSubmitCall = false;
+                $scope.infoText = '';
+                $j_commvault('#addServerModal').modal('hide');
+			};
+			
+			$scope.doInstallSoftware = function () {
+				var addServerModelToSend = $scope.addServerModel;
+				
+				$scope.addServerModel.errorText = '';
+				$scope.addServerModel.infoText = '';
+				
+				if(addServerModelToSend.selectedInstallType.value == 1) {
+					//PUSH_INSTALL
+					if(addServerModelToSend.hostnames.trim().length === 0) {
+						$scope.addServerModel.errorText = 'Please provide host name';
+						return;
+					}
+					
+					if(addServerModelToSend.pushInstallUsername.trim().length === 0 || addServerModelToSend.pushInstallPassword.trim().length === 0) {
+						$scope.addServerModel.errorText = 'Please provide credentials';
+						return;
+					}
+					
+					if(addServerModelToSend.osType.trim().length === 0) {
+						$scope.addServerModel.errorText = 'Please choose an operating sytem type';
+						return;
+					}
+					
+					if(addServerModelToSend.osType.toUpperCase() != "WINDOWS" && addServerModelToSend.osType.toUpperCase() != "UNIX") {
+						$scope.addServerModel.errorText = 'Please choose a valid operating sytem type';
+						return;
+					}
+					
+					if(addServerModelToSend.selectedAgents.length === 0) {
+						$scope.addServerModel.errorText = 'Please choose at least one agent to install';
+						return;
+					}
+					
+					
+				} else if(addServerModelToSend.selectedInstallType.value == 2) {
+					//DOCK_INSTALL
+					if(addServerModelToSend.dockServerName.trim().length === 0)  {
+						$scope.addServerModel.errorText = 'Please provide a server name';
+						return;
+					}
+					
+					if(addServerModelToSend.dockHostname.trim().length === 0)  {
+						$scope.addServerModel.errorText = 'Please provide a host name';
+						return;
+					}
+					
+				}
+				
+				$scope.addServerModel.errorText = '';
+				$scope.addServerModel.infoText = 'Please wait..';
+				$scope.addServerModel.onSubmitCall = true;
+				
+				if(addServerModelToSend.selectedInstallType.value == 1) {
+					restservice.sendPushInstallSoftwareRequest(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, $scope.addServerModel).then($scope.onSendInstallSoftwareRequest,
+						function () {
+							toasterservice.showErrorToast('API Error', 'Something went wrong');
+						}
+					);
+				} else if(addServerModelToSend.selectedInstallType.value == 2) {
+					restservice.sendDockInstallSoftwareRequest(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, $scope.addServerModel).then($scope.onSendInstallSoftwareRequest,
+						function () {
+							toasterservice.showErrorToast('API Error', 'Something went wrong');
+						}
+					);
+				}
 			};
 			
 			/*-------------------------------------------------------------------------------------------------------------------*/
@@ -2735,7 +2883,7 @@
                     console.log('Failed to get cookie');
                 }
                 if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
-                    $scope.getClients();
+                    $scope.getCvCommonProperties();
                 } else {
                     $scope.cvLogin.unauthorized = true;
                     //$scope.cvLogin = {};
@@ -2878,14 +3026,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>516</sys_mod_count>
+        <sys_mod_count>543</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-05-08 12:28:11</sys_updated_on>
+        <sys_updated_on>2018-05-10 11:36:19</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>

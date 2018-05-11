@@ -92,6 +92,73 @@ angular.module('angularapp').service('restservice', [
 			});
 		};
 		
+		this.sendPushInstallSoftwareRequest = function(snow_usertoken, cvtoken, cvendpoint, installSoftwareOperationModelInfo) {
+			var getPackagesToSend = function (selectedAgents) {
+				var isAgentAlreadyPresent = function (agentArray, agentIdToFind) {
+					return agentArray.some(function(agent) {
+						return (agent.ComponentId == agentIdToFind); 
+					});
+				};
+				
+				var packagesToSend = [];
+				selectedAgents.forEach(function(agent) {
+					if(!isAgentAlreadyPresent(packagesToSend, agent.packageId)) {
+						packagesToSend.push({'osType':agent.osType,'ComponentId':agent.packageId});
+						
+						var requiredPackages = agent.requiredPackages;
+						if(requiredPackages && angular.isArray(requiredPackages)) {
+							requiredPackages.forEach(function(requiredPackage){
+								if(!isAgentAlreadyPresent(packagesToSend, requiredPackage.ComponentId)) {
+									packagesToSend.push({'osType':requiredPackage.osType,'ComponentId':requiredPackage.ComponentId});
+								}
+							});
+						}
+					}
+				});
+				
+				return packagesToSend;
+			};
+			
+			var pushInstallSoftwareOperationInfo = {};
+			
+			if (installSoftwareOperationModelInfo.hostnames) {
+				pushInstallSoftwareOperationInfo.hostnames = installSoftwareOperationModelInfo.hostnames.split('\n').map(function(row) {
+					return row.trim();
+				}).filter(function(row) {
+					return row.length > 0;
+				});
+			}
+			
+			pushInstallSoftwareOperationInfo.componentInfo = getPackagesToSend(installSoftwareOperationModelInfo.selectedAgents);
+			pushInstallSoftwareOperationInfo.commCellId = installSoftwareOperationModelInfo.commCellId;
+
+			pushInstallSoftwareOperationInfo.userName = installSoftwareOperationModelInfo.pushInstallUsername;
+			pushInstallSoftwareOperationInfo.password = utilFactory.escapeXml(installSoftwareOperationModelInfo.pushInstallPassword);
+			
+			return $http.post('/api/x_183199_testcommv/cvapi/pushinstallsoftware', pushInstallSoftwareOperationInfo, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.sendDockInstallSoftwareRequest = function(snow_usertoken, cvtoken, cvendpoint, installSoftwareOperationModelInfo) {
+			var dockInstallSoftwareOperationInfo = {};
+			
+			dockInstallSoftwareOperationInfo.clientName = installSoftwareOperationModelInfo.dockServerName;
+			dockInstallSoftwareOperationInfo.hostName = installSoftwareOperationModelInfo.dockHostname;
+			
+			return $http.post('/api/x_183199_testcommv/cvapi/dockinstallsoftware', dockInstallSoftwareOperationInfo, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
 		this.getSubclients = function(snow_usertoken, cvtoken, cvendpoint, clientId) {
 			return $http.get('/api/x_183199_testcommv/cvapi/subclients', {
 				headers: {
@@ -437,6 +504,130 @@ angular.module('angularapp').service('restservice', [
 			});
 		};
 		
+		this.getPackages = function () {
+			var packageList = [
+				{
+					"packageId": 1101,
+					"packageName": "File System",
+					"code": "FS_UNIX",
+					"osType": "Unix"
+				},
+				{
+					"packageId": 713,
+					"packageName": "Virtual Server",
+					"code": "VSA",
+					"osType": "Windows",
+					"requiredPackages": [
+						{
+							"osType": "Windows",
+							"ComponentId": 453
+						},
+						{
+							"osType": "Windows",
+							"ComponentId": 51
+						}
+					]
+				},
+				{
+					"packageId": 1210,
+					"packageName": "SAP HANA",
+					"code": "SAPHANA_UNIX",
+					"osType": "Unix"
+				},
+				{
+					"packageId": 362,
+					"packageName": "PostgreSQL",
+					"code": "PostgreSQL",
+					"osType": "Windows"
+				},
+				{
+					"packageId": 1209,
+					"packageName": "PostgreSQL",
+					"code": "PostgreSQL_UNIX",
+					"osType": "Unix"
+				},
+				{
+					"packageId": 1204,
+					"packageName": "Oracle",
+					"code": "ORACLE_UNIX",
+					"osType": "Unix"
+				},
+				{
+					"packageId": 1212,
+					"packageName": "SQL Server",
+					"code": "MSSQL_UNIX",
+					"osType": "Unix"
+				},
+				{
+					"packageId": 353,
+					"packageName": "SQL Server",
+					"code": "MSSQL",
+					"osType": "Windows"
+				},
+				{
+					"packageId": 702,
+					"packageName": "File System",
+					"code": "FS",
+					"osType": "Windows"
+				},
+				{
+					"packageId": 352,
+					"packageName": "Oracle",
+					"code": "ORACLE",
+					"osType": "Windows"
+				},
+				{
+					"packageId": 51,
+					"packageName": "Media Agent",
+					"code": "MA",
+					"osType": "Windows",
+					"requiredPackages": [
+						{
+							"osType": "Windows",
+							"ComponentId": 453
+						}
+					]
+				},
+				{
+					"packageId": 726,
+					"packageName": "Web Console",
+					"code": "WebConsole",
+					"osType": "Windows"
+				},
+				{
+					"packageId": 101,
+					"packageName": "Sharepoint",
+					"code": "SHAREPOINT",
+					"osType": "Windows"
+				},
+				{
+					"packageId": 1136,
+					"packageName": "Virtual Server",
+					"code": "VSA_UNIX",
+					"osType": "Unix"
+				},
+				{
+					"packageId": 730,
+					"packageName": "Cloud Apps",
+					"code": "CAPPS",
+					"osType": "Windows"
+				},
+				{
+					"packageId": 1140,
+					"packageName": "Cloud Apps",
+					"code": "CAPPS_UNIX",
+					"osType": "Unix"
+				},
+				{
+					"packageId": 1301,
+					"packageName": "Media Agent",
+					"code": "MA_UNIX",
+					"osType": "Unix"
+				}
+			]; 
+			return packageList;
+		};
+		
 		this.doLogin = function(snow_usertoken, loginInfo) {
 			return $http.post('/api/x_183199_testcommv/cvapi/dologin', loginInfo, {
 				headers: {
@@ -464,14 +655,14 @@ angular.module('angularapp').service('restservice', [
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-04-02 07:27:08</sys_created_on>
         <sys_id>13d1dad4db1113004eb15ec0cf9619f0</sys_id>
-        <sys_mod_count>41</sys_mod_count>
+        <sys_mod_count>46</sys_mod_count>
         <sys_name>x_183199_testcommv.ApiServices</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_13d1dad4db1113004eb15ec0cf9619f0</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-05-08 12:26:25</sys_updated_on>
+        <sys_updated_on>2018-05-10 09:33:59</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>

@@ -12,7 +12,7 @@
 	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"></link>
 	<link href="https://cdnjs.cloudflare.com/ajax/libs/angularjs-toaster/1.1.0/toaster.min.css" rel="stylesheet" />
 	<link href="c15d08dddb530300180ad170cf961922.cssdbx" rel="stylesheet" type="text/css"></link> 
-
+	<link href="1ae40052dbe113004eb15ec0cf961967.cssdbx" rel="stylesheet" type="text/css"></link>
 	
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
@@ -28,6 +28,7 @@
 	<script src="x_183199_testcommv.loginDirective.jsdbx"></script>
 	<script src="x_183199_testcommv.toaster.svc.jsdbx"></script>
 	<script src="x_183199_testcommv.ApiServices.jsdbx"></script>
+	<script src="x_183199_testcommv.isteven-multi-select.jsdbx"></script>
 	<script src="x_183199_testcommv.UtilFactory.jsdbx"></script>
 	
 	
@@ -45,15 +46,15 @@
 	
 	<div id="cvapp" ng-app="angularapp" class="ng-cloak">
 		
-		<div ng-controller="ViewClientsController as vcctrl" class="appContainer" ng-init="getLoginCookie()">
+		<div ng-controller="ViewClientsController as vcctrl" class="appContainer view-clients" ng-init="getLoginCookie()">
 			
 			<toaster-container toaster-options="{'position-class': 'toast-bottom-right'}"></toaster-container>
 			
-			<commvaultlogin callback="getClients()" cv-login="cvLogin" ng-if="cvLogin.unauthorized"></commvaultlogin>
+			<commvaultlogin callback="getCvCommonProperties()" cv-login="cvLogin" ng-if="cvLogin.unauthorized"></commvaultlogin>
 			
 			<!-- Backup Modal -->
 			
-			<div class="modal backupModal fade" id="backupModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+			<div class="modal backupModal fade" id="backupModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" ng-show="backupModalOptype === 'RESTORE' || !autoRunBackup">
 				<div class="modal-dialog" role="document">
 					<div class="modal-content">
 						<div class="modal-header">
@@ -764,7 +765,7 @@
 										<div class="form-group">
 											<label for="hostname" class="col-xs-3 control-label">Host name</label>
 											<div class="col-xs-9">
-											  <textarea class="form-control hostnameTextArea" id="hostname" placeholder="Please enter the host names of the computers, one per line"></textarea>
+											  <textarea class="form-control hostnameTextArea" id="hostname" placeholder="Please enter the host names of the computers, one per line" ng-model="addServerModel.hostnames"></textarea>
 											</div>
 										</div>
 									</div>
@@ -775,7 +776,7 @@
 										<div class="form-group">
 											<label for="pushinstallusername" class="col-xs-3 control-label">Username</label>
 											<div class="col-xs-9">
-											  <input type="text" class="form-control" id="pushinstallusername"></input>
+											  <input type="text" class="form-control" id="pushinstallusername" ng-model="addServerModel.pushInstallUsername"></input>
 											</div>
 										</div>
 									</div>
@@ -786,7 +787,7 @@
 										<div class="form-group">
 											<label for="pushinstallpassword" class="col-xs-3 control-label">Password</label>
 											<div class="col-xs-9">
-											  <input type="password" class="form-control" id="pushinstallpassword"></input>
+											  <input type="password" class="form-control" id="pushinstallpassword" ng-model="addServerModel.pushInstallPassword"></input>
 											</div>
 										</div>
 									</div>
@@ -799,7 +800,7 @@
 											<div class="col-xs-4">
 												<div class="radio">
 												  <label>
-													<input type="radio" name="osType" id="osType" value="windows" checked="true"></input>
+													<input type="radio" name="osType" id="osType" value="Windows" checked="true" ng-model="addServerModel.osType" ng-change="addServerOsTypeChange()"></input>
 													Windows
 												  </label>
 												</div>
@@ -807,7 +808,7 @@
 											<div class="col-xs-5">
 											  <div class="radio">
 												  <label>
-													<input type="radio" name="osType" id="osType" value="unix"></input>
+													<input type="radio" name="osType" id="osType" value="Unix" ng-model="addServerModel.osType" ng-change="addServerOsTypeChange()"></input>
 													Unix and Linux
 												  </label>
 												</div>
@@ -821,26 +822,20 @@
 										<div class="form-group">
 											<label for="pushinstallpassword" class="col-xs-3 control-label">Select package(s)</label>
 											<div class="col-xs-9">
-												  <div class="btn-group choose-packages-btn-group">
-													<button type="button" class="btn btn-default dropdown-toggle choose-packages-btn" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="select-packages-label">Select packages</span><span class="caret choose-packages-caret"></span></button>
-
-													<ul class="dropdown-menu choose-packages-menu">
-														<li>
-															<a href="#" class="small" data-value="option1" tabIndex="-1">
-																<div class="checkbox choose-packages-checkbox">
-																	<label><input type="checkbox"></input> Check me out</label>
-																</div>
-															</a>
-														</li>
-														<li>
-															<a href="#" class="small" data-value="option2" tabIndex="-1">
-																<div class="checkbox choose-packages-checkbox">
-																	<label><input type="checkbox"></input> Check me out</label>
-																</div>
-															</a>
-														</li>
-													</ul>
-												</div>
+												  <isteven-multi-select
+													  input-model="addServerModel.agents"
+													  output-model="addServerModel.selectedAgents"
+													  button-label="packageName"
+													  item-label="packageName"
+													  tick-property="checked"
+													  disable-property="disabled"
+													  class="isteven-multi-select package-select"
+													  max-height="220px"					
+													  id="agents"
+													  name="agents"
+													  helper-elements="all none reset filter"
+													  max-labels="2">
+												</isteven-multi-select>
 											</div>	
 										</div>
 									</div>
@@ -854,7 +849,7 @@
 										<div class="form-group">
 											<label for="dockServerName" class="col-xs-3 control-label">Server name</label>
 											<div class="col-xs-9">
-											  <input type="text" class="form-control" id="dockServerName"></input>
+											  <input type="text" class="form-control" id="dockServerName" ng-model="addServerModel.dockServerName"></input>
 											</div>
 										</div>
 									</div>
@@ -865,7 +860,7 @@
 										<div class="form-group">
 											<label for="dockHostName" class="col-xs-3 control-label">Host name</label>
 											<div class="col-xs-9">
-											  <input type="text" class="form-control" id="dockHostName"></input>
+											  <input type="text" class="form-control" id="dockHostName"  ng-model="addServerModel.dockHostname"></input>
 											</div>
 										</div>
 									</div>
@@ -883,8 +878,8 @@
 							
 						</div>
 						<div class="modal-footer">
-							<button type="button" class="btn actionBtn modalClose" data-dismiss="modal">Close</button>
-							<button type="button" class="btn actionBtn" ng-click="saveActivitySettings()"> Install</button>
+							<button type="button" class="btn actionBtn modalClose" data-dismiss="modal" ng-class="{'inactiveBtn': addServerModel.onSubmitCall}">Close</button>
+							<button type="button" class="btn actionBtn" ng-click="doInstallSoftware()" ng-class="{'inactiveBtn': addServerModel.onSubmitCall}"> Install</button>
 						</div>
 					</div>
 				</div>
@@ -1025,13 +1020,13 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-02-12 13:07:19</sys_created_on>
         <sys_id>940017a0dbd013004eb15ec0cf961914</sys_id>
-        <sys_mod_count>190</sys_mod_count>
+        <sys_mod_count>205</sys_mod_count>
         <sys_name>ViewClients</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_page_940017a0dbd013004eb15ec0cf961914</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-05-08 12:38:16</sys_updated_on>
+        <sys_updated_on>2018-05-10 12:08:21</sys_updated_on>
     </sys_ui_page>
 </record_update>
