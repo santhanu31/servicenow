@@ -397,7 +397,7 @@
                     }
 				};
 				
-				restservice.sendLogFilesOperation(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, selectedJobForSendLogs, $scope.sendLogsModel).then(onSendLogFiles,
+				restservice.sendLogFilesForJob(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, selectedJobForSendLogs, $scope.sendLogsModel).then(onSendLogFiles,
                     function () {
                         toasterservice.showErrorToast('API Error', 'Something went wrong');
                     }
@@ -3026,14 +3026,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>543</sys_mod_count>
+        <sys_mod_count>544</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-05-10 11:36:19</sys_updated_on>
+        <sys_updated_on>2018-05-15 05:31:05</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>
