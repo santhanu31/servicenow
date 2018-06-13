@@ -34,7 +34,7 @@
 
 	var body = '<TMMsg_CreateTaskReq><taskInfo><task policyType="0" taskType="1" /><associations subclientId="' + subclientId + '" applicationId="106" _type_="3"/><subTasks><subTask subTaskType="3" operationType="1001"/><options><restoreOptions restoreACLsType="3"><browseOption noImage="1" useExactIndex="0" listMedia="0" toTime="0" fromTime="0"><timeRange _type_="54" fromTime="0" toTime="0"/><mediaOption><copyPrecedence copyPrecedence="0"/></mediaOption></browseOption><destination inPlace="0" isLegalHold="0"><destPath val="' + destPath + '"/><destClient clientId="' + destClientId + '" clientName="' + destClientName + '"/></destination><volumeRstOption volumeLeveRestore="0"/><virtualServerRstOption isFileBrowse="1" viewType="0"><diskLevelVMRestoreOption useVcloudCredentials="1"/><fileLevelVMRestoreOption serverName="' + serverName + '" vmGuid="' + vmGuid + '"><guestUserPassword userName="' + vmUsername + '" password="' + vmPassword + '"/></fileLevelVMRestoreOption></virtualServerRstOption><fileOption><sourceItem val="' + sourcePath + '"/></fileOption><impersonation useImpersonation="1"><user userName="' + vmUsername + '" password="' + vmPassword + '"/></impersonation><commonOptions overwriteFiles="' + overwriteFiles + '" detectRegularExpression="1" unconditionalOverwrite="' + overwriteFiles + '" stripLevelType="0" preserveLevel="1" stripLevel="0" restoreACLs="1" isFromBrowseBackup="1" clusterDBBackedup="0"/></restoreOptions></options></subTasks></taskInfo></TMMsg_CreateTaskReq>';
 
-	gs.info('Sending file level vm restore request: ' + body);
+	gs.info('Sending file level vm restore request from snow: ' + body);
 
 	var sm = new sn_ws.RESTMessageV2();
 	sm.setEndpoint(endpoint + "/webconsole/RestServlet/CreateTask");
@@ -78,14 +78,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-04-03 07:06:00</sys_created_on>
         <sys_id>dcdb17e8dbd913004eb15ec0cf961917</sys_id>
-        <sys_mod_count>0</sys_mod_count>
+        <sys_mod_count>1</sys_mod_count>
         <sys_name>runFileLevelVmRestore</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ws_operation_dcdb17e8dbd913004eb15ec0cf961917</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-04-03 07:06:00</sys_updated_on>
+        <sys_updated_on>2018-06-06 12:05:00</sys_updated_on>
         <web_service_definition display_value="cvapi">d1004b1fdbc513004eb15ec0cf96190b</web_service_definition>
         <web_service_version/>
     </sys_ws_operation>

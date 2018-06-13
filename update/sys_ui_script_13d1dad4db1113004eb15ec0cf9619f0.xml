@@ -79,6 +79,21 @@ angular.module('angularapp').service('restservice', [
 			});
 		};
 		
+		this.doBrowse = function(snow_usertoken, cvtoken, cvendpoint, subclientId, applicationId, path) {
+			var browseInfo = {
+				subclientId: subclientId,
+				applicationId: applicationId,
+				browsePath: path
+			};
+			return $http.post('/api/x_183199_testcommv/cvapi/dobrowse', browseInfo, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
 		this.deleteClientGroupOperation = function(snow_usertoken, cvtoken, cvendpoint, clientGroupId) {
 			return $http.post('/api/x_183199_testcommv/cvapi/deleteclientgroup', {}, {
 				headers: {
@@ -88,6 +103,19 @@ angular.module('angularapp').service('restservice', [
 				},
 				params: {
 					'clientGroupId' : clientGroupId
+				}
+			});
+		};
+		
+		this.getInstancePropertiesForClient = function(snow_usertoken, cvtoken, cvendpoint, clientId) {
+			return $http.get('/api/x_183199_testcommv/cvapi/getInstancebyclient', {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				},
+				params: {
+					'clientId' : clientId
 				}
 			});
 		};
@@ -655,14 +683,14 @@ angular.module('angularapp').service('restservice', [
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-04-02 07:27:08</sys_created_on>
         <sys_id>13d1dad4db1113004eb15ec0cf9619f0</sys_id>
-        <sys_mod_count>46</sys_mod_count>
+        <sys_mod_count>50</sys_mod_count>
         <sys_name>x_183199_testcommv.ApiServices</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_13d1dad4db1113004eb15ec0cf9619f0</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-05-10 09:33:59</sys_updated_on>
+        <sys_updated_on>2018-06-12 06:58:40</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>

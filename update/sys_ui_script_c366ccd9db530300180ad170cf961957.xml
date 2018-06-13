@@ -761,7 +761,7 @@
 
                 var overwriteFiles = $scope.vmFileOverwrite ? 1 : 0;
                 var sourcePath = "\\" + $scope.selectedVmForFileLevelRestore.strGUID + "\\" + $scope.vmFileSourcePath;
-                var destPath = "\\" + $scope.selectedVmForFileLevelRestore.strGUID + "\\" + $scope.vmFileDestPath;
+                var destPath = $scope.vmFileDestPath;
 
                 $scope.errorText = '';
                 $scope.infoText = 'Please wait...';
@@ -2471,6 +2471,93 @@
 
                 console.log($scope.runFullVmRestoreResponse);
             };
+			
+			var getInstancePropertiesForClient = function(clientId) {
+				var deferred = $q.defer();
+				
+				restservice.getInstancePropertiesForClient(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, clientId).then(
+					function(response) {
+						var responseJson = response.data.result;
+
+						if (responseJson.cvStatusCode === 200) {
+							deferred.resolve(responseJson);
+						} else if (responseJson.cvStatusCode === 401) {
+							//toasterservice.showInfoToast('Commvault login', 'User is logged out');
+							//$scope.showLoginModal();
+							$scope.cvLogin.unauthorized = true;
+							deferred.reject('Could not get instance properties for client');
+							//$scope.cvLogin = {};
+						} else {
+							toasterservice.showErrorToast('Commvault error', 'Could not get instance properties for client. Something went wrong');
+							deferred.reject('Could not get instance properties for client');
+						}
+					},
+					function() {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+						deferred.reject('Could not get instance properties for client');
+                    }
+				);
+				
+				return deferred.promise;
+			};
+			
+			var getAdvancedRestoreOptions = function (subclientId, applicationId) {
+				var deferred = $q.defer();
+				
+				restservice.doBrowse(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, subclientId, applicationId, "\\").then(
+					function(response) {
+						var responseJson = response.data.result;
+
+						if (responseJson.cvStatusCode === 200) {
+							deferred.resolve(responseJson);
+						} else if (responseJson.cvStatusCode === 401) {
+							//toasterservice.showInfoToast('Commvault login', 'User is logged out');
+							//$scope.showLoginModal();
+							$scope.cvLogin.unauthorized = true;
+							deferred.reject('Could not get advanced restore options');
+							//$scope.cvLogin = {};
+						} else {
+							toasterservice.showErrorToast('Commvault error', 'Could not get advanced restore options. Something went wrong');
+							deferred.reject('Could not get advanced restore options');
+						}
+					},
+					function() {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+						deferred.reject('Could not get advanced restore options');
+                    }
+				);
+				
+				return deferred.promise;
+			};
+				
+			var getDiskInfo = function (subclientId, applicationId, browsePath) {
+				var deferred = $q.defer();
+
+				restservice.doBrowse(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, subclientId, applicationId, browsePath).then(
+					function(response) {
+						var responseJson = response.data.result;
+
+						if (responseJson.cvStatusCode === 200) {
+							deferred.resolve(responseJson);
+						} else if (responseJson.cvStatusCode === 401) {
+							//toasterservice.showInfoToast('Commvault login', 'User is logged out');
+							//$scope.showLoginModal();
+							$scope.cvLogin.unauthorized = true;
+							deferred.reject('Could not get disk info');
+							//$scope.cvLogin = {};
+						} else {
+							toasterservice.showErrorToast('Commvault error', 'Could not get disk info. Something went wrong');
+							deferred.reject('Could not get disk info');
+						}
+					},
+					function() {
+						toasterservice.showErrorToast('API Error', 'Something went wrong');
+						deferred.reject('Could not get disk info');
+					}
+				);	
+
+				return deferred.promise;
+			};
 
             $scope.onFullVmRestore = function () {
                 $scope.errorText = '';
@@ -2503,12 +2590,132 @@
                     vmGuid: $scope.selectedVmForFullRestore.strGUID,
                     vmName: $scope.selectedVmForFullRestore.name
                 };
+				
+				restoreInfo.disks = [];
+				
+				/*********************Full VM Restore Fix******************************************************************/
+				
+				$scope.infoText = '';
+				$scope.errorText = '';
+				$j_commvault('#restoreModal').modal('hide');
 
-                restservice.runFullVmRestore(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, restoreInfo).then($scope.runFullVmRestoreCallback,
+				toasterservice.showInfoToast('Full VM Restore', 'Sending restore request');
+				
+				//get instance properties
+				getInstancePropertiesForClient($scope.selectedVmForFullRestore.pseudoClient.clientId).then(
+					function(responseJson) {
+						
+						if(angular.isArray(responseJson.instanceProperties)) {
+							
+							if(angular.isDefined(responseJson.instanceProperties[0].virtualServerInstance) && angular.isDefined(responseJson.instanceProperties[0].virtualServerInstance.vmwareVendor) && angular.isDefined(responseJson.instanceProperties[0].virtualServerInstance.vmwareVendor.virtualCenter)) {
+								
+								restoreInfo.diskUsername = responseJson.instanceProperties[0].virtualServerInstance.vmwareVendor.virtualCenter.userName;
+								
+							}
+							
+							if(angular.isDefined(responseJson.instanceProperties[0].instance)) {
+							   
+								restoreInfo.instanceId = responseJson.instanceProperties[0].instance.instanceId; 
+								restoreInfo.applicationId = responseJson.instanceProperties[0].instance.applicationId;	   
+							    restoreInfo.vClientId = responseJson.instanceProperties[0].instance.clientId;
+							}
+
+							return getAdvancedRestoreOptions(restoreInfo.subclientId, restoreInfo.applicationId);
+						} else {
+							return null;
+						}
+						
+					},
+					function(error) {
+						toasterservice.showErrorToast('API Error', error);
+					}
+				).then (
+					function(responseJson) {
+						if(angular.isDefined(responseJson)) {
+							var browseData = responseJson.browseResponses;
+							
+							browseData.forEach(function(b) {
+								if(b.browseResult && b.browseResult.dataResultSet && b.browseResult.dataResultSet.length > 0) {
+									b.browseResult.dataResultSet.forEach(function(dataResult) {
+										if(dataResult.name && dataResult.name.toLowerCase() == restoreInfo.vmGuid.toLowerCase()) {
+											restoreInfo.browsePathForVm = dataResult.path;
+											restoreInfo.vmGuidFromBrowse = dataResult.name;
+											if(dataResult.advancedData) {
+												if(dataResult.advancedData.sourceCommServer) {
+													restoreInfo.commcellId = dataResult.advancedData.sourceCommServer.commCellId;
+												}
+												if(dataResult.advancedData.browseMetaData && dataResult.advancedData.browseMetaData.virtualServerMetaData) {
+													restoreInfo.esxHost = dataResult.advancedData.browseMetaData.virtualServerMetaData.esxHost;
+													restoreInfo.folderPah = dataResult.advancedData.browseMetaData.virtualServerMetaData.inventoryPath;
+													restoreInfo.resourcePoolPath = dataResult.advancedData.browseMetaData.virtualServerMetaData.resourcePoolPath ? dataResult.advancedData.browseMetaData.virtualServerMetaData.resourcePoolPath : "/";
+													restoreInfo.datastore = dataResult.advancedData.browseMetaData.virtualServerMetaData.datastore;
+													
+												}
+											}
+										}
+									});
+								}
+							});
+							
+							return getDiskInfo(restoreInfo.subclientId, restoreInfo.applicationId, restoreInfo.browsePathForVm);
+							
+						} else {
+							return null;
+						}
+					},
+					function(error) {
+						toasterservice.showErrorToast('API Error', error);
+					}
+				).then (
+					function(responseJson) {
+						if(angular.isDefined(responseJson)) {
+							var diskBrowseData = responseJson.browseResponses;
+							
+							diskBrowseData.forEach(function(b) {
+								if(b.browseResult && b.browseResult.dataResultSet && b.browseResult.dataResultSet.length > 0) {
+									b.browseResult.dataResultSet.forEach(function(dataResult) {
+										if(dataResult.name && dataResult.name.toLowerCase().endsWith('vmdk')) {
+											var datastore = "";
+											if(dataResult.advancedData && dataResult.advancedData.browseMetaData && dataResult.advancedData.browseMetaData.virtualServerMetaData) {
+												datastore = dataResult.advancedData.browseMetaData.virtualServerMetaData.datastore;
+											}
+											restoreInfo.disks.push({
+												diskName : dataResult.name,
+												dataStore : datastore
+											});
+										}
+									});
+								}
+							});
+							
+							restservice.runFullVmRestore(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, restoreInfo).then($scope.runFullVmRestoreCallback,
+								function () {
+									toasterservice.showErrorToast('API Error', 'Something went wrong');
+								}
+							);
+							
+							
+							
+						} else {
+							return null;
+						}
+					},
+					function(error) {
+						toasterservice.showErrorToast('API Error', error);
+					}
+				);
+				
+				
+				
+				
+				/*********************Full VM Restore Fix End**************************************************************/
+				
+
+                /*restservice.runFullVmRestore(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, restoreInfo).then($scope.runFullVmRestoreCallback,
                     function () {
                         toasterservice.showErrorToast('API Error', 'Something went wrong');
                     }
-                );
+                );*/
             };
 
             $scope.showFullVmRestoreModal = function (clientProperty) {
@@ -2585,7 +2792,7 @@
 
                 var overwriteFiles = $scope.vmFileOverwrite ? 1 : 0;
                 var sourcePath = "\\" + $scope.selectedVmForFileLevelRestore.strGUID + "\\" + $scope.vmFileSourcePath;
-                var destPath = "\\" + $scope.selectedVmForFileLevelRestore.strGUID + "\\" + $scope.vmFileDestPath;
+                var destPath = $scope.vmFileDestPath;
 
                 $scope.errorText = '';
                 $scope.infoText = 'Please wait...';
@@ -3026,14 +3233,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>544</sys_mod_count>
+        <sys_mod_count>557</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-05-15 05:31:05</sys_updated_on>
+        <sys_updated_on>2018-06-12 14:15:40</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>

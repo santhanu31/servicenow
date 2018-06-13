@@ -28,9 +28,34 @@
 	var subclientId = requestData.subclientId;
 	var vmGuid = requestData.vmGuid;
 	var vmName = requestData.vmName;
+	
+	var applicationId = requestData.applicationId;
+	var commcellId = requestData.commcellId;
+	var diskUsername = requestData.diskUsername;
+	var esxHost = requestData.esxHost;
+	var folderPah = requestData.folderPah;
+	var resourcePoolPath = requestData.resourcePoolPath;
+	var disks = requestData.disks;
+	var datastore = requestData.datastore;
+	var vClientId = requestData.vClientId;
+	var instanceId = requestData.instanceId;
+	var browsePathForVm = requestData.browsePathForVm;
+	var vmGuidFromBrowse = requestData.vmGuidFromBrowse;
+	
+	var vmGuidToSend = vmGuidFromBrowse;
+	
+	if(!vmGuidToSend) {
+		vmGuidToSend = vmGuid;
+	}
 
-
-	var body = '<TMMsg_CreateTaskReq><taskInfo><task policyType="0" taskType="1"/><associations subclientId="' + subclientId + '" applicationId="106" _type_="3"/><subTasks><subTask subTaskType="3" operationType="1001" /><options><restoreOptions restoreACLsType="3"><destination inPlace="1" isLegalHold="0"><destClient clientId="' + destClientId + '" clientName="' + destClientName + '" /></destination><volumeRstOption volumeLeveRestore="0" volumeLevelRestoreType="1"/><virtualServerRstOption isDiskBrowse="1" viewType="0"><diskLevelVMRestoreOption powerOnVmAfterRestore="' + powerOnVmAfterRestore + '" passUnconditionalOverride="' + unconditionalOverwrite + '" transportMode="0" useVcloudCredentials="1" restoreToDefaultHost="0"><advancedRestoreOptions guid="' + vmGuid + '" name="' + vmName + '" newName="' + newName + '" addToFailoverCluster="0"></advancedRestoreOptions></diskLevelVMRestoreOption></virtualServerRstOption><commonOptions overwriteFiles="' + unconditionalOverwrite + '" detectRegularExpression="1" unconditionalOverwrite="' + unconditionalOverwrite + '" stripLevelType="0" preserveLevel="1" stripLevel="0" restoreACLs="1" isFromBrowseBackup="1" clusterDBBackedup="0" /></restoreOptions></options></subTasks></taskInfo></TMMsg_CreateTaskReq>';
+	var body = '<TMMsg_CreateTaskReq><taskInfo><task policyType="0" taskType="1" initiatedFrom="1"><taskFlags disabled="0"/></task><associations subclientId="' + subclientId + '" applicationId="' + applicationId + '" _type_="3"><client/></associations><subTasks><subTask subTaskType="3" operationType="1001" /><options><restoreOptions restoreACLsType="3"><browseOption commCellId="' + commcellId + '" noImage="1" useExactIndex="0" listMedia="0" toTime="0" fromTime="0"><timeRange _type_="54" fromTime="0" toTime="0"/><mediaOption><copyPrecedence copyPrecedence="0"/></mediaOption></browseOption><destination inPlace="1" isLegalHold="0"><destClient clientId="' + destClientId + '" clientName="' + destClientName + '" /></destination><volumeRstOption volumeLeveRestore="0" volumeLevelRestoreType="1"/><virtualServerRstOption isDiskBrowse="1" viewType="0"><diskLevelVMRestoreOption powerOnVmAfterRestore="' + powerOnVmAfterRestore + '" passUnconditionalOverride="' + unconditionalOverwrite + '" transportMode="0" useVcloudCredentials="1" restoreToDefaultHost="0"><userPassword userName="' + diskUsername + '"/><advancedRestoreOptions guid="' + vmGuidToSend + '" name="' + vmName + '" newName="' + newName + '" addToFailoverCluster="0" esxHost="' + esxHost + '" Datastore="' + datastore + '" resourcePoolPath="' + resourcePoolPath + '" FolderPath="' + folderPah + '">';
+	
+	var i;
+	for(i=0; i<disks.length; i++) {
+			body += '<disks name="' + disks[i].diskName + '" Datastore="' + disks[i].dataStore + '"/>';
+	}	
+	
+	body += '</advancedRestoreOptions></diskLevelVMRestoreOption><vCenterInstance clientId="' + vClientId + '" applicationId="' + applicationId + '" instanceId="' + instanceId + '"/></virtualServerRstOption><fileOption><sourceItem val="' + browsePathForVm + '"/></fileOption><commonOptions overwriteFiles="' + unconditionalOverwrite + '" detectRegularExpression="1" unconditionalOverwrite="' + unconditionalOverwrite + '" stripLevelType="0" preserveLevel="1" stripLevel="0" restoreACLs="1" isFromBrowseBackup="1" clusterDBBackedup="0" /></restoreOptions><adminOpts><updateOption invokeLevel="0"/></adminOpts></options></subTasks></taskInfo></TMMsg_CreateTaskReq>';
 
 	gs.info('Sending full vm restore request ' + body);
 
@@ -76,14 +101,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-04-03 06:32:20</sys_created_on>
         <sys_id>f1745ba4dbd913004eb15ec0cf9619c4</sys_id>
-        <sys_mod_count>0</sys_mod_count>
+        <sys_mod_count>8</sys_mod_count>
         <sys_name>runFullVmRestore</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ws_operation_f1745ba4dbd913004eb15ec0cf9619c4</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-04-03 06:32:20</sys_updated_on>
+        <sys_updated_on>2018-06-12 09:39:13</sys_updated_on>
         <web_service_definition display_value="cvapi">d1004b1fdbc513004eb15ec0cf96190b</web_service_definition>
         <web_service_version/>
     </sys_ws_operation>
