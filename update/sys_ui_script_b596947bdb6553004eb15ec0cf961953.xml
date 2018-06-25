@@ -7,7 +7,13 @@
         <name>x_183199_testcommv.UtilFactory</name>
         <script><![CDATA[(function () {
     angular.module('angularapp').service('utilFactory', [
-        function () {
+		'$interval',
+		'$http',
+		'toasterservice',
+		'$rootScope',
+        function ($interval, $http, toasterservice,  $rootScope) {
+			var utilfact = this;
+			
 			this.escapeXml = function (unsafe) {
 				return unsafe.replace(/[<>&'"]/g, function (c) {
 					switch (c) {
@@ -19,6 +25,50 @@
 					}
 				});
 			};
+			
+			var stayLoggedInScheduler;
+			var stayLoggedInFunctionToExecute = function(scope, g_ck, token, endpoint) {
+				$http.post('/api/x_183199_testcommv/cvapi/stayloggedin', {}, {
+					headers: {
+						'X-UserToken': g_ck,
+						'cvtoken': token,
+						'cvendpoint': endpoint
+					}
+				}).then(
+					function(response) {
+						//toasterservice.showInfoToast('API Success', 'stay logged in successful');
+						var responseJson = response.data.result;
+					
+						if (responseJson.cvStatusCode === 401) {
+							//toasterservice.showInfoToast('Commvault login', 'User is logged out');
+							//$scope.showLoginModal();
+							utilfact.stopStayLoggedInScheduler();
+							scope.$emit('loggedout', '');
+							//$scope.cvLogin = {};
+						}
+
+						console.log(response);
+					},
+                    function () {
+                        //toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
+			};
+			this.startStayLoggedInScheduler = function(scope, g_ck, token, endpoint) {
+				//console.log("Inside startStayLoggedInScheduler");
+				if (angular.isDefined(stayLoggedInScheduler)) return;
+				console.log("startStayLoggedInScheduler is not defined. Starting.");
+				stayLoggedInScheduler = $interval(stayLoggedInFunctionToExecute, 15 * 60 * 1000, 0, true, scope, g_ck, token, endpoint);
+                //stayLoggedInScheduler = $interval(stayLoggedInFunctionToExecute, 5 * 1000, 0, true, scope, g_ck, token, endpoint);
+				//stayLoggedInScheduler = $interval(function(){console.log("schedule");}, 5 * 1000);
+			};
+			this.stopStayLoggedInScheduler = function() {
+				console.log('Stopping startStayLoggedInScheduler');
+                if (angular.isDefined(stayLoggedInScheduler)) {
+                    $interval.cancel(stayLoggedInScheduler);
+                    stayLoggedInScheduler = undefined;
+                }
+			};
         }
     ]);
 })();]]></script>
@@ -27,14 +77,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-04-25 05:16:40</sys_created_on>
         <sys_id>b596947bdb6553004eb15ec0cf961953</sys_id>
-        <sys_mod_count>0</sys_mod_count>
+        <sys_mod_count>25</sys_mod_count>
         <sys_name>x_183199_testcommv.UtilFactory</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_b596947bdb6553004eb15ec0cf961953</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-04-25 05:16:40</sys_updated_on>
+        <sys_updated_on>2018-06-25 08:49:35</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>

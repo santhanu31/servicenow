@@ -106,7 +106,9 @@
         '$interval',
         'jobFactory',
         'JOB_ACTION',
-        function ($scope, $cookies, toasterservice, restservice, $interval, jobFactory, JOB_ACTION) {
+		'utilFactory',
+		'$rootScope',
+        function ($scope, $cookies, toasterservice, restservice, $interval, jobFactory, JOB_ACTION, utilFactory, $rootScope) {
 
             $scope.tableLoaded = false;
 
@@ -221,6 +223,8 @@
                     limit: $scope.pageSize,
                     completedJobLookupTime: $scope.completedJobLookupTime
                 };
+				
+				utilFactory.startStayLoggedInScheduler($scope, window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint);
 
                 restservice.getJobs(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, jobsInfo).then($scope.onGetJobs,
                     function () {
@@ -499,6 +503,10 @@
             };
             $scope.$on('$destroy', function () {
                 $scope.stopScheduler();
+            });
+			
+			$scope.$on('loggedout', function(event, data) {
+                $scope.cvLogin.unauthorized = true;
             });
 
             $scope.cvLogin = {};
@@ -869,7 +877,8 @@
         '$cookies',
         'toasterservice',
         'restservice',
-        function ($scope, $cookies, toasterservice, restservice) {
+		'utilFactory',
+        function ($scope, $cookies, toasterservice, restservice, utilFactory) {
             console.log('In SLA Report controller');
 
             $scope.pieData = [];
@@ -1018,6 +1027,8 @@
                     }
 
                 };
+				
+				utilFactory.startStayLoggedInScheduler($scope, window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint);
 
                 $scope.onAjax = true;
 
@@ -1029,6 +1040,9 @@
             };
 
 
+			$scope.$on('loggedout', function(event, data) {
+                $scope.cvLogin.unauthorized = true;
+            });
             $scope.cvLogin = {};
             $scope.getLoginCookie = function () {
                 $scope.cvLogin.unauthorized = true;
@@ -1056,7 +1070,8 @@
         '$cookies',
         'toasterservice',
         'restservice',
-        function ($scope, $cookies, toasterservice, restservice) {
+		'utilFactory',
+        function ($scope, $cookies, toasterservice, restservice, utilFactory) {
             console.log('In schedule controller');
 
             $scope.getSchedules = function () {
@@ -1080,7 +1095,9 @@
                     //$scope.$apply();
                     console.log($scope.schedules);
                 };
-
+				
+				utilFactory.startStayLoggedInScheduler($scope, window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint);
+				
                 $scope.onAjax = true;
                 restservice.getSchedules(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint).then($scope.onSchedules,
                     function () {
@@ -1088,6 +1105,10 @@
                     }
                 );
             };
+			
+			$scope.$on('loggedout', function(event, data) {
+                $scope.cvLogin.unauthorized = true;
+            });
 
             $scope.cvLogin = {};
             $scope.getLoginCookie = function () {
@@ -1119,7 +1140,8 @@
         '$q',
         'toasterservice',
         'restservice',
-        function ($scope, $cookies, $timeout, $q, toasterservice, restservice) {
+		'utilFactory',
+        function ($scope, $cookies, $timeout, $q, toasterservice, restservice, utilFactory) {
 			$scope.tableLoaded = false;
 			
 			$j_commvault('#addEditServerGroupModal').on('hidden.bs.modal', function (e) {
@@ -1457,7 +1479,9 @@
                     $scope.onAjax = false;
                     console.log($scope.clientResponse);
                 };
-
+				
+				utilFactory.startStayLoggedInScheduler($scope, window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint);
+				
                 $scope.onAjax = true;
                 restservice.getClientGroups(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint).then($scope.onGetClientGroups,
                     function () {
@@ -1497,6 +1521,9 @@
             $scope.pageSize = $scope.pageSizeList[2];
 
 
+			$scope.$on('loggedout', function(event, data) {
+                $scope.cvLogin.unauthorized = true;
+            });
             $scope.cvLogin = {};
             $scope.getLoginCookie = function () {
                 $scope.cvLogin.unauthorized = true;
@@ -1529,7 +1556,8 @@
 		'$rootScope',
         'toasterservice',
         'restservice',
-        function ($scope, $cookies, $timeout, $q, $rootScope, toasterservice, restservice) {
+		'utilFactory',
+        function ($scope, $cookies, $timeout, $q, $rootScope, toasterservice, restservice, utilFactory) {
 			
 			$scope.includeVM = false;
 
@@ -1554,6 +1582,8 @@
                         toasterservice.showErrorToast('Commvault error', 'Could not fetch clients. Something went wrong');
                     }
                 };
+				
+				utilFactory.startStayLoggedInScheduler($scope, window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint);
 				
 				$scope.onAjax = true;
                 restservice.getCommservProperties(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, $scope.includeVM).then($scope.onGetCommservProperties,
@@ -3077,6 +3107,9 @@
             $scope.pageSize = $scope.pageSizeList[2];
 
 
+			$scope.$on('loggedout', function(event, data) {
+                $scope.cvLogin.unauthorized = true;
+            });
             $scope.cvLogin = {};
             $scope.getLoginCookie = function () {
                 $scope.cvLogin.unauthorized = true;
@@ -3105,7 +3138,8 @@
         '$cookies',
         'toasterservice',
         'restservice',
-        function ($scope, $cookies, toasterservice, restservice) {
+		'utilFactory',
+        function ($scope, $cookies, toasterservice, restservice, utilFactory) {
             console.log('In Onboarding controller');
 
             $scope.obparams = {
@@ -3143,7 +3177,8 @@
         '$cookies',
         'toasterservice',
         'restservice',
-        function ($scope, $cookies, toasterservice, restservice) {
+		'utilFactory',
+        function ($scope, $cookies, toasterservice, restservice, utilFactory) {
             console.log('In logout controller');
             $scope.showHelp = false;
 
@@ -3163,6 +3198,7 @@
                         });
                         $scope.showHelp = true;
                         $scope.helpInfo = "You have been logged out";
+						utilFactory.stopStayLoggedInScheduler();
                     } else {
                         toasterservice.showErrorToast('Commvault error', 'Something went wrong');
                     }
@@ -3179,6 +3215,7 @@
                 );
             };
 
+			
             $scope.cvLogin = {};
             $scope.getLoginCookie = function () {
                 $scope.cvLogin.unauthorized = true;
@@ -3233,14 +3270,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>558</sys_mod_count>
+        <sys_mod_count>582</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-06-19 09:54:01</sys_updated_on>
+        <sys_updated_on>2018-06-25 06:40:46</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>
