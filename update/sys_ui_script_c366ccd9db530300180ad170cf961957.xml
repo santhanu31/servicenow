@@ -7,7 +7,11 @@
         <name>x_183199_testcommv.angular_app_client_lo</name>
         <script><![CDATA[(function () {
     angular.module('angularapp', ['highcharts-ng', 'angularUtils.directives.dirPagination', 'toaster', 'ngAnimate', 'ngSanitize', 'ngCookies', 'isteven-multi-select']);
-
+	
+	angular.module('angularapp').config(function($httpProvider) {
+		$httpProvider.interceptors.push('httpInterceptor');
+	});
+	
     angular.module('angularapp').filter('capacity', function () {
         var format = function (number, unit) {
             if (number.toFixed(2) == Math.floor(number.toFixed(2))) {
@@ -108,7 +112,8 @@
         'JOB_ACTION',
 		'utilFactory',
 		'$rootScope',
-        function ($scope, $cookies, toasterservice, restservice, $interval, jobFactory, JOB_ACTION, utilFactory, $rootScope) {
+		'$window',
+        function ($scope, $cookies, toasterservice, restservice, $interval, jobFactory, JOB_ACTION, utilFactory, $rootScope, $window) {
 
             $scope.tableLoaded = false;
 
@@ -211,7 +216,10 @@
                 console.log($scope.getJobsResponse);
             };
 
-            $scope.getJobs = function () {
+            $scope.getJobs = function (fromScheduler) {
+				if(!angular.isDefined(fromScheduler)) {
+					fromScheduler = false;
+				}
                 console.log('getting jobs');
                 $scope.onAjax = true;
 
@@ -221,7 +229,8 @@
                     sortDirection: $scope.sortDirection,
                     offset: $scope.offset,
                     limit: $scope.pageSize,
-                    completedJobLookupTime: $scope.completedJobLookupTime
+                    completedJobLookupTime: $scope.completedJobLookupTime,
+					fromScheduler: fromScheduler
                 };
 				
 				utilFactory.startStayLoggedInScheduler($scope, window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint);
@@ -229,6 +238,7 @@
                 restservice.getJobs(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, jobsInfo).then($scope.onGetJobs,
                     function () {
                         toasterservice.showErrorToast('API Error', 'Something went wrong');
+						$scope.onAjax = false;
                     }
                 );
 
@@ -492,7 +502,7 @@
             $scope.startScheduler = function () {
                 $scope.getJobs();
                 if (angular.isDefined(scheduler)) return;
-                scheduler = $interval($scope.getJobs, 60 * 1000);
+                scheduler = $interval($scope.getJobs, 60 * 1000, 0, true, true);
             };
             $scope.stopScheduler = function () {
                 console.log('Stopping scheduler');
@@ -505,10 +515,21 @@
                 $scope.stopScheduler();
             });
 			
+			$scope.$on('sessiontimeout', function(event, data) {
+				try {
+					utilFactory.stopStayLoggedInScheduler();
+					$scope.stopScheduler();
+					if(!data.config.url.endsWith('/api/x_183199_testcommv/cvapi/stayloggedin') && !data.config.data.fromScheduler) {
+						$window.location.reload();
+					}
+				} catch (e) {
+					$window.location.reload();
+				}
+            });
+
 			$scope.$on('loggedout', function(event, data) {
                 $scope.cvLogin.unauthorized = true;
             });
-
             $scope.cvLogin = {};
             $scope.getLoginCookie = function () {
                 $scope.cvLogin.unauthorized = true;
@@ -521,12 +542,19 @@
                 } catch (e) {
                     console.log('Failed to get cookie');
                 }
-                if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
-                    $scope.startScheduler();
-                } else {
-                    $scope.cvLogin.unauthorized = true;
-                    //$scope.cvLogin = {};
-                }
+				
+				if($scope.cvLogin.snowToken && $scope.cvLogin.snowToken != window.g_ck) {
+					$scope.cvLogin.unauthorized = true;
+					$scope.cvLogin.token = '';
+					utilFactory.deleteTokenFromCookie($scope.cvLogin);
+				} else {
+					if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
+						$scope.startScheduler();
+					} else {
+						$scope.cvLogin.unauthorized = true;
+						//$scope.cvLogin = {};
+					}
+				}
             };
         }
     ]);
@@ -536,7 +564,8 @@
         '$cookies',
         'toasterservice',
         'restservice',
-        function ($scope, $cookies, toasterservice, restservice) {
+		'$window',
+        function ($scope, $cookies, toasterservice, restservice, $window) {
             console.log('In VM controller');
 			
 			$scope.modernBrowsers = [
@@ -878,7 +907,8 @@
         'toasterservice',
         'restservice',
 		'utilFactory',
-        function ($scope, $cookies, toasterservice, restservice, utilFactory) {
+		'$window',
+        function ($scope, $cookies, toasterservice, restservice, utilFactory, $window) {
             console.log('In SLA Report controller');
 
             $scope.pieData = [];
@@ -1038,7 +1068,17 @@
                     }
                 );
             };
-
+			
+			$scope.$on('sessiontimeout', function(event, data) {
+				try {
+					utilFactory.stopStayLoggedInScheduler();
+					if(!data.config.url.endsWith('/api/x_183199_testcommv/cvapi/stayloggedin')) {
+						$window.location.reload();
+					}
+				} catch (e) {
+					$window.location.reload();
+				}
+            });
 
 			$scope.$on('loggedout', function(event, data) {
                 $scope.cvLogin.unauthorized = true;
@@ -1055,12 +1095,19 @@
                 } catch (e) {
                     console.log('Failed to get cookie');
                 }
-                if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
-                    $scope.getSLAReport();
-                } else {
-                    $scope.cvLogin.unauthorized = true;
-                    //$scope.cvLogin = {};
-                }
+				
+				if($scope.cvLogin.snowToken && $scope.cvLogin.snowToken != window.g_ck) {
+					$scope.cvLogin.unauthorized = true;
+					$scope.cvLogin.token = '';
+					utilFactory.deleteTokenFromCookie($scope.cvLogin);
+				} else {
+					if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
+						$scope.getSLAReport();
+					} else {
+						$scope.cvLogin.unauthorized = true;
+						//$scope.cvLogin = {};
+					}
+				}
             };
         }
     ]);
@@ -1071,7 +1118,8 @@
         'toasterservice',
         'restservice',
 		'utilFactory',
-        function ($scope, $cookies, toasterservice, restservice, utilFactory) {
+		'$window',
+        function ($scope, $cookies, toasterservice, restservice, utilFactory, $window) {
             console.log('In schedule controller');
 
             $scope.getSchedules = function () {
@@ -1106,10 +1154,20 @@
                 );
             };
 			
+			$scope.$on('sessiontimeout', function(event, data) {
+				try {
+					utilFactory.stopStayLoggedInScheduler();
+					if(!data.config.url.endsWith('/api/x_183199_testcommv/cvapi/stayloggedin')) {
+						$window.location.reload();
+					}
+				} catch (e) {
+					$window.location.reload();
+				}
+            });
+
 			$scope.$on('loggedout', function(event, data) {
                 $scope.cvLogin.unauthorized = true;
             });
-
             $scope.cvLogin = {};
             $scope.getLoginCookie = function () {
                 $scope.cvLogin.unauthorized = true;
@@ -1122,12 +1180,19 @@
                 } catch (e) {
                     console.log('Failed to get cookie');
                 }
-                if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
-                    $scope.getSchedules();
-                } else {
-                    $scope.cvLogin.unauthorized = true;
-                    //$scope.cvLogin = {};
-                }
+				
+				if($scope.cvLogin.snowToken && $scope.cvLogin.snowToken != window.g_ck) {
+					$scope.cvLogin.unauthorized = true;
+					$scope.cvLogin.token = '';
+					utilFactory.deleteTokenFromCookie($scope.cvLogin);
+				} else {
+					if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
+						$scope.getSchedules();
+					} else {
+						$scope.cvLogin.unauthorized = true;
+						//$scope.cvLogin = {};
+					}
+				}
             };
         }
     ]);
@@ -1141,7 +1206,8 @@
         'toasterservice',
         'restservice',
 		'utilFactory',
-        function ($scope, $cookies, $timeout, $q, toasterservice, restservice, utilFactory) {
+		'$window',
+        function ($scope, $cookies, $timeout, $q, toasterservice, restservice, utilFactory, $window) {
 			$scope.tableLoaded = false;
 			
 			$j_commvault('#addEditServerGroupModal').on('hidden.bs.modal', function (e) {
@@ -1315,6 +1381,7 @@
 					},
 					function (error) {
 						toasterservice.showErrorToast('API Error', error);
+						return $q.reject('Something went wrong');
 					}
 				).then(
 					function(response) {
@@ -1332,8 +1399,11 @@
 						showAddEditServerGroupModal();
 					}, function(error) {
 						toasterservice.showErrorToast('API Error', error);
+						return $q.reject('Something went wrong');
 					} 
-				).finally(function() {
+				).catch(function(error){
+					toasterservice.showErrorToast('Something went wrong');
+				}).finally(function() {
 					$scope.onAjax = false;
 				});
 			};
@@ -1519,7 +1589,17 @@
 
             $scope.pageSizeList = [5, 10, 20, 50, 100];
             $scope.pageSize = $scope.pageSizeList[2];
-
+			
+			$scope.$on('sessiontimeout', function(event, data) {
+				try {
+					utilFactory.stopStayLoggedInScheduler();
+					if(!data.config.url.endsWith('/api/x_183199_testcommv/cvapi/stayloggedin')) {
+						$window.location.reload();
+					}
+				} catch (e) {
+					$window.location.reload();
+				}
+            });
 
 			$scope.$on('loggedout', function(event, data) {
                 $scope.cvLogin.unauthorized = true;
@@ -1536,12 +1616,19 @@
                 } catch (e) {
                     console.log('Failed to get cookie');
                 }
-                if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
-                    $scope.getClientGroups();
-                } else {
-                    $scope.cvLogin.unauthorized = true;
-                    //$scope.cvLogin = {};
-                }
+				
+				if($scope.cvLogin.snowToken && $scope.cvLogin.snowToken != window.g_ck) {
+					$scope.cvLogin.unauthorized = true;
+					$scope.cvLogin.token = '';
+					utilFactory.deleteTokenFromCookie($scope.cvLogin);
+				} else {
+					if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
+						$scope.getClientGroups();
+					} else {
+						$scope.cvLogin.unauthorized = true;
+						//$scope.cvLogin = {};
+					}
+				}
             };
 			
 		}
@@ -1557,7 +1644,8 @@
         'toasterservice',
         'restservice',
 		'utilFactory',
-        function ($scope, $cookies, $timeout, $q, $rootScope, toasterservice, restservice, utilFactory) {
+		'$window',
+        function ($scope, $cookies, $timeout, $q, $rootScope, toasterservice, restservice, utilFactory, $window) {
 			
 			$scope.includeVM = false;
 
@@ -2176,11 +2264,13 @@
                             restservice.setActivityControl(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, selectedClientBackup, activityInfoBackup).then($scope.onSetActivityControlBackup,
                                 function () {
                                     toasterservice.showErrorToast('API Error', 'Something went wrong');
+									return $q.reject('Something went wrong');
                                 }
                             );
                         },
                         function (error) {
                             toasterservice.showErrorToast('API Error', error);
+							return $q.reject('Something went wrong');
                         });
 
                 }
@@ -2216,11 +2306,13 @@
                             restservice.setActivityControl(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, selectedClientRestore, activityInfoRestore).then($scope.onSetActivityControlRestore,
                                 function () {
                                     toasterservice.showErrorToast('API Error', 'Something went wrong');
+									return $q.reject('Something went wrong');
                                 }
                             );
                         },
                         function (error) {
                             toasterservice.showErrorToast('API Error', error);
+							return $q.reject('Something went wrong');
                         });
 
                 }
@@ -2658,6 +2750,7 @@
 					},
 					function(error) {
 						toasterservice.showErrorToast('API Error', error);
+						return $q.reject('Something went wrong');
 					}
 				).then (
 					function(responseJson) {
@@ -2695,6 +2788,7 @@
 					},
 					function(error) {
 						toasterservice.showErrorToast('API Error', error);
+						return $q.reject('Something went wrong');
 					}
 				).then (
 					function(responseJson) {
@@ -2732,6 +2826,7 @@
 					},
 					function(error) {
 						toasterservice.showErrorToast('API Error', error);
+						return $q.reject('Something went wrong');
 					}
 				);
 				
@@ -3105,7 +3200,17 @@
 
             $scope.pageSizeList = [5, 10, 20, 50, 100];
             $scope.pageSize = $scope.pageSizeList[2];
-
+			
+			$scope.$on('sessiontimeout', function(event, data) {
+				try {
+					utilFactory.stopStayLoggedInScheduler();
+					if(!data.config.url.endsWith('/api/x_183199_testcommv/cvapi/stayloggedin')) {
+						$window.location.reload();
+					}
+				} catch (e) {
+					$window.location.reload();
+				}
+            });
 
 			$scope.$on('loggedout', function(event, data) {
                 $scope.cvLogin.unauthorized = true;
@@ -3122,12 +3227,19 @@
                 } catch (e) {
                     console.log('Failed to get cookie');
                 }
-                if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
-                    $scope.getCvCommonProperties();
-                } else {
-                    $scope.cvLogin.unauthorized = true;
-                    //$scope.cvLogin = {};
-                }
+				
+				if($scope.cvLogin.snowToken && $scope.cvLogin.snowToken != window.g_ck) {
+					$scope.cvLogin.unauthorized = true;
+					$scope.cvLogin.token = '';
+					utilFactory.deleteTokenFromCookie($scope.cvLogin);
+				} else {
+					if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
+						$scope.getCvCommonProperties();
+					} else {
+						$scope.cvLogin.unauthorized = true;
+						//$scope.cvLogin = {};
+					}
+				}
             };
         }
     ]);
@@ -3139,7 +3251,8 @@
         'toasterservice',
         'restservice',
 		'utilFactory',
-        function ($scope, $cookies, toasterservice, restservice, utilFactory) {
+		'$window',
+        function ($scope, $cookies, toasterservice, restservice, utilFactory, $window) {
             console.log('In Onboarding controller');
 
             $scope.obparams = {
@@ -3178,7 +3291,8 @@
         'toasterservice',
         'restservice',
 		'utilFactory',
-        function ($scope, $cookies, toasterservice, restservice, utilFactory) {
+		'$window',
+        function ($scope, $cookies, toasterservice, restservice, utilFactory, $window) {
             console.log('In logout controller');
             $scope.showHelp = false;
 
@@ -3216,6 +3330,17 @@
             };
 
 			
+            $scope.$on('sessiontimeout', function(event, data) {
+				try {
+					utilFactory.stopStayLoggedInScheduler();
+					if(!data.config.url.endsWith('/api/x_183199_testcommv/cvapi/stayloggedin')) {
+						$window.location.reload();
+					}
+				} catch (e) {
+					$window.location.reload();
+				}
+            });
+
             $scope.cvLogin = {};
             $scope.getLoginCookie = function () {
                 $scope.cvLogin.unauthorized = true;
@@ -3228,14 +3353,22 @@
                 } catch (e) {
                     console.log('Failed to get cookie');
                 }
-                if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
-                    $scope.doLogout();
-                } else {
-                    $scope.showHelp = true;
-                    $scope.helpInfo = "You have been logged out";
-                    //$scope.unauthorized = true;
-                    //$scope.cvLogin = {};
-                }
+				
+				if($scope.cvLogin.snowToken && $scope.cvLogin.snowToken != window.g_ck) {
+					//$scope.cvLogin.unauthorized = true;
+					$scope.cvLogin.token = '';
+					utilFactory.deleteTokenFromCookie($scope.cvLogin);
+					$scope.showHelp = true;
+					$scope.helpInfo = "You have been logged out";
+				} else {
+					if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
+						$scope.doLogout();
+					} else {
+						$scope.showHelp = true;
+						$scope.helpInfo = "You have been logged out";
+						//$scope.cvLogin = {};
+					}
+				}
             };
         }
     ]);
@@ -3270,14 +3403,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>582</sys_mod_count>
+        <sys_mod_count>601</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-06-25 06:40:46</sys_updated_on>
+        <sys_updated_on>2018-06-30 11:17:49</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>

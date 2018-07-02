@@ -24,13 +24,14 @@
 			'$cookies',
 			'toasterservice',
 			'restservice',
-			function ($scope, $cookies, toasterservice, restservice) {
+			'utilFactory',
+			function ($scope, $cookies, toasterservice, restservice, utilFactory) {
 				$j_commvault('#loginModal').modal({
 					keyboard: false,
 					backdrop: 'static'
 				});
 				$j_commvault('#loginModal').modal('show');
-				
+				utilFactory.stopStayLoggedInScheduler();
 				
 				//$scope.cvLogin = {};
 				/*try {
@@ -68,6 +69,7 @@
 						$scope.cvLogin.token = $scope.loginResponse.token;
 						$scope.cvLogin.endpoint = endpoint;
 						$scope.cvLogin.unauthorized = false;
+						$scope.cvLogin.snowToken = window.g_ck;
 
 						var expireDate = new Date();
 						expireDate.setDate(expireDate.getDate() + 7);
@@ -178,14 +180,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-03-22 14:46:43</sys_created_on>
         <sys_id>36ab4b74db4513004eb15ec0cf9619fc</sys_id>
-        <sys_mod_count>22</sys_mod_count>
+        <sys_mod_count>24</sys_mod_count>
         <sys_name>x_183199_testcommv.loginDirective</sys_name>
         <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_36ab4b74db4513004eb15ec0cf9619fc</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-06-22 14:35:00</sys_updated_on>
+        <sys_updated_on>2018-06-28 13:11:55</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>
