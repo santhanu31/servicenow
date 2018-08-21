@@ -1844,7 +1844,7 @@
                         //$scope.$apply();
                         //$scope.cvLogin = {};
                     } else {
-                        toasterservice.showErrorToast('Commvault error', 'Could not run backup. Something went wrong');
+                        toasterservice.showErrorToast('Commvault error', 'Could not run backup. Something went wrong. Please contact backup Administrator for further assistance.');
                     }
 
                 };
@@ -1977,7 +1977,7 @@
                     $scope.cvLogin.unauthorized = true;
                     //$scope.cvLogin = {};
                 } else {
-                    toasterservice.showErrorToast('Commvault error', 'Could not run backup. Something went wrong');
+                    toasterservice.showErrorToast('Commvault error', 'Could not run backup. Something went wrong. Please contact backup Administrator for further assistance.');
                 }
 
                 $scope.infoText = '';
@@ -2022,7 +2022,7 @@
                 };
                 restservice.runFsBackup(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, backupInfo).then($scope.runBackupCallback,
                     function () {
-                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                        toasterservice.showErrorToast('API Error', 'Something went wrong. Please contact backup Administrator for further assistance.');
                     }
                 );
             };
@@ -2051,7 +2051,7 @@
                     $scope.cvLogin.unauthorized = true;
                     //$scope.cvLogin = {};
                 } else {
-                    toasterservice.showErrorToast('Commvault error', 'Could not run restore. Something went wrong');
+                    toasterservice.showErrorToast('Commvault error', 'Could not run restore. Something went wrong. Please contact backup Administrator for further assistance.');
                 }
 
                 $scope.infoText = '';
@@ -2144,7 +2144,7 @@
 
                 restservice.runFsRestore(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, restoreInfo).then($scope.runFsRestoreCallback,
                     function () {
-                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                        toasterservice.showErrorToast('API Error', 'Something went wrong. Please contact backup Administrator for further assistance.');
                     }
                 );
 
@@ -2565,7 +2565,7 @@
                     $scope.cvLogin.unauthorized = true;
                     //$scope.cvLogin = {};
                 } else {
-                    toasterservice.showErrorToast('Commvault error', 'Could not run backup. Something went wrong');
+                    toasterservice.showErrorToast('Commvault error', 'Could not run backup. Something went wrong. Please contact backup Administrator for further assistance.');
                 }
 
                 console.log($scope.runBackupResponse);
@@ -2588,14 +2588,14 @@
 
                         restservice.runBackupVm(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, backupInfo).then($scope.runBackupVmCallback,
                             function () {
-                                toasterservice.showErrorToast('API Error', 'Something went wrong');
+                                toasterservice.showErrorToast('API Error', 'Something went wrong. Please contact backup Administrator for further assistance.');
                             }
                         );
 
                     } else if (responseJson.cvStatusCode === 401) {
                         $scope.cvLogin.unauthorized = true;
                     } else {
-                        toasterservice.showErrorToast('Commvault error', 'Something went wrong');
+                        toasterservice.showErrorToast('Commvault error', 'Something went wrong. Please contact backup Administrator for further assistance.');
                     }
                 };
                 $scope.getVMDetails(clientProperty.client.clientEntity.clientGUID, onGetVMDetails);
@@ -2619,7 +2619,7 @@
                     $scope.cvLogin.unauthorized = true;
                     //$scope.cvLogin = {};
                 } else {
-                    toasterservice.showErrorToast('Commvault error', 'Could not run restore. Something went wrong');
+                    toasterservice.showErrorToast('Commvault error', 'Could not run restore. Something went wrong. Please contact backup Administrator for further assistance.');
                 }
 
                 console.log($scope.runFullVmRestoreResponse);
@@ -2670,12 +2670,12 @@
 							deferred.reject('Could not get advanced restore options');
 							//$scope.cvLogin = {};
 						} else {
-							toasterservice.showErrorToast('Commvault error', 'Could not get advanced restore options. Something went wrong');
+							toasterservice.showErrorToast('Commvault error', 'Could not get advanced restore options. Something went wrong. Please contact backup Administrator for further assistance.');
 							deferred.reject('Could not get advanced restore options');
 						}
 					},
 					function() {
-                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                        toasterservice.showErrorToast('API Error', 'Something went wrong. Please contact backup Administrator for further assistance.');
 						deferred.reject('Could not get advanced restore options');
                     }
 				);
@@ -2699,12 +2699,12 @@
 							deferred.reject('Could not get disk info');
 							//$scope.cvLogin = {};
 						} else {
-							toasterservice.showErrorToast('Commvault error', 'Could not get disk info. Something went wrong');
+							toasterservice.showErrorToast('Commvault error', 'Could not get disk info. Something went wrong. Please contact backup Administrator for further assistance.');
 							deferred.reject('Could not get disk info');
 						}
 					},
 					function() {
-						toasterservice.showErrorToast('API Error', 'Something went wrong');
+						toasterservice.showErrorToast('API Error', 'Something went wrong. Please contact backup Administrator for further assistance.');
 						deferred.reject('Could not get disk info');
 					}
 				);	
@@ -2868,7 +2868,7 @@
 							
 							restservice.runFullVmRestore(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, restoreInfo).then($scope.runFullVmRestoreCallback,
 								function () {
-									toasterservice.showErrorToast('API Error', 'Something went wrong');
+									toasterservice.showErrorToast('API Error', 'Something went wrong. Please contact backup Administrator for further assistance.');
 								}
 							);
 							
@@ -2945,7 +2945,7 @@
                     $scope.cvLogin.unauthorized = true;
                     //$scope.cvLogin = {};
                 } else {
-                    toasterservice.showErrorToast('Commvault error', 'Could not restore. Something went wrong');
+                    toasterservice.showErrorToast('Commvault error', 'Could not restore. Something went wrong. Please contact backup Administrator for further assistance.');
                 }
 
                 console.log($scope.runFileLevelVmRestoreResponse);
@@ -2991,7 +2991,7 @@
 
                 restservice.runFileLevelVmRestore(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, restoreInfo).then($scope.runFileLevelVmRestoreCallback,
                     function () {
-                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                        toasterservice.showErrorToast('API Error', 'Something went wrong. Please contact backup Administrator for further assistance.');
                     }
                 );
             };
@@ -3457,14 +3457,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>608</sys_mod_count>
+        <sys_mod_count>610</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
-        <sys_package display_value="TestCommvault" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
+        <sys_package display_value="CommvaultServiceNowApplication" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
-        <sys_scope display_value="TestCommvault">3aafe741db130300180ad170cf961919</sys_scope>
+        <sys_scope display_value="CommvaultServiceNowApplication">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-07-20 14:21:34</sys_updated_on>
+        <sys_updated_on>2018-08-05 10:44:43</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>
