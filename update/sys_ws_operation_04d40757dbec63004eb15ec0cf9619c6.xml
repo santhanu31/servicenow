@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_ws_operation">
+    <sys_ws_operation action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <consumes>application/json,application/xml,text/xml</consumes>
+        <consumes_customized>false</consumes_customized>
+        <default_operation_uri/>
+        <enforce_acl>cf9d01d3e73003009d6247e603f6a990</enforce_acl>
+        <http_method>GET</http_method>
+        <name>getCommcellEntities</name>
+        <operation_script><![CDATA[(function process(/*RESTAPIRequest*/ request, /*RESTAPIResponse*/ response) {
+
+    // implement resource here
+	var headers = request.headers;
+	var token = headers['cvtoken'];
+	var endpoint = headers['cvendpoint'];
+	var queryParams = request.queryParams; 
+	var entityType = queryParams.entityType;
+	var entityTypes = {};
+	entityTypes.ClientEntity = {endpoint: "Client?hiddenclients=true", respIndex: "clientProperties"};
+	entityTypes.ClientGroupEntity = {endpoint: "ClientGroup", respIndex: "groups"};
+	entityTypes.StoragePolicyEntity = {endpoint: "StoragePolicy", respIndex: "policies"};
+	//entityTypes.MA_TYPE = {name: "MediaAgentEntity", endpoint: "qcommand/qoperation execute"};
+	entityTypes.UserEntity = {endpoint: "User", respIndex: "users"};
+	entityTypes.UserGroupEntity = {endpoint: "UserGroup", respIndex: "userGroups"};
+	entityTypes.SchedulePolicyEntity = {endpoint: "SchedulePolicy", respIndex: "taskDetail"};
+	
+	var entityTypeObj = entityTypes[entityType];
+	var api = null;
+	if(entityTypeObj){
+		api = entityTypeObj.endpoint;
+	}
+	var responseJson = {};
+	if(api != null){
+		var sm = new sn_ws.RESTMessageV2();
+		sm.setEndpoint(endpoint + "/webconsole/RestServlet/"+api);
+		//var body = '<Workflow_GetExecutableWorkflowsRequest><workflow workflowId="'+workflowid+'"/></Workflow_GetExecutableWorkflowsRequest>';
+		sm.setHttpMethod("get");
+		sm.setHttpTimeout(80000);
+		sm.setRequestHeader("Accept","application/json");
+		sm.setRequestHeader("Content-Type","application/xml");
+		sm.setRequestHeader("Authtoken", token);
+		sm.setLogLevel("all");
+		//sm.setRequestBody(body);
+		var cvresponse = sm.execute();
+		var cvresponseBody = cvresponse.getBody();
+		var statusCode = cvresponse.getStatusCode();
+
+		gs.info("statusCode " + statusCode);
+		gs.info("responseBody ["+entityType+"]" + cvresponseBody); 
+
+		if(statusCode != 200) {
+			cvresponseBody = "{}";
+		}
+		//responseJson.respXML = cvresponseBody;
+		var respJson = JSON.parse(cvresponseBody);
+		gs.info('Response json: ' + JSON.stringify(respJson));
+		responseJson.entities = respJson[entityTypeObj.respIndex];
+		responseJson.cvStatusCode = statusCode;
+	}else{
+		responseJson.status = 500;
+		responseJson.errorTxt = "Entity type: ["+entityType+"] not supported.";
+	}
+
+	return responseJson;
+	
+
+})(request, response);]]></operation_script>
+        <operation_uri>/api/x_183199_testcommv/cvapi/comcellEntities</operation_uri>
+        <produces>application/json,application/xml,text/xml</produces>
+        <produces_customized>false</produces_customized>
+        <relative_path>/comcellEntities</relative_path>
+        <request_example/>
+        <requires_acl_authorization>true</requires_acl_authorization>
+        <requires_authentication>true</requires_authentication>
+        <short_description/>
+        <sys_class_name>sys_ws_operation</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2018-09-20 07:50:18</sys_created_on>
+        <sys_id>04d40757dbec63004eb15ec0cf9619c6</sys_id>
+        <sys_mod_count>15</sys_mod_count>
+        <sys_name>getCommcellEntities</sys_name>
+        <sys_package display_value="CommvaultServiceNowApplication" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="CommvaultServiceNowApplication">3aafe741db130300180ad170cf961919</sys_scope>
+        <sys_update_name>sys_ws_operation_04d40757dbec63004eb15ec0cf9619c6</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2018-10-03 09:31:44</sys_updated_on>
+        <web_service_definition display_value="cvapi">d1004b1fdbc513004eb15ec0cf96190b</web_service_definition>
+        <web_service_version/>
+    </sys_ws_operation>
+</record_update>

@@ -9,7 +9,101 @@
 angular.module('angularapp').service('restservice', [
 	'$http', 
 	'utilFactory',
-	function($http, utilFactory) {
+	'$q',
+	function($http, utilFactory, $q) {
+		this.commcellEntities = {};
+		this.getCommcellEntities = function(snow_usertoken, cvtoken, cvendpoint, entityType){
+			if(!this.commcellEntities[entityType]){
+				this.commcellEntities[entityType] = {inProgress: true,entityType: entityType};
+			}else{
+				return this.commcellEntities[entityType];
+				/*if(this.commcellEntities[entityType].inProgress === false){
+					return this.commcellEntities[entityType].entities;
+				}else if(this.commcellEntities[entityType].deferredPromise){
+					return this.commcellEntities[entityType];
+				}*/
+			}
+			var deferred = $q.defer();
+			$http.get('/api/x_183199_testcommv/cvapi/comcellEntities', {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				},
+				params: {
+					'entityType' : entityType
+				}
+			}).then(function(data) {
+				this.commcellEntities[entityType].inProgress = false;
+				this.commcellEntities[entityType].entities = {};
+				if(data.data.result.cvStatusCode == 200){
+					this.commcellEntities[entityType].entities = data.data.result.entities;
+				}
+				this.commcellEntities[entityType].deferredPromise = null;
+				deferred.resolve(this.commcellEntities[entityType]);
+			}.bind(this),function(msg, code) {
+				this.commcellEntities[entityType].inProgress = false;
+				this.commcellEntities[entityType].entities = {};
+				this.commcellEntities[entityType].deferredPromise = null;
+				deferred.reject(msg);
+			}.bind(this));
+			this.commcellEntities[entityType].deferredPromise = deferred.promise;
+			return this.commcellEntities[entityType];
+		};
+		/*this.executeWorkflow = function(snow_usertoken, cvtoken, cvendpoint, workflowname, inputs){
+			var workflowInfo = {};
+			workflowInfo.workflowName = workflowname;
+			workflowInfo.inputs = inputs;
+			return $http.post('/api/x_183199_testcommv/cvapi/executeworkflow', workflowInfo, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};*/
+		this.executeWorkflow = function(snow_usertoken, cvtoken, cvendpoint, workflowname, inputs){
+			var workflowInfo = {};
+			workflowInfo.workflowName = workflowname;
+			workflowInfo.inputs = inputs;
+			return $http.post('/api/x_183199_testcommv/cvapi/executeworkflowV2', workflowInfo, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.executePoputInputForWorkflow = function(snow_usertoken, cvtoken, cvendpoint, popupInputSubmitRequest){
+			return $http.post('/api/x_183199_testcommv/cvapi/executepoputinputforworkflow', popupInputSubmitRequest, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.executeInfoMsgForWorkflow = function(snow_usertoken, cvtoken, cvendpoint, infoMsgSubmitRequest){
+			return $http.post('/api/x_183199_testcommv/cvapi/executeinfomsgforworkflow', infoMsgSubmitRequest, {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
+		
+		this.getWorkflows = function(snow_usertoken, cvtoken, cvendpoint){
+			return $http.get('/api/x_183199_testcommv/cvapi/workflow', {
+				headers: {
+					'X-UserToken': snow_usertoken,
+					'cvtoken': cvtoken,
+					'cvendpoint': cvendpoint
+				}
+			});
+		};
 		this.getSchedules = function(snow_usertoken, cvtoken, cvendpoint) {
 			return $http.get('/api/x_183199_testcommv/cvapi/schedules', {
 				headers: {
@@ -693,14 +787,14 @@ angular.module('angularapp').service('restservice', [
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2018-04-02 07:27:08</sys_created_on>
         <sys_id>13d1dad4db1113004eb15ec0cf9619f0</sys_id>
-        <sys_mod_count>51</sys_mod_count>
+        <sys_mod_count>72</sys_mod_count>
         <sys_name>x_183199_testcommv.ApiServices</sys_name>
         <sys_package display_value="CommvaultServiceNowApplication" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="CommvaultServiceNowApplication">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_13d1dad4db1113004eb15ec0cf9619f0</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-06-22 10:11:53</sys_updated_on>
+        <sys_updated_on>2018-10-07 13:40:47</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>

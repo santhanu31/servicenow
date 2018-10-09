@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_ui_page">
+    <sys_ui_page action="INSERT_OR_UPDATE">
+        <category>general</category>
+        <client_script/>
+        <description/>
+        <direct>true</direct>
+        <endpoint>x_183199_testcommv_Workflows.do</endpoint>
+        <html><![CDATA[<?xml version="1.0" encoding="utf-8" ?>
+<j:jelly trim="false" xmlns:j="jelly:core" xmlns:g="glide" xmlns:j2="null" xmlns:g2="null">
+	
+	<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous"></link>
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/angularjs-toaster/1.1.0/toaster.min.css" rel="stylesheet" />
+	<link href="c15d08dddb530300180ad170cf961922.cssdbx" rel="stylesheet" type="text/css"></link> 
+	<link href="1ae40052dbe113004eb15ec0cf961967.cssdbx" rel="stylesheet" type="text/css"></link>
+	
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular-sanitize.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular-cookies.min.js"></script>
+	<script src="https://code.angularjs.org/1.6.4/angular-animate.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/angularjs-toaster/1.1.0/toaster.min.js"></script>
+	<script src="https://code.highcharts.com/stock/highstock.src.js"></script>
+	<script src="https://rawgithub.com/pablojim/highcharts-ng/master/src/highcharts-ng.js"></script>
+	<g:requires name="x_183199_testcommv.dirPagination.jsdbx"/>
+	<script src="x_183199_testcommv.angular_app_client_lo.jsdbx"></script>	
+	<script src="x_183199_testcommv.loginDirective.jsdbx"></script>
+	<script src="x_183199_testcommv.textboxListDirective.jsdbx"></script>
+	<script src="x_183199_testcommv.toaster.svc.jsdbx"></script>
+	<script src="x_183199_testcommv.ApiServices.jsdbx"></script>
+	<script src="x_183199_testcommv.isteven-multi-select.jsdbx"></script>
+	<script src="x_183199_testcommv.UtilFactory.jsdbx"></script>
+	<script src="x_183199_testcommv.httpInterceptor.jsdbx"></script>
+	
+	
+	<script>
+          var $j_commvault = jQuery.noConflict(true);
+    </script>
+	
+	<g:evaluate object="true">
+         var g_ck = gs.getSession().getSessionToken(); 
+		 var gsc = gs;	
+	</g:evaluate> 
+	<script>     
+			 window.g_ck = "$[g_ck]"; 
+	</script>
+	
+	
+	<div id="cvapp" ng-app="angularapp" class="ng-cloak">
+		
+		<div ng-controller="WorkflowController as wrkflwCtlr" class="appContainer appContainer" ng-init="getLoginCookie()">
+			
+			<toaster-container toaster-options="{'position-class': 'toast-bottom-right'}"></toaster-container>
+			
+			<commvaultlogin callback="getWorkflows()" cv-login="cvLogin" ng-if="cvLogin.unauthorized"></commvaultlogin>
+			<div class="row">
+				
+			<div class="col-xs-12">
+				<div class="form-container">
+					<h4 class="imageHeading"><img src="commvault_logo.png" width="300" height="49"/>
+						<span class="module-name">Workflows</span>
+						<div class="cos_load_holder" ng-show="onAjax">
+							<div class="cos_load">
+								<div class="cos_spinner">
+									<div class="cos_mask">
+										<div class="cos_maskedCircle"></div>
+									</div>
+								</div>
+							</div>
+						</div>			
+					</h4>
+					<hr/>
+					<div class="row table-action-bar" ng-class="{hidden:showInputs}">
+						<div class="col-xs-4 pull-right">
+							<div class="input-group search-term">
+								<input type="text" class="form-control" placeholder="Search" ng-model="searchTerm"></input>
+								<span class="input-group-addon">
+									<span class="glyphicon glyphicon-search"></span>
+								</span>
+							</div>
+						</div>				
+					</div>
+					
+					
+					<!-- popup input modal -->
+			
+					<div class="modal popupInputModal fade" id="popupInputModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+						<div class="modal-dialog" role="document">
+							<div class="modal-content">
+								<div class="modal-header">
+									
+									<h4 class="modal-title" id="myModalLabel">{{popupInputJson.subject}} - {{popupInputJson.description}}</h4>
+								</div>
+								<div class="modal-body">
+
+									<div class="form-group row" ng-repeat="anInput in popupInputJson.inputForm.entries">
+										<div calss="row" ng-if="!(anInput.hidden || anInput.controlHidden)">
+											<label class="col-sm-4 col-form-label" >{{anInput.displayName?(anInput.displayName==""?anInput.inputName:anInput.displayName):anInput.inputName}}</label>
+											<div class="col-sm-8">
+												<input type="text" class="form-control" ng-if="anInput.controlType==0 &#38;&#38; !anInput.listType" ng-model="popupInputs[anInput.inputName]" placeholder="{{anInput.displayName}}"/>
+												<cv-list-textbox-input ng-if="anInput.controlType==0 &#38;&#38; anInput.listType" out-model="popupInputs[anInput.inputName]"></cv-list-textbox-input>
+												<input type="checkbox" ng-if="anInput.controlType==5" ng-model="popupInputs[anInput.inputName]" placeholder="{{anInput.displayName}}" ng-init="popupInputs[anInput.inputName]=false"/>
+												<textarea class="form-control" ng-if="anInput.controlType==1" ng-model="popupInputs[anInput.inputName]" placeholder="{{anInput.displayName}}" rows="3"></textarea>
+												<select ng-if="anInput.controlType==2" ng-model="popupInputs[anInput.inputName]" class="form-control">                                
+													<option ng-repeat="anOpt in anInput.options" value="{{anOpt}}" >
+														{{anOpt}}
+													</option>
+												</select>
+											</div>
+										</div>
+									</div>
+
+									<!--<div class="error-text-container">
+										<div class="row">
+											<div class="col-xs-12 text-center">
+												<span class="error-text">{{errorText}}</span>
+												<span class="info-text">{{infoText}}</span>
+											</div>
+										</div>
+									</div>-->	
+
+								</div>
+								<div class="modal-footer">
+									<button type="button" class="btn actionBtn modalClose" data-dismiss="modal" ng-click="popupInputCancel()" ng-class="{disabled:onAjax}">Close</button>
+									<button type="button" class="btn actionBtn" ng-click="popupInputSubmit()" ng-class="{disabled:onAjax}"> Submit</button>
+								</div>
+							</div>
+						</div>
+					</div>
+			
+					<!-- popup input modal end -->
+					
+					
+					<!-- info msg modal -->
+			
+					<div class="modal infoMsgModal fade" id="infoMsgModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+						<div class="modal-dialog" role="document">
+							<div class="modal-content">
+								<div class="modal-header">
+									
+									<h4 class="modal-title" id="myModalLabel">{{infoMsgJson.title}}</h4>
+								</div>
+								<div class="modal-body">
+
+									<p ng-bind-html="infoMsgJson.message"></p>
+
+									<!--<div class="error-text-container">
+										<div class="row">
+											<div class="col-xs-12 text-center">
+												<span class="error-text">{{errorText}}</span>
+												<span class="info-text">{{infoText}}</span>
+											</div>
+										</div>
+									</div>-->	
+
+								</div>
+								<div class="modal-footer">
+									<button type="button" class="btn actionBtn modalClose" data-dismiss="modal" ng-click="infoMsgCancel()" ng-class="{disabled:onAjax}">Close</button>
+									<button type="button" class="btn actionBtn" ng-click="infoMsgSubmit()" ng-class="{disabled:onAjax}"> Ok</button>
+								</div>
+							</div>
+						</div>
+					</div>
+			
+					<!-- info msg modal end -->
+					
+					
+					<div class="row" ng-class="{hidden:showInputs}">
+						<div class="col-xs-12 text-center">
+							<div class="table-container" ng-hide="onAjax || !workflows">
+								<div class="workflows">
+									<ul class="apps licenseApps">
+
+										<li ng-repeat="workflow in workflows | filter : searchTerm">
+											<div class="displayText">
+												<a ng-click="getWorkflowInputDetails(workflow)" title="{{workflow.entity.workflowName}}" ng-data="workflowid">{{workflow.entity.workflowName}}</a>
+												<p class="disp" ng-bind-html="workflow.description"></p>
+											</div>
+										</li>
+
+									</ul>
+								</div>
+							</div>	
+						</div>
+					</div>
+					<div class="row" ng-class="{hidden:!showInputs}">
+						<div class="col-xs-12">
+							<div class="table-container">
+								<div class="modal-header">
+									<nav aria-label="breadcrumb">
+									  <ol class="breadcrumb">
+										<li class="breadcrumb-item" ng-click="showWorkflows()"><a href="#">Workflows</a></li>
+										<li class="breadcrumb-item active" aria-current="page">{{workflowSelected.entity.workflowName}}</li>
+									  </ol>
+									</nav>
+								</div>
+																
+								<div class="modal-title">
+									<label class="workflow-inputs col-12"  for="description" ng-bind-html="workflowSelected.description"></label>
+								</div>
+
+								
+								<div class="workflow-inputs">
+									
+									<div class="form-group row" ng-repeat="anInput in workflowSelected.deployments[0].inputForm.entries">
+										<div calss="row" ng-if="!(anInput.hidden || anInput.controlHidden)">
+											<label class="col-sm-2 col-form-label" >{{anInput.displayName?(anInput.displayName==""?anInput.inputName:anInput.displayName):anInput.inputName}}</label>
+											<div class="col-sm-6">
+												<input type="text" class="form-control" ng-if="anInput.controlType==0 &#38;&#38; !anInput.listType" ng-model="workflowInputs[anInput.inputName]" placeholder="{{anInput.displayName}}"/>
+												<cv-list-textbox-input ng-if="anInput.controlType==0 &#38;&#38; anInput.listType" out-model="workflowInputs[anInput.inputName]"></cv-list-textbox-input>
+												<input type="checkbox" ng-if="anInput.controlType==5" ng-model="workflowInputs[anInput.inputName]" placeholder="{{anInput.displayName}}" ng-init="workflowInputs[anInput.inputName]=false"/>
+												<textarea class="form-control" ng-if="anInput.controlType==1" ng-model="workflowInputs[anInput.inputName]" placeholder="{{anInput.displayName}}" rows="3"></textarea>
+												<select ng-if="anInput.controlType==2" ng-model="workflowInputs[anInput.inputName]" class="form-control">                                
+													<option ng-repeat="anOpt in anInput.options" value="{{anOpt}}" >
+														{{anOpt}}
+													</option>
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="form-group row">
+										<div class="workflowbtns">
+											<button ng-click="showWorkflows()" class="btn btn-outline-secondary" ng-class="{disabled:onAjax}">Cancel</button>
+											<button ng-click="runWorkflow(0)" class="btn btn-primary" ng-class="{disabled:onAjax}">Run Workflow</button>
+										</div>
+									</div>
+								</div>
+							</div>	
+						</div>
+					</div>
+				</div>	
+			</div>
+			</div>
+			
+			
+		</div>
+	</div>
+</j:jelly>]]></html>
+        <name>Workflows</name>
+        <processing_script/>
+        <sys_class_name>sys_ui_page</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2018-09-12 10:09:28</sys_created_on>
+        <sys_id>29979670dba023004eb15ec0cf9619a2</sys_id>
+        <sys_mod_count>75</sys_mod_count>
+        <sys_name>Workflows</sys_name>
+        <sys_package display_value="CommvaultServiceNowApplication" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="CommvaultServiceNowApplication">3aafe741db130300180ad170cf961919</sys_scope>
+        <sys_update_name>sys_ui_page_29979670dba023004eb15ec0cf9619a2</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2018-10-08 10:08:19</sys_updated_on>
+    </sys_ui_page>
+</record_update>

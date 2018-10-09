@@ -101,6 +101,23 @@
         RESUBMIT: 'job_resubmit',
         RESTORE: 'job_restore'
     });
+	
+	
+	angular.module('angularapp').constant('START_WORKFLOW_RESPONSE', {
+		GENERIC_RESP:0, 
+		INFORMATION_MESSAGE:1, 
+		USER_POPUP:2, 
+		END_USER_SESSION:3, 
+		START_WORKFLOW_RESP:4, 
+		INPUT_PAGE:5, 
+		WIZARD_POPUP:6
+    });
+	
+	angular.module('angularapp').constant('RUN_WORKFLOW_TYPE', {
+		START_WORKFLOW:0, 
+		POPUP_INPUT:1, 
+		INFORMATION_MESSAGE:2
+    });
 
     angular.module('angularapp').controller('ViewJobsController', [
         '$scope',
@@ -3450,6 +3467,594 @@
             getHelloAddr.getXML($scope.callback);
         };
     });
+	
+	angular.module('angularapp').controller('WorkflowController', [
+        '$scope',
+        '$cookies',
+		'$q',
+        'toasterservice',
+        'restservice',
+		'utilFactory',
+		'START_WORKFLOW_RESPONSE',
+		'RUN_WORKFLOW_TYPE',
+		'$window',
+        function ($scope, $cookies, $q, toasterservice, restservice, utilFactory, START_WORKFLOW_RESPONSE, RUN_WORKFLOW_TYPE, $window) {
+            console.log('In WorkflowController');
+			$scope.showInputs = false;
+			$scope.workflowInputs = {};
+			$scope.workflowSelected = {};
+			$scope.filterWorkflows = function (workflows, searchString) {
+				searchString = "delete";
+				var filtered = [];
+				var letterMatch = new RegExp(searchString, 'i');
+				for (var i = 0; i < workflows.length; i++) {
+				  var item = workflows[i];
+				  if (letterMatch.test(workflows.entity.workflowName)) {
+					filtered.push(item);
+				  }
+				}
+				return filtered;
+			};
+            
+            $scope.getWorkflows = function () {
+				console.log('In getWorkflows');
+                $scope.onGettingWorkflows = function (response) {
+                    //var answer = response.responseXML.documentElement.getAttribute("answer");
+					console.log(response);
+					if(response.status === 200){
+						var responseJson = response.data.result;
+
+						if (responseJson.cvStatusCode === 200) {
+						   $scope.workflows = responseJson.container;
+						} else if (responseJson.cvStatusCode === 401){
+							$scope.cvLogin.unauthorized = true;
+						} else {
+							toasterservice.showErrorToast('Commvault error', 'Something went wrong');
+						}
+					}else{
+						toasterservice.showErrorToast('Servicenow error', 'There was some problem while calling api, please check with admin.');
+					}
+                    
+					$scope.onAjax = false;
+                    
+                };
+				utilFactory.startStayLoggedInScheduler($scope, window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint);
+				$scope.onAjax = true;
+                restservice.getWorkflows(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint).then($scope.onGettingWorkflows,
+                    function () {
+                        toasterservice.showErrorToast('API Error', 'Something went wrong');
+                    }
+                );
+            };
+			
+			var getEntitiesForType = function(inType){
+				var entities = null;
+				if(!inType.toLowerCase().startsWith("commvault")){
+					inType = "";
+				}
+				if(inType != ""){
+					inType = inType.split(".");
+					inType = inType[inType.length-1];
+					if(inType != ""){
+						entities = restservice.getCommcellEntities(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, inType);
+					}
+				}
+				return entities;
+			};
+			
+			var getEntityNamesForWorkflow = function(entities){
+				var entityNameindex = "";
+				if(entities.entityType == "ClientEntity"){
+					entityNameindex = "client.clientEntity.clientName";
+				}
+				var entitynames = [];
+				for(var i =0; i < entities.entities.length; i++){
+					var entity = entities.entities[i];
+					if(entities.entityType == "StoragePolicyEntity"){
+						entitynames.push(entity.storagePolicyName);
+					}
+					if(entities.entityType == "ClientGroupEntity"){
+						entitynames.push(entity.name);
+					}
+					if(entities.entityType == "ClientEntity"){
+						entitynames.push(entity.client.clientEntity.clientName);
+					}
+					if(entities.entityType == "MediaAgentEntity"){
+						entitynames.push(entity.client.clientEntity.clientName);
+					}
+					if(entities.entityType == "SchedulePolicyEntity"){
+						entitynames.push(entity.task.task.taskName);
+					}
+					if(entities.entityType == "UserEntity"){
+						entitynames.push(entity.userEntity.userName);
+					}
+					if(entities.entityType == "UserGroupEntity"){
+						entitynames.push(entity.userGroupEntity.userGroupName);
+					}
+					
+				}
+				return entitynames;
+			};
+			
+			$scope.getWorkflowInputDetails = function (workflow) {
+				//console.log('In get workflow input details');
+				//call getCommcellEntities to get commcell entities added in inputs
+				$scope.workflowSelected = workflow;
+				var inputEntries = workflow.deployments?(workflow.deployments[0].inputForm?(workflow.deployments[0].inputForm.entries?(workflow.deployments[0].inputForm.entries):[]):[]):[];
+				var promises = [];
+				onGettingCommcellEntities = function (data) {
+                    //var answer = response.responseXML.documentElement.getAttribute("answer");
+					$scope.onAjax = false;
+					for(var i=0;i<inputEntries.length;i++) {
+						var inType = inputEntries[i].inputType;
+						if(!inputEntries[i].options){
+							var entities = getEntitiesForType(inType);
+							if(entities && entities.entities){
+								inputEntries[i].options = getEntityNamesForWorkflow(entities);
+							}else{
+								inputEntries[i].options  = [];
+							}
+						}
+					}
+					$scope.showWorkflowInputs();
+                };
+				for(var i=0;i<inputEntries.length;i++) {
+					var inType = inputEntries[i].inputType;
+					if(inputEntries[i].listType) {
+						$scope.workflowInputs[inputEntries[i].inputName] = [];
+					}
+					if(!inputEntries[i].options){
+						var entities = getEntitiesForType(inType);
+						if(entities && entities.deferredPromise != null){
+							$scope.onAjax = true;
+							promises[inType] = entities.deferredPromise;
+						} else {
+							inputEntries[i].options = entities? getEntityNamesForWorkflow(entities):[];
+						}
+					}
+				}
+				var normal_promises = [];
+				for ( var item in promises ){
+					normal_promises.push( promises[ item ] );
+				}
+				if(normal_promises.length > 0){
+					$q.all(normal_promises).then(function(){
+						utilFactory.startStayLoggedInScheduler($scope, window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint);
+						onGettingCommcellEntities();
+					});
+				}else{
+					onGettingCommcellEntities();
+				}
+				
+            };
+			$scope.showWorkflowInputs = function(){
+				$scope.showInputs = true;
+				//$scope.workflowInputs = {}; --moved to showWorkflows()
+				var workflow = $scope.workflowSelected;// = workflow;
+				var inputEntries = workflow.deployments?(workflow.deployments[0].inputForm?(workflow.deployments[0].inputForm.entries?(workflow.deployments[0].inputForm.entries):[]):[]):[];
+				for(var i=0;i<inputEntries.length;i++) {
+					var dVal = inputEntries[i].defaultValue;
+					if(dVal && dVal != ""){
+						if(inputEntries[i].controlType == 5){
+							if(dVal == "true"){
+								dVal = true;
+							}else{
+								dVal = false;
+							}
+						}
+						//not setting default value for list of textboxes
+						if(!(inputEntries[i].controlType == 0 && inputEntries[i].listType)) {
+							$scope.workflowInputs[inputEntries[i].inputName] = dVal;
+						}
+					}
+				}
+				console.log("workflow:",workflow, "workflowInputs:", $scope.workflowInputs);
+			};
+			$scope.showWorkflows = function(){
+				if(!$scope.onAjax){
+					$scope.showInputs = false;
+					$scope.workflowSelected = {};
+					$scope.workflowInputs = {};
+				}
+			};
+			
+			$j_commvault('#popupInputModal').on('hidden.bs.modal', function (e) {
+                $scope.popupInputJson = null;
+				$scope.popupInputs = {};
+				$scope.popupInputSubmitRequest = {};
+            });
+			
+			$scope.showPopupInputModal = function (popupInputJson) {
+				$scope.onAjax = false;
+				$scope.popupInputJson = popupInputJson;
+				$j_commvault('#popupInputModal').modal({
+					keyboard: false,
+					backdrop: 'static'
+				});
+				$j_commvault('#popupInputModal').modal('show');
+			};
+			
+			$scope.hidePopupInputModal = function () {
+				$j_commvault('#popupInputModal').modal('hide');
+			};
+			
+			$scope.popupInputSubmit = function() {
+				$scope.popupInputJson.okClicked = 1;
+				$scope.popupInputJson.action = "OK";
+				$scope.popupInputSubmitRequest = {
+					popupMetadata:$scope.popupInputJson,
+					popupInputs:$scope.popupInputs
+				};
+				
+				$scope.runWorkflow(RUN_WORKFLOW_TYPE.POPUP_INPUT);
+			};
+			
+			$scope.popupInputCancel = function() {
+				$scope.popupInputJson.okClicked = 0;
+				$scope.popupInputSubmitRequest = {
+					popupMetadata:$scope.popupInputJson,
+					popupInputs:$scope.popupInputs
+				};
+				
+				$scope.runWorkflow(RUN_WORKFLOW_TYPE.POPUP_INPUT);
+			};
+			
+			/*****/
+			
+			/** popup input details **/
+			
+			$scope.getPopupInputDetails = function (popupInputJson) {
+				//console.log('In get workflow input details');
+				//call getCommcellEntities to get commcell entities added in inputs
+				
+				var inputEntries = popupInputJson.inputForm?(popupInputJson.inputForm.entries?(popupInputJson.inputForm.entries):[]):[];
+				var promises = [];
+				
+				onGettingCommcellEntitiesForPopupInput = function (data) {
+                    //var answer = response.responseXML.documentElement.getAttribute("answer");
+					//$scope.onAjax = false;
+					for(var i=0;i<inputEntries.length;i++) {
+						var inType = inputEntries[i].inputType;
+						if(!inputEntries[i].options || !inputEntries[i].options.length>0){
+							var entities = getEntitiesForType(inType);
+							if(entities && entities.entities){
+								inputEntries[i].options = getEntityNamesForWorkflow(entities);
+							}else{
+								inputEntries[i].options  = [];
+							}
+						}
+					}
+					$scope.showPopupInputModal(popupInputJson);
+                };
+				for(var i=0;i<inputEntries.length;i++) {
+					var inType = inputEntries[i].inputType;
+					if(inputEntries[i].listType) {
+						$scope.popupInputs[inputEntries[i].inputName] = [];
+					}
+					if(!inputEntries[i].options || !inputEntries[i].options.length>0){
+						var entities = getEntitiesForType(inType);
+						if(entities && entities.deferredPromise != null){
+							$scope.onAjax = true;
+							promises[inType] = entities.deferredPromise;
+						} else {
+							inputEntries[i].options = entities? getEntityNamesForWorkflow(entities):[];
+						}
+					}
+				}
+				var normal_promises = [];
+				for ( var item in promises ){
+					normal_promises.push( promises[ item ] );
+				}
+				if(normal_promises.length > 0){
+					$q.all(normal_promises).then(function(){
+						utilFactory.startStayLoggedInScheduler($scope, window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint);
+						onGettingCommcellEntitiesForPopupInput();
+					});
+				}else{
+					onGettingCommcellEntitiesForPopupInput();
+				}
+				
+            };
+			
+			/** popup input details **/
+			
+			$j_commvault('#infoMsgModal').on('hidden.bs.modal', function (e) {
+                $scope.infoMsgJson = null;
+				$scope.popupInputSubmitRequest = {};
+            });
+			
+			$scope.showInfoMsgModal = function (infoMsgJson) {
+				$scope.onAjax = false;
+				$scope.infoMsgJson = infoMsgJson;
+				$j_commvault('#infoMsgModal').modal({
+					keyboard: false,
+					backdrop: 'static'
+				});
+				$j_commvault('#infoMsgModal').modal('show');
+			};
+			
+			$scope.hideInfoMsgModal = function () {
+				$j_commvault('#infoMsgModal').modal('hide');
+			};
+			
+			$scope.infoMsgSubmit = function() {
+				$scope.infoMsgJson.okClicked = 1;
+				$scope.infoMsgJson.action = "OK";
+				$scope.infoMsgSubmitRequest = {
+					infoMsgMetadata:$scope.infoMsgJson
+				};
+				
+				$scope.runWorkflow(RUN_WORKFLOW_TYPE.INFORMATION_MESSAGE);
+			};
+			
+			$scope.infoMsgCancel = function() {
+				$scope.infoMsgJson.okClicked = 0;
+				$scope.infoMsgSubmitRequest = {
+					infoMsgMetadata:$scope.infoMsgJson
+				};
+				
+				$scope.runWorkflow(RUN_WORKFLOW_TYPE.INFORMATION_MESSAGE);
+			};
+			
+			/*****/
+			
+			var getJobIdFromXmlMessage = function(startWorkflowInputXmlMessage) {
+				var xmlDoc = $j_commvault.parseXML( startWorkflowInputXmlMessage );
+				var jxml = $j_commvault(xmlDoc);
+				var rootNodeName = 'Workflow_StartWorkflowResponse';
+				var rootNode = $j_commvault(jxml).find(rootNodeName);
+				
+				return $j_commvault(rootNode).attr('jobId')?$j_commvault(rootNode).attr('jobId'):0;
+			};
+			
+			var getInfoMsgJsonFromXmlMessage = function(InfoMsgXmlMessage) {
+				var xmlDoc = $j_commvault.parseXML( InfoMsgXmlMessage );
+				var jxml = $j_commvault(xmlDoc);
+				var rootNodeName = 'Workflow_InformationalMessageResponse';
+				var rootNode = $j_commvault(jxml).find(rootNodeName);
+				
+				var workflowNode = $j_commvault(jxml).find('workflow');
+				var clientNode = $j_commvault(jxml).find('client');
+				var commcellNode = $j_commvault(jxml).find('commCell');
+				
+				var responseJsonObj = {};
+				responseJsonObj.workflow = {};
+				responseJsonObj.client = {};
+				responseJsonObj.commCell = {};
+				
+				
+				responseJsonObj.workflow.workflowName = $j_commvault(workflowNode).attr('workflowName');
+				responseJsonObj.workflow.workflowId = $j_commvault(workflowNode).attr('workflowId');
+				responseJsonObj.dialogType = $j_commvault(rootNode).attr('dialogType');
+				responseJsonObj.processStepId = $j_commvault(rootNode).attr('processStepId');
+				responseJsonObj.sessionId = $j_commvault(rootNode).attr('sessionId');
+				responseJsonObj.jobId = $j_commvault(rootNode).attr('jobId');
+				responseJsonObj.html = $j_commvault(rootNode).attr('html');
+				responseJsonObj.message = $j_commvault(rootNode).attr('message');
+				responseJsonObj.title = $j_commvault(rootNode).attr('title');
+				responseJsonObj.client.clientId = $j_commvault(clientNode).attr('clientId');
+				responseJsonObj.client.clientName = $j_commvault(clientNode).attr('clientName');
+				responseJsonObj.client.hostName = $j_commvault(clientNode).attr('hostName');
+				responseJsonObj.commCell.commCellId = $j_commvault(commcellNode).attr('commCellId');
+				
+				return responseJsonObj;
+			};
+			
+			var getPopupInputJsonFromXmlMessage = function(popupInputXmlMessage) {
+				var xmlDoc = $j_commvault.parseXML( popupInputXmlMessage );
+				var jxml = $j_commvault(xmlDoc);
+				var rootNodeName = 'Workflow_PopupInputResponse';
+				
+				var rootNode = $j_commvault(jxml).find(rootNodeName);
+				var inputFormNode = $j_commvault(jxml).find('inputForm');
+				var workflowNode = $j_commvault(jxml).find('workflow');
+				var clientNode = $j_commvault(jxml).find('client');
+				var commcellNode = $j_commvault(jxml).find('commCell');
+				
+				var responseJsonObj = {};
+				responseJsonObj.workflow = {};
+				responseJsonObj.client = {};
+				responseJsonObj.commCell = {};
+				responseJsonObj.inputForm = {};
+				responseJsonObj.inputForm.entries = [];
+				
+				responseJsonObj.workflow.workflowName = $j_commvault(workflowNode).attr('workflowName');
+				responseJsonObj.workflow.workflowId = $j_commvault(workflowNode).attr('workflowId');
+				responseJsonObj.description = $j_commvault(rootNode).attr('description');
+				responseJsonObj.processStepId = $j_commvault(rootNode).attr('processStepId');
+				responseJsonObj.sessionId = $j_commvault(rootNode).attr('sessionId');
+				responseJsonObj.jobId = $j_commvault(rootNode).attr('jobId');
+				responseJsonObj.subject = $j_commvault(rootNode).attr('subject');
+				responseJsonObj.inputForm.activity = $j_commvault(inputFormNode).attr('activity');
+				responseJsonObj.client.clientId = $j_commvault(clientNode).attr('clientId');
+				responseJsonObj.client.clientName = $j_commvault(clientNode).attr('clientName');
+				responseJsonObj.client.hostName = $j_commvault(clientNode).attr('hostName');
+				responseJsonObj.commCell.commCellId = $j_commvault(commcellNode).attr('commCellId');
+				
+				$j_commvault(jxml).find('entries').each(function(){
+					var entry = {};
+					
+					entry.hidden = $j_commvault(this).attr('hidden') === "1"?true:false;
+					entry.controlHidden = $j_commvault(this).attr('controlHidden') === "1"?true:false;
+					entry.displayName = $j_commvault(this).attr('displayName');
+					entry.inputName = $j_commvault(this).attr('inputName');
+					entry.controlType = $j_commvault(this).attr('controlType');
+					entry.listType = $j_commvault(this).attr('listType') === "1"?true:false;
+					entry.defaultValue = $j_commvault(this).attr('defaultValue');
+					entry.className = $j_commvault(this).attr('className');
+					entry.inputType = $j_commvault(this).attr('inputType');
+					entry.options = [];
+					$j_commvault(this).find('options').each(function(){
+						entry.options.push($j_commvault(this).attr('val'));
+					});
+					$j_commvault(this).find('labelsForOptions').each(function(){
+						entry.options.push($j_commvault(this).attr('val'));
+					});
+					responseJsonObj.inputForm.entries.push(entry);
+				});
+				
+				
+				return responseJsonObj;
+			};
+			
+			var getGenericRespJsonFromXmlMessage = function(popupInputXmlMessage) {
+				var xmlDoc = $j_commvault.parseXML( popupInputXmlMessage );
+				var jxml = $j_commvault(xmlDoc);
+				var rootNodeName = 'App_GenericResp';
+				
+				var responseJsonObj = {};
+				var rootNode = $j_commvault(jxml).find(rootNodeName);
+				responseJsonObj.errorMessage = $j_commvault(rootNode).attr('errorMessage');
+				responseJsonObj.errorCode = $j_commvault(rootNode).attr('errorCode');
+				
+				return responseJsonObj;
+			};
+			
+			$scope.runWorkflow = function(runWorkflowType){
+				//console.log("inputs", $scope.workflowInputs);
+				//not validating inputs, sending request to server
+				afterWorkflowExecution = function(resp){
+					$scope.hidePopupInputModal();
+					$scope.hideInfoMsgModal();
+					$scope.popupInputSubmitRequest = {};
+					$scope.infoMsgSubmitRequest = {};
+					console.log(resp);
+					if(resp.status === 200){
+						var responseJson = resp.data.result;
+
+						if (responseJson.cvStatusCode === 200) {
+							
+							/***************Changes  for interaction workflows**************************************/
+							
+							
+							switch(responseJson.messageType) {
+								case START_WORKFLOW_RESPONSE.START_WORKFLOW_RESP:
+									$scope.workflowSelected.executeJobId = getJobIdFromXmlMessage(responseJson.message);
+									if($scope.workflowSelected.executeJobId != 0 ){
+										toasterservice.showInfoToast('Workflow execution', 'Succesffuly started workflow with jobid: '+$scope.workflowSelected.executeJobId);
+									}
+									break;
+								case START_WORKFLOW_RESPONSE.INFORMATION_MESSAGE:
+									var infoMsgJson = getInfoMsgJsonFromXmlMessage(responseJson.message);
+									
+									$scope.showInfoMsgModal(infoMsgJson);
+									break;
+								case START_WORKFLOW_RESPONSE.USER_POPUP:
+									var popupInputXmlMessage = responseJson.message;
+									var popupInputJson = getPopupInputJsonFromXmlMessage(popupInputXmlMessage);
+									
+									/**************************/
+									
+									//get commcell entities for popup inputs
+									$scope.popupInputs = {};
+									$scope.getPopupInputDetails(popupInputJson);
+									
+									
+									/**************************/
+									
+									break;
+								case START_WORKFLOW_RESPONSE.GENERIC_RESP:
+									var genericRespJson = getGenericRespJsonFromXmlMessage(responseJson.message);
+									if(genericRespJson.errorCode != 0) {
+										toasterservice.showErrorToast('Workflow error', (genericRespJson.errorMessage&&genericRespJson.errorMessage != "")?genericRespJson.errorMessage:'Something went wrong');
+									}
+									break;
+								default:break;
+								
+							}
+							
+							
+							/*****************************************************/
+							
+						} else if (responseJson.cvStatusCode === 401){
+							$scope.cvLogin.unauthorized = true;
+						} else {
+							toasterservice.showErrorToast('Commvault error', 'Something went wrong');
+						}
+					}else{
+						toasterservice.showErrorToast('Servicenow error', 'There was some problem while calling api, please check with admin.');
+					}
+                    
+					$scope.onAjax = false;
+				};
+				$scope.onAjax = true;
+				
+				switch(runWorkflowType) {
+					case RUN_WORKFLOW_TYPE.START_WORKFLOW:
+						$scope.workflowSelected.executeWithInputs = $scope.workflowInputs;
+						restservice.executeWorkflow(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, $scope.workflowSelected.entity.workflowName, $scope.workflowInputs).then(afterWorkflowExecution,
+							function () {
+								$scope.onAjax = false;
+								toasterservice.showErrorToast('API Error', 'Something went wrong');
+							}
+						);
+						break;
+					case RUN_WORKFLOW_TYPE.POPUP_INPUT:
+						restservice.executePoputInputForWorkflow(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, $scope.popupInputSubmitRequest).then(afterWorkflowExecution,
+							function () {
+								$scope.popupInputSubmitRequest = {};
+								$scope.onAjax = false;
+								toasterservice.showErrorToast('API Error', 'Something went wrong');
+							}
+						);
+						break;
+					case RUN_WORKFLOW_TYPE.INFORMATION_MESSAGE:
+						restservice.executeInfoMsgForWorkflow(window.g_ck, $scope.cvLogin.token, $scope.cvLogin.endpoint, $scope.infoMsgSubmitRequest).then(afterWorkflowExecution,
+							function () {
+								$scope.infoMsgSubmitRequest = {};
+								$scope.onAjax = false;
+								toasterservice.showErrorToast('API Error', 'Something went wrong');
+							}
+						);
+						break;
+					default:
+						break;
+						
+				}
+			};
+			$scope.$on('sessiontimeout', function(event, data) {
+				try {
+					utilFactory.stopStayLoggedInScheduler();
+					if(!data.config.url.endsWith('/api/x_183199_testcommv/cvapi/stayloggedin')) {
+						$window.location.reload();
+					}
+				} catch (e) {
+					$window.location.reload();
+				}
+            });
+
+			$scope.$on('loggedout', function(event, data) {
+                $scope.cvLogin.unauthorized = true;
+            });
+            $scope.cvLogin = {};
+            $scope.getLoginCookie = function () {
+                $scope.cvLogin.unauthorized = true;
+                try {
+                    var cvLoginFromCookie = $cookies.getObject('snow_cvLogin');
+                    if (cvLoginFromCookie) {
+                        $scope.cvLogin = cvLoginFromCookie;
+                        $scope.cvLogin.unauthorized = false;
+                    }
+                } catch (e) {
+                    console.log('Failed to get cookie');
+                }
+				
+				if($scope.cvLogin.snowToken && $scope.cvLogin.snowToken != window.g_ck) {
+					$scope.cvLogin.unauthorized = true;
+					$scope.cvLogin.token = '';
+					utilFactory.deleteTokenFromCookie($scope.cvLogin);
+				} else {
+					if ($scope.cvLogin.token && $scope.cvLogin.token.length > 0) {
+						$scope.getWorkflows();
+					} else {
+						$scope.cvLogin.unauthorized = true;
+						//$scope.cvLogin = {};
+					}
+				}
+            };
+           
+        }
+    ]);
 
 })();]]></script>
         <script_name>angular_app_client_lo</script_name>
@@ -3457,14 +4062,14 @@
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:21:18</sys_created_on>
         <sys_id>c366ccd9db530300180ad170cf961957</sys_id>
-        <sys_mod_count>610</sys_mod_count>
+        <sys_mod_count>703</sys_mod_count>
         <sys_name>x_183199_testcommv.angular_app_client_lo</sys_name>
         <sys_package display_value="CommvaultServiceNowApplication" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="CommvaultServiceNowApplication">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>sys_ui_script_c366ccd9db530300180ad170cf961957</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-08-05 10:44:43</sys_updated_on>
+        <sys_updated_on>2018-10-08 11:00:01</sys_updated_on>
         <use_scoped_format>false</use_scoped_format>
     </sys_ui_script>
 </record_update>

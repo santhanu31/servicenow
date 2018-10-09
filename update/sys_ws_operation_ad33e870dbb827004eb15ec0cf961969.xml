@@ -7,83 +7,89 @@
         <default_operation_uri/>
         <enforce_acl>cf9d01d3e73003009d6247e603f6a990</enforce_acl>
         <http_method>POST</http_method>
-        <name>doLogin</name>
+        <name>executeworkflow</name>
         <operation_script><![CDATA[(function process(/*RESTAPIRequest*/ request, /*RESTAPIResponse*/ response) {
 	var headers = request.headers;
+	var token = headers['cvtoken'];
+	var endpoint = headers['cvendpoint'];
+
+	//gs.info('Getting schedules using token ' + token);
 	
 	var requestBody = request.body;
 	var requestData = requestBody.data;
 	
-	gs.info('requestData ' + JSON.stringify(requestData));
+	gs.info('workflow requestData: ' + JSON.stringify(requestData));
 	
-	var username = requestData.cvusername;
-	var password = requestData.cvpassword;
-	var endpoint = requestData.cvwebconsolename;
-
-	var ePassword = gs.base64Encode(password);
-
-	if(endpoint.endsWith("/")) {
-		endpoint = endpoint.substring(0, endpoint.length - 1);
+	var workflowName = requestData.workflowName;
+	var inputs = requestData.inputs;
+	var body = '';
+	for(var anInput in inputs){
+		if(Array.isArray(inputs[anInput])) {
+			gs.info("json " + JSON.stringify(inputs[anInput]));
+			for(var i=0; i<inputs[anInput].length; i++) {
+				gs.info("json item" + JSON.stringify(inputs[anInput][i]));
+				if(inputs[anInput][i].textinput && inputs[anInput][i].textinput.length>0) {
+					body += "<"+anInput+">"+inputs[anInput][i].textinput+"</"+anInput+">";	
+				}
+			}
+		} else {
+			body += "<"+anInput+">"+inputs[anInput]+"</"+anInput+">";
+		}
 	}
+	body = "<inputs>"+body+"</inputs>";
 
-	gs.info("username " + username);
-	gs.info("endpoint " + endpoint);
+	gs.info('Sending workflow execute as api request, body:' + body);
 
 	var sm = new sn_ws.RESTMessageV2();
-	sm.setEndpoint(endpoint + "/webconsole/RestServlet/Login");
+	sm.setEndpoint(endpoint + "/webconsole/RestServlet/wapi/"+workflowName);
 	sm.setHttpMethod("post");
-	sm.setHttpTimeout(30000);
+	sm.setHttpTimeout(80000);
 	sm.setRequestHeader("Accept","application/json");
 	sm.setRequestHeader("Content-Type","application/xml");
+	sm.setRequestHeader("Authtoken", token);
 	sm.setLogLevel("all");
 
-	var body = '<DM2ContentIndexing_CheckCredentialReq mode="Webconsole" username="' + username + '" password="' + ePassword + '" />';
 	sm.setRequestBody(body);
 
-	gs.info("body " + body);
-	gs.info("endpoint " + endpoint + "/webconsole/RestServlet/Login");
-	
 	var cvresponse = sm.execute();
-	var errMsg = cvresponse.getErrorMessage();
 	var cvresponseBody = cvresponse.getBody();
 	var statusCode = cvresponse.getStatusCode();
 
 	gs.info("statusCode " + statusCode);
 	gs.info("responseBody " + cvresponseBody); 
-	gs.info("errorCode" + errMsg);
 
-	if(cvresponseBody.length === 0) {
+	if(statusCode != 200) {
 		cvresponseBody = "{}";
 	}
 
 	var responseJson = JSON.parse(cvresponseBody);
 	responseJson.cvStatusCode = statusCode;
 
-	gs.info('Response json: ' + JSON.stringify(responseJson));
+	gs.info('Workflow Response json: ' + JSON.stringify(responseJson));
 
 	return responseJson;
 
 })(request, response);]]></operation_script>
-        <operation_uri>/api/x_183199_testcommv/cvapi/dologin</operation_uri>
+        <operation_uri>/api/x_183199_testcommv/cvapi/executeworkflow</operation_uri>
         <produces>application/json,application/xml,text/xml</produces>
         <produces_customized>false</produces_customized>
-        <relative_path>/dologin</relative_path>
+        <relative_path>/executeworkflow</relative_path>
         <request_example/>
-        <requires_acl_authorization>false</requires_acl_authorization>
+        <requires_acl_authorization>true</requires_acl_authorization>
         <requires_authentication>true</requires_authentication>
         <short_description/>
         <sys_class_name>sys_ws_operation</sys_class_name>
         <sys_created_by>admin</sys_created_by>
-        <sys_created_on>2018-04-03 11:10:39</sys_created_on>
-        <sys_id>f1c3503cdb5d13004eb15ec0cf96190d</sys_id>
-        <sys_mod_count>3</sys_mod_count>
-        <sys_name>doLogin</sys_name>
+        <sys_created_on>2018-09-24 12:55:17</sys_created_on>
+        <sys_id>ad33e870dbb827004eb15ec0cf961969</sys_id>
+        <sys_mod_count>10</sys_mod_count>
+        <sys_name>executeworkflow</sys_name>
         <sys_package display_value="CommvaultServiceNowApplication" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="CommvaultServiceNowApplication">3aafe741db130300180ad170cf961919</sys_scope>
-        <sys_update_name>sys_ws_operation_f1c3503cdb5d13004eb15ec0cf96190d</sys_update_name>
+        <sys_update_name>sys_ws_operation_ad33e870dbb827004eb15ec0cf961969</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-09-17 08:04:43</sys_updated_on>
+        <sys_updated_on>2018-10-04 13:56:19</sys_updated_on>
         <web_service_definition display_value="cvapi">d1004b1fdbc513004eb15ec0cf96190b</web_service_definition>
         <web_service_version/>
     </sys_ws_operation>

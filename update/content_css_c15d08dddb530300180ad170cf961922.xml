@@ -991,22 +991,89 @@ div.checkbox.choose-packages-checkbox {&#13;
   clip           : rect(0, 0, 0, 0);&#13;
   pointer-events : none;&#13;
 }&#13;
+div.workflows li {&#13;
+    display: inline;&#13;
+    float: left;&#13;
+    font-size: 1.2em;&#13;
+    height: 75px;&#13;
+    line-height: 1.4;&#13;
+    margin: 11px 0 0.2em;&#13;
+    padding-right: 30px;&#13;
+    position: relative;&#13;
+    text-align: left;&#13;
+    width: 354px;&#13;
+    font-family: Helvetica,Arial,sans-serif;&#13;
+}&#13;
+.ellip {&#13;
+    margin-top: 37px;&#13;
+    position: absolute;&#13;
+    right: 25px;&#13;
+}&#13;
+div.workflows a {&#13;
+    color: #006699 !important;&#13;
+    font-size: 14px;&#13;
+    font-weight: lighter;&#13;
+    cursor: pointer;&#13;
+}&#13;
+div.workflows .displayText {&#13;
+    overflow: hidden;&#13;
+    text-overflow: ellipsis;&#13;
+    margin-top: 5px;&#13;
+}&#13;
+div.workflows li p {&#13;
+    color: #777777;&#13;
+    font-size: 0.9em;&#13;
+    margin: 0;&#13;
+    height: 40px; &#13;
+    overflow: hidden;&#13;
+}&#13;
+.workflowbtns{&#13;
+    padding: 15px;&#13;
+}&#13;
+.workflowbtns .btn+.btn {&#13;
+    margin-bottom: 0;&#13;
+    margin-left: 5px;&#13;
+}&#13;
+.workflow-inputs{&#13;
+    padding: 20px 15px;&#13;
+}&#13;
 &#13;
+.cv-list-textbox .glyphicon {&#13;
+  font-size:12px;&#13;
+   top: 0px;&#13;
+}&#13;
 &#13;
+.cv-list-textbox .glyphicon-plus {&#13;
+  left: 1px;&#13;
+}&#13;
 &#13;
-</style>
+.cv-list-textbox .glyphbtn{&#13;
+    border-radius: 50%;&#13;
+    height: 30px;&#13;
+    width: 30px;&#13;
+    border: none;&#13;
+    outline: none;&#13;
+    box-shadow: none;&#13;
+    background-color: #337ab7;&#13;
+    color: white;&#13;
+}&#13;
+&#13;
+.cv-list-textbox .input-group .textboxcontrol.form-control:first-child {&#13;
+    width: 98%;&#13;
+    border-radius: 8px;&#13;
+}</style>
         <sys_class_name>content_css</sys_class_name>
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2017-12-26 13:48:59</sys_created_on>
         <sys_id>c15d08dddb530300180ad170cf961922</sys_id>
-        <sys_mod_count>192</sys_mod_count>
+        <sys_mod_count>208</sys_mod_count>
         <sys_name>testcommvaultstyles</sys_name>
         <sys_package display_value="CommvaultServiceNowApplication" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
         <sys_policy/>
         <sys_scope display_value="CommvaultServiceNowApplication">3aafe741db130300180ad170cf961919</sys_scope>
         <sys_update_name>content_css_c15d08dddb530300180ad170cf961922</sys_update_name>
         <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2018-05-09 11:00:27</sys_updated_on>
+        <sys_updated_on>2018-10-05 06:14:55</sys_updated_on>
         <type>local</type>
         <url/>
     </content_css>

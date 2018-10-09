@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sys_ui_script">
+    <sys_ui_script action="INSERT_OR_UPDATE">
+        <active>true</active>
+        <description/>
+        <global>false</global>
+        <name>x_183199_testcommv.textboxListDirective</name>
+        <script><![CDATA[(function () {
+	angular.module('angularapp').directive('cvListTextboxInput', function(){
+		
+		var directive = {};
+
+		directive.restrict = 'E';
+		//directive.replace = true;
+
+		directive.template = "<div class=\"form-group cv-list-textbox\" data-ng-repeat=\"textbox in textboxList\"><div class=\"input-group\"><input type=\"text\" class=\"form-control textboxcontrol\" ng-model=\"textbox.textinput\"><span class=\"input-group-btn\"><button class=\"glyphbtn\" ng-show=\"showAddButton(textbox)\" ng-click=\"addNewtextbox()\"><span class=\"glyphicon glyphicon-plus\"></span></button><button class=\"glyphbtn\" ng-click=\"removeNewtextbox(textbox)\" ng-show=\"!showAddButton(textbox)\"><span class=\"glyphicon glyphicon-remove\"></span></button></span></div></div>";
+
+		directive.controller = [
+		'$scope',
+		function($scope) {
+		   
+			var initTextbox = {id:0, textinput:""};
+			$scope.textboxList.push(initTextbox);
+
+			$scope.addNewtextbox = function() {
+			  var textbox = {id:$scope.textboxList[$scope.textboxList.length-1].id+1, textinput:""};
+			  $scope.textboxList.push(textbox);
+			};
+
+			var findIndexOfId = function(id) {
+			  for(var i=0; i < $scope.textboxList.length; i++) {
+				if($scope.textboxList[i].id == id) {
+				  return i;
+				}
+			  }
+			  return -1;
+			};
+
+			$scope.removeNewtextbox = function(textbox) {
+			  if ( $scope.textboxList.length - 1 !== 0 ) {
+				var indexToRemove = findIndexOfId(textbox.id);
+				//console.log("Removing id, index " + textbox.id + " " + indexToRemove);
+				if(indexToRemove != -1) {
+				  $scope.textboxList.splice( indexToRemove, 1 );
+				}
+			  }
+			};
+
+			$scope.showAddButton = function(textbox) {
+			  return textbox.id === $scope.textboxList[$scope.textboxList.length - 1].id;
+			};
+			
+		  }
+		];
+
+		directive.scope = {
+			textboxList : "=outModel"
+		};
+		
+		return directive;
+		
+	}); 
+})();	]]></script>
+        <script_name>textboxListDirective</script_name>
+        <sys_class_name>sys_ui_script</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2018-10-03 13:54:25</sys_created_on>
+        <sys_id>b5a49fafdb7023004eb15ec0cf9619b7</sys_id>
+        <sys_mod_count>21</sys_mod_count>
+        <sys_name>x_183199_testcommv.textboxListDirective</sys_name>
+        <sys_package display_value="CommvaultServiceNowApplication" source="x_183199_testcommv">3aafe741db130300180ad170cf961919</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="CommvaultServiceNowApplication">3aafe741db130300180ad170cf961919</sys_scope>
+        <sys_update_name>sys_ui_script_b5a49fafdb7023004eb15ec0cf9619b7</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2018-10-08 11:00:37</sys_updated_on>
+        <use_scoped_format>false</use_scoped_format>
+    </sys_ui_script>
+</record_update>
